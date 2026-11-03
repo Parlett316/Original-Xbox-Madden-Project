@@ -16,6 +16,7 @@ jobs:
         run: python -m compileall -q patches roster tools
       - name: No game or EA data tracked
         run: |
-          if git ls-files | grep -iE '\.(xbe|dat|db|qkl|xbx|json|png|jpe?g)$|Fran-|Rost-'; then
+          # docs/screenshots/ holds photos of the game running, the only images allowed
+          if git ls-files | grep -v '^docs/screenshots/' | grep -iE '\.(xbe|dat|db|qkl|xbx|json|png|jpe?g)$|Fran-|Rost-'; then
             echo "game files, saves or downloaded data are tracked"; exit 1
           fi

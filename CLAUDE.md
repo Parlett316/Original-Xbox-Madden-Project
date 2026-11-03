@@ -7,7 +7,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
 
 ## Ground rules
 - **Never modify the stock game folders** (`Madden NFL 0x (USA)/`). Scripts take stock inputs and write to new paths (`patched/…`, scratch dirs).
-- **Never commit game data, saves, build output, EA downloads or personal images.** `.gitignore` is an allow-list; CI fails if `.xbe/.dat/.db/.qkl/.json/.png` files are tracked.
+- **Never commit game data, saves, build output, EA downloads or personal images.** `.gitignore` is an allow-list; CI fails if `.xbe/.dat/.db/.qkl/.json/.png/.jpg` files are tracked; the one exception is `docs/screenshots/` (photos of the game running, metadata stripped).
 - **Prove writers byte for byte.** Rebuilding with no changes must reproduce the stock file exactly: `tdb.DB.resized({})`, `qkl_sync.py` with stock inputs, and the awareness patcher's 09 output SHA-1 `3814c23eb76a390936fbb5562291e70486ea2e0b`. After a refactor, rebuild existing outputs and `cmp` them.
 - **Recompute every checksum.** Every TDB edit ends with `db.fix()`; verify with `db.verify()`.
 - **Keep file sets consistent:**
