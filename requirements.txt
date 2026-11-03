@@ -1,0 +1,4 @@
+# Python 3.10+
+Pillow>=10          # textures: headshots, load/start screens
+capstone>=5         # tools/xdis.py (reverse-engineering helper)
+unicorn>=2          # patches/loadscreen/lzh1emu.py (runs the game's LZH1 codec)

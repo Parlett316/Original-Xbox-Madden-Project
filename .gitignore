@@ -1,0 +1,45 @@
+# Allow-list: only code and docs are tracked. Game files, saves, build output
+# and downloaded EA data must never be committed.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/LICENSE
+!/CLAUDE.md
+!/requirements.txt
+!/.github/
+!/docs/
+!/patches/
+!/roster/
+!/tools/
+
+# Python
+__pycache__/
+*.pyc
+
+# Anything that is (or is derived from) game data, in any tracked folder
+*.xbe
+*.dat
+*.DAT
+*.db
+*.DB
+*.qkl
+*.xbx
+Fran-*
+Rost-*
+Prof-*
+Sett-*
+
+# Downloaded EA data (fetch it yourself with roster/fetch_*.py)
+roster/*.json
+roster/headshots_raw/
+roster/coach_photos/
+roster/out_*/
+# Table dumps of the stock roster
+roster/*.csv
+
+# Personal load/start-screen art and the script hand-tuned for it
+patches/loadscreen/*.png
+patches/loadscreen/*.jpg
+patches/loadscreen/*.jpeg
+patches/loadscreen/compose.py

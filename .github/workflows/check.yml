@@ -1,0 +1,21 @@
+name: check
+
+on: [push, pull_request]
+
+jobs:
+  compile:
+    # No game files exist in CI, so this only checks that every script parses
+    # and that no game data or downloaded EA data slipped into the repo.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile all scripts
+        run: python -m compileall -q patches roster tools
+      - name: No game or EA data tracked
+        run: |
+          if git ls-files | grep -iE '\.(xbe|dat|db|qkl|xbx|json|png|jpe?g)$|Fran-|Rost-'; then
+            echo "game files, saves or downloaded data are tracked"; exit 1
+          fi
