@@ -160,19 +160,23 @@ class DB:
     def resized(self, capacities):
         """Return this DB rebuilt as a new bytearray, with the tables named in
         `capacities` ({name: new capacity}) grown; records and all other
-        tables are kept. Tables are packed back to back, as EA lays them out."""
+        tables are kept. Tables are packed back to back, as EA lays them out.
+        Most tables store every slot; some (flags 0x1a, e.g. in the franchise
+        DB) store only their current rows, so only the capacity changes."""
         b, off = self.buf, self.off
         n = len(self.order)
         out = bytearray(b[off:off + 0x18 + 8 * n])
         body = bytearray()
-        for k, t in enumerate(self.order):
+        ends = [t.pos for t in self.order[1:]] + [off + self.size - 4]
+        for k, (t, end) in enumerate(zip(self.order, ends)):
             cap = capacities.get(t.name, t.capacity)
             assert cap >= t.capacity, f'{t.name}: shrinking is not supported'
             struct.pack_into('<I', out, 0x1c + 8 * k, len(body))
             head = bytearray(b[t.pos:t.recpos])
             struct.pack_into('<H', head, 0x14, cap)
-            body += head + b[t.recpos:t.recpos + t.reclen * t.capacity]
-            body += bytes(t.reclen * (cap - t.capacity))
+            body += head + b[t.recpos:end]
+            if end - t.recpos == t.reclen * t.capacity:
+                body += bytes(t.reclen * (cap - t.capacity))
         out += body + bytes(4)
         struct.pack_into('<I', out, 8, len(out))
         db = DB(out, 0)

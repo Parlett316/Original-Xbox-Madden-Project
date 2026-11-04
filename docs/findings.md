@@ -117,3 +117,32 @@ Young players get ×1.25 on gains; veterans get ×0.75 on gains and ×1.25 on lo
 **Measured from the stock franchise saves:** generated classes are *not* what inflates the league. The 218 drafted rookies in `FranchisePreseasonYear2` average 76.5 OVR (top 88, 12 at 85+, none at 90+), the same as the real 2008 rookies (76.7, top 86). One season later they average 76.3 with three at 90+. The 90+ players come from years 3–4 (15–28 per class), so they're made by progression, not the draft. `SPAD` is the lever if weaker or more varied classes are wanted, but it isn't needed for the 99 problem.
 
 `NIRA` (two tiers A/B × 17 groups × 16 attributes, ranges near 97–100, queried at `0x3b839`) is not draft classes; it looks like Superstar-mode or created-player ranges. Injury frequency doesn't appear to be table-driven (only `INJY`, the live injury list, and the `PINJ` rating); it's probably code or the in-game sliders.
+
+## 8. Season structure and playoffs (09)
+
+Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). Not yet changed or tested.
+
+**Schedules are data.** `template.dat` DB @`0x164480` holds `SCHD` (664/664 rows, full): two complete seasons, `SESI` 0 and 1, which alternate by franchise year (`SEAI.SESI`). At creation and each new season the game copies the matching rows into the franchise DB (`insert into SCHD … where SEST = ? and SESI = ?`, `0x3dd718`). Week types `SEWT`: 0 preseason (`SEST` 9, weeks 0–3), 25 regular season (weeks 0–16 = 16 games + bye), 50 wild card (week 17, 4 games), 75 divisional (18), 100 conference (19), 125 Super Bowl (20), 150 Pro Bowl (21, teams 214/215). `strmdata.db` `SCHD` (320 rows, dated 2004) looks like a leftover.
+
+**Season counts are derived from the schedule.** `0x3c0ff0` counts `SCHD` rows by `SEWT` and writes `SEAI` (`SERW` regular-season weeks, `SEFP` first playoff week, `SNWP`/`SNDP`/`SNCP` games per round, …). A stock year-3 save has `SERW` 17, `SEFP` 17, 4/4/2. So the number of weeks and games per round isn't a constant in that path.
+
+**Bracket rows hold seeds, not teams.** The wild-card rows are `GHTG`/`GATG` = 2/5 and 3/4 (0-based seeds: #6 at #3, #5 at #4), one pair per conference. Later rounds hold 1023 and are filled as winners advance.
+
+**Seeding is hardcoded to 6 per conference** (`0x41b590`, per conference):
+- `0x41aa10` lists division winners (`SDST` = 0, ordered by `scst`) into the seed array.
+- `0x41ab00` adds wild cards (`SDST` > 0); the count is `6 − divisions` (`mov ecx, 6` at `0x41b5e5`).
+- Limits of 6 at `0x41aa88` and `0x41ab7b`; the re-sort by seed at `0x41a810` scans 6 entries (`0x41a87b`, `0x41a882`).
+- The seed array is a global at `0x7ba428`: 2 × 6 words, ending at `0x7ba43e`. `0x7ba440` onwards belongs to other code (`0x41d58e…`, `0x41dfa9…`), so 7 seeds means moving the array.
+- `TEAM.TMPS` (`'SPMT'`) stores each team's seed. Advancement (`0x41abf0` collects a round's winners per conference; `0x41b6f0` writes the next round's rows via `0x3d7a80`) assumes two byes.
+
+**Per-week table capacities** in the franchise DB (`template.dat` @`0xab500`): `SCHD` 269 (a full stock season uses 268), `SCWE` 25, `OTIW` 672 (32 × 21), `OTGO` 704 (32 × 22, full), `OWGP` 22, `PONF` 22. A 17-game season with 14 playoff teams needs 272 + 14 = 286 `SCHD` rows, so these need `resized()`. Whether a bigger franchise save still fits the memory-card save is untested.
+
+**What an 18-week season needed (hardware-verified 2026-11-03):**
+- **Advancing:** after each sim, `0x135b80` calls advance-week (`0x3c4350`), which runs the end-of-week chain (`0x3c3f10`) and only then sets the next week (`0x3c38e0`; the last week + 1 becomes `SEWT` 175, the offseason marker). Any database error in the chain cancels the advance silently.
+- **The Super Bowl lock:** the weekly fan step (`0x3d96d3`) reads `strmdata.db` `OWFW` for the current week. Its rows stop at week 20, since stock's week 21 is the Pro Bowl and has no team games. That missing row was what locked the Super Bowl at week 21.
+- **Weekly owner values:** `OACI`/`OFAC` (weeks 0–16) are read without an error check, so a missing week just leaves stale values.
+- **Offseason marker:** the offseason start (`0x3a9530`) hardcodes week 22 for `SEAI.SEWN` and its marker game, so with the Pro Bowl at week 22 it has to become 23.
+- **Box scores** (`BOFF`, `BDEF`, …) only hold the current week, so the Pro Bowl week is where the Super Bowl's stats can be viewed.
+- **Front end:** the stats screens label week 21 as the Pro Bowl (`0x130060`, `0x1300ec`); that's cosmetic. The `16, 17, 20, 21, 22` constants found in nearly every menu script are shared library code, not weeks.
+
+**Game rules aren't in tables.** Overtime and kickoff/touchback spots have no DB fields, only UI strings ("End of Overtime Quarter", "OVERTIME!!!", "Touchback"), so they live in gameplay code.

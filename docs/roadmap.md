@@ -12,9 +12,21 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
 - **Watch over more seasons:** the league OVR mean is drifting down slowly (−0.1/season), and generated rookies have to replace the real players.
 
 ## Ready but not hardware-tested
+- **17-game season: works on hardware** (2026-11-03, test 5). `patches/season17.py`, `build_all.py --season17` (not the default yet). Test files: `patched/Madden NFL 09 (USA)/season17_test/`.
+  - What it does: a 3-week preseason; 17 games over 18 weeks with a bye, where week 18 is an AFC division against an unplayed NFC division; playoffs in weeks 19–22 and the Pro Bowl in week 23. The Super Bowl box score can be viewed during Pro Bowl week, and then the season advances to the offseason.
+  - Changes needed: `template.dat` (schedules plus franchise tables sized for 22 weeks), `strmdata.db` (`OWFW` week 21 and `OACI`/`OFAC` week 17) and the XBE (offseason-start week 22 → 23).
+  - The hardware tests, in order:
+    1. week 18 rematched week 1;
+    2. the Super Bowl locked with the Pro Bowl at week 22;
+    3. it still locked with no Pro Bowl;
+    4. the missing `OWFW` row was fixed and the season reached the offseason, but the Super Bowl stats couldn't be viewed;
+    5. the Pro Bowl came back with the XBE week patch and everything worked.
+  - Still to check: year 2 (the second schedule, `SESI` 1) plays 18 weeks, and a second offseason works.
+  - Next: 7-team playoffs (findings §8).
 - **Awareness fix for 07 and 08:** `patched/Madden NFL 07 (USA)/default.xbe`, `…08…` ("Madden NFL 0x Modded"). Checked by disassembly only. The first test is simply that franchise seasons sim without crashing.
 
 ## Ideas, roughly by value
+0. **Real names for the classic teams** (next roster project, before photos). `DB_TEAMS.dat` has 201 classic and special teams with 10,507 players. About 170 are real seasons ('69 Raiders … '07 Packers), and about 9,200 players are stored only as position plus number ("LE", "#99"), with `PSXP` 0. The plan: take each season's roster from Pro-Football-Reference (number, position, name) and match it by team, year, number and position. Two players sharing a number are decided by position, then games played. Write a CSV for the user to review before building. Names fit `PFNA` 11 and `PLNA` 13 characters. Photos come later: they need the photo-slot expansion (item 4), and one photo can be shared by a player's appearances on several teams.
 1. **Throwback rosters from 07 and 08** (2006 and 2007 seasons). Their PLAY layout is identical to 09's, so the roster is nearly a direct copy; their headshot files may come along too.
 2. **2005 and 06 rosters in 09** (2004 and 2005 seasons). These need field conversion (115 and 111 fields vs 110).
 3. **Raise the 40-song EA Trax limit.** It's in three places: `MUPL` capacity (template.dat and the fe.qkl copy), the constant at `0x18cebb`, and the playback array (`0x370` bytes = 55 entries, allocated at `0x2a9e65`). The profile save also stores the playlist.
@@ -23,6 +35,7 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
 6. **Write roster saves to the memory card.** This needs the 20-byte save signature (at 0x10 in `Rost-Rost1`).
 7. **Look at Madden 06** for another cause of awareness creep, since it has no roles.
 8. **Port 2005-style offseason progression** (`PYRA`), if in-season tuning isn't enough.
+9. **Modern season format** ([findings §8](findings.md#8-season-structure-and-playoffs-09)). Step 1: a 17-game schedule (data plus table resizes; test whether the franchise save still fits). Step 2: 7-team playoffs (XBE: seed limit 6 → 7, move the seed array, rewrite the divisional pairing for one bye). Step 3 (research): overtime and kickoff rules in gameplay code.
 
 ## Done (for context)
 - Real coach ages and NFL head-coaching records (`coaches.BORN/RECORDS/SUPER_BOWLS`, `fetch_coach_facts.py`); confirmed on hardware over a season 2026-11-03 (only Danny Smith, 73, retired). Coaches' contract lengths still come from the 2008 slot (Blough's ran one year).

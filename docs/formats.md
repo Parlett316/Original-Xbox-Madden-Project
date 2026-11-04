@@ -14,13 +14,14 @@ table header, 0x28:    u32 CRC of the previous region, u32 flags, u32 record len
                        u32 record bits - 1, u32 0, u16 capacity, u16 count, u16 0, u16 0xffff,
                        u8 field count, ..., u32 CRC(table[4:0x24]) at +0x24
 field defs, 16 each:   u32 type, u32 bit offset, 4-byte tag, u32 bit width
-records:               capacity × record length (tables are packed back to back)
+records:               capacity × record length (tables are packed back to back);
+                       tables with flags 0x1a store only count × record length
 trailer:               u32 CRC of the last table's field defs + records
 ```
 
 - **Checksums** are all CRC-32/MPEG-2: poly `0x04C11DB7`, not reflected, init `0xFFFFFFFF`, no final xor. Table 0's leading CRC covers the index; table *k*'s covers table *k*−1's field defs and records. `tdb.DB.fix()` recomputes everything, and verifies on every DB in all five games.
 - **Fields** are LSB-first bitfields over the little-endian record. Type 0 = string (full width, no terminator needed), 2 = signed, 3 = unsigned.
-- `DB.resized({table: capacity})` grows tables. With no changes it reproduces the original file byte for byte.
+- `DB.resized({table: capacity})` grows tables, padding only full-storage ones (flags 2/6); a 0x1a table keeps its stored rows and just gets the new capacity. With no changes it reproduces every DB in `template.dat` and `strmdata.db` byte for byte. Most of the franchise DB (`template.dat` entry 4) is 0x1a.
 - **In XBE code**, queries are SQL-like strings with byte-reversed tags: `select 'PXSP' into ? from 'YALP' where 'DIGP' = ?` reads `PSXP` from `PLAY` where `PGID` = ?. Marker bytes 0x80–0x8C stand for parameters.
 
 ### Where things live (09)
@@ -78,6 +79,8 @@ Franchise season stats: `PSNG` (`sgmp` games played, `sgms` games started), `PSO
 chunks after the header: (tag, u32 size): DIR1 (u32 offset from DATA start, u32 size per entry),
                          optional COMP (u32 codec, u32 unpacked size per entry), DATA
 ```
+
+`template.dat`'s entries are 0x40-aligned from the DATA chunk (an empty entry still takes one slot), and the DATA chunk's size field covers everything after it; `patches/season17.py:repack` rebuilds the archive by that rule, and with no changes reproduces the stock file byte for byte. `fe.qkl` preloads `template.dat`'s header and directory (and entry 11), so re-sync it whenever an entry's size changes.
 
 Codec 5 is EA "LZH1"; `patches/loadscreen/lzh1emu.py` runs the game's own codec under unicorn. Readers: `patches/loadscreen/terf.py`, `roster/headshots.py:terf_entries`.
 
