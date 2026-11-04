@@ -23,6 +23,9 @@ Usage:
                      roster/classic_names.py (high and medium matches)
   --season17         17-game, 18-week franchise season (template.dat; not yet
                      hardware-tested, new franchises only)
+  --schedule CSV     with --season17: year 1 is a real NFL season from nflverse's
+                     games.csv (github.com/nflverse/nfldata, data/games.csv)
+  --schedule-season YEAR  which season (default: the latest complete one)
 
 Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
@@ -71,8 +74,10 @@ def main():
     ap.add_argument('--demo-delay', type=int, default=86400000)
     ap.add_argument('--season17', action='store_true')
     ap.add_argument('--classic-names')
+    ap.add_argument('--schedule')
+    ap.add_argument('--schedule-season')
     a = ap.parse_args()
-    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names'):
+    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
 
@@ -111,7 +116,8 @@ def main():
     # 2b. 17-game season: shifts template.dat's later DBs, so it comes after the roster
     if a.season17:
         tpl = os.path.join(out_data, 'template.dat')
-        run(os.path.join(P, 'season17.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
+        real = [a.schedule] + ([a.schedule_season] if a.schedule_season else []) if a.schedule else []
+        run(os.path.join(P, 'season17.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl, *real)
 
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')
