@@ -12,7 +12,7 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
 - **Watch over more seasons:** the league OVR mean is drifting down slowly (−0.1/season), and generated rookies have to replace the real players.
 
 ## Ready but not hardware-tested
-- **17-game season: works on hardware** (2026-11-03, years 1 to 3). `patches/season17.py`, the default in `build_all.py` since then (`--no-season17` opts out). Franchises need the build they were started with: the franchise tables are sized at creation. Test files: `patched/Madden NFL 09 (USA)/season17_test/`.
+- **17-game season: works on hardware** (2026-11-03, years 1 to 4, the full interconference rotation). `patches/season17.py`, the default in `build_all.py` since then (`--no-season17` opts out). Franchises need the build they were started with: the franchise tables are sized at creation. Test files: `patched/Madden NFL 09 (USA)/season17_test/`.
   - What it does: a 3-week preseason; 17 games over 18 weeks with a bye; playoffs in weeks 19–22 and the Pro Bowl in week 23. The Super Bowl box score can be viewed during Pro Bowl week, and then the season advances to the offseason.
   - Year 1 can be a real NFL season (`--schedule nflverse_schedule/games.csv`, from nflverse's nfldata; the 2026 schedule was checked on hardware). Years 2+ are the game's own generated schedule plus week 18: each AFC division against the NFC division it played two years earlier (the modern rule), computed by the XBE every year.
   - Changes needed: `template.dat` (schedules plus franchise tables sized for 22 weeks), `strmdata.db` (`OWFW` week 21 and `OACI`/`OFAC` week 17) and the XBE (offseason-start week 22 → 23; a cave that adds week 18 after the year-2+ generator).
@@ -26,7 +26,7 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
     7. keeping week 18 through the generator hung "Advancing To Regular Season";
     8. inserting week 18 after the generator worked: 18 weeks, 17 games each, no repeats (save checked).
     9. years 2 and 3 were played through the Pro Bowl and a second offseason: year 3's save (`SEYR` 2) has 18 weeks, 272 scored games, no repeats, and week 18 against a different NFC division from that year's rotation.
-  - From year 2 the preseason picker schedules 4 games (harmless; a 4th checkpoint row is kept).
+    10. the preseason picker was removed: every year plays the data's 3 preseason weeks. Year 4's save (`SEYR` 3) has 18 weeks, 272 scored games and no repeats.
   - Next: 7-team playoffs (findings §8).
 - **Awareness fix for 07 and 08:** `patched/Madden NFL 07 (USA)/default.xbe`, `…08…` ("Madden NFL 0x Modded"). Checked by disassembly only. The first test is simply that franchise seasons sim without crashing.
 
@@ -34,7 +34,7 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
 Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first step is research. Suggested order: finish the season format (year 3 check, 3-game preseason, then default), then 7-team playoffs, then classic-team photos.
 
 ### Modern NFL rules ([findings §8](findings.md#8-season-structure-and-playoffs-09))
-- **3-game preseason from year 2.** Small. The picker schedules 4 games from its own code, not the schedule data.
+- **Varied or selectable preseason.** Small to large. Every year now plays the same 3 preseason weeks from the data; restoring a 3-game picker would mean reworking its builder (`0x40a000`) and pick limits (`0x40456c`, `0x40459d`).
 - **7-team playoffs.** Large, XBE: seed limit 6 → 7, move the seed array, rewrite the divisional pairing for one bye.
 - **Overtime and kickoff rules.** Unknown. They have no table fields, so they're in gameplay code.
 - **Varied kickoff times in generated week 18s.** Small to medium. The cave uses Sunday 1:00 for all 16 games and has 11 bytes free, so a Saturday and Sunday-night mix may need more cave space.
