@@ -21,6 +21,7 @@ Usage:
                      (default 86400000 = 24 h, i.e. off; stock 75000; 0 = leave stock)
   --classic-names CSV real names for the classic teams' players, from
                      roster/classic_names.py (high and medium matches)
+  --save-unlock      let the game load edited saves (skips their signature check)
   --no-season17      keep the stock 16-game season (the default is 17 games over
                      18 weeks; existing franchises need the matching build)
   --schedule CSV     year 1 is a real NFL season from nflverse's
@@ -73,6 +74,7 @@ def main():
     ap.add_argument('--startscreen')
     ap.add_argument('--demo-delay', type=int, default=86400000)
     ap.add_argument('--no-season17', dest='season17', action='store_false')
+    ap.add_argument('--save-unlock', action='store_true')
     ap.add_argument('--classic-names')
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
@@ -93,6 +95,8 @@ def main():
     run(os.path.join(P, 'set_xbe_title.py'), xbe, xbe, a.title)
     if a.season17:                        # offseason start follows the Pro Bowl, now a week later
         run(os.path.join(P, 'season17.py'), xbe, xbe)
+    if a.save_unlock:
+        run(os.path.join(P, 'save_unlock.py'), xbe, xbe)
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:

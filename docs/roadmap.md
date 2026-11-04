@@ -52,7 +52,7 @@ Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first 
 
 ### Rosters and franchise
 - **Separate photo slots for the modern roster**, so 2008 roster saves keep their own photos. Medium to large. `uis_plyr.dat`'s directory is full, and its header is preloaded in both qkl bundles (fixed size), so this needs the qkl regions rebuilt.
-- **Write saves to the memory card.** Medium to large, uncertain. This needs the 20-byte save signature (at 0x10 in `Rost-Rost1`). Besides roster saves, it would let us edit franchise saves for quick tests (jump to a given week or year), which would cut many rounds of hardware testing.
+- **Edit franchise saves.** Loading works (2026-11-04): `--save-unlock` skips the signature check, see [formats](formats.md). Saving an edited franchise from the game and reloading it works too: the game writes new data and padding signatures and valid CRCs, and the edit survives offseason stages. Still to do: write the tool that jumps a franchise to a given week or year, which would cut many rounds of hardware testing. Roster saves appear to use the same stream driver, but haven't been tried.
 - **Gameplay sliders and CPU tendencies.** Unknown, new idea: tune them from franchise reports, the way progression was tuned.
 - **Long-run progression check.** Mostly sim time: 5+ seasons, to see whether the slow OVR drift above matters.
 - **Coach contract lengths.** Small. They still come from the 2008 slot (Blough's ran one year).
