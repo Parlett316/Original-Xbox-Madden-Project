@@ -35,8 +35,7 @@ Entry 4 is the empty franchise DB copied into new franchises. Its per-week
 tables are sized for 21 weeks and grow by one week: SCHD (+16 games), OTIW
 (+32 rows, 32 teams x 22 weeks), AWPL (+5 weekly awards). SCWE, the
 progression checkpoint list, follows the schedule: the preseason checkpoint
-moves to the 3rd preseason week (week 4 keeps a row: from year 2 the user
-picks up to 4 preseason games), the new week joins the third period (its
+moves to the 3rd preseason week (week 4 keeps an unused row), the new week joins the third period (its
 checkpoint moves from week 16 to 17) and the playoff rows shift by one.
 Only franchises started with this file get the new format.
 
@@ -60,6 +59,11 @@ fix's (needs that XBE): the stock step, then 16 inserts (its own query) for
 week 17 from the generator's team tables (0x7ba440 AFC, 0x7ba460 NFC, 4 per
 division) and its rotation table: game n is AFC division n // 4 team n % 4
 against the same NFC team, Sunday 1:00, home side alternating by n and year.
+From year 2 stock also stops at franchise stage 6 for a preseason picker and
+generates 4 weeks (0x40aa60; its matchup builder and pick limits assume 4
+games). Those years now take year 1's path (0x41ff2c): the data's 3 weeks, no
+picker, the real year still passed on because SEAI.SSYE, stored here, is what
+turns the regular-season generator on.
 
 With no change requested (--repack-only) the archive is rebuilt as is and
 must match the input byte for byte.
@@ -92,6 +96,10 @@ PLACE, DB_EXEC = 0x41d970, 0x427eb0
 INSERT_GAME = 0x650d68                  # the generator's insert (SEWN, SEWT, SGNM, GSTA, GHTG, GATG,
                                         # GHSC, GASC, GTOD, GDAT, GFHU)
 KICKOFF = 780                           # week 17 from year 2: Sunday (GDAT 3) 1:00 pm
+# Preseason from year 2 as in year 1: from the data, no picker (see the module doc).
+PRESEASON_PATCHES = ((0x41ff32, b'\x75\x17', b'\x90\x90'),   # year > 0: to the picker stage
+                     (0x41ff34, b'\x6a\x00', b'\x50\x90'),   # push 0 -> push eax (SEYR)
+                     (0x404656, b'\x75\x14', b'\x90\x90'))   # year > 0: generate 4 weeks
 CAVE_VA = 0x10f60                       # header page, after the awareness fix's cave
 # nflverse team codes -> TGID (stock 09 numbering)
 TGID = dict(CHI=1, CIN=2, BUF=3, DEN=4, CLE=5, TB=6, ARI=7, LAC=8, KC=9, IND=10, DAL=11, MIA=12,
@@ -241,8 +249,6 @@ def franchise(db):
     reg = sorted((r for r in rows if r['SEST'] == 0), key=lambda r: r['SEWN'])
     assert [r['SEWN'] for r in pre] == list(range(4)) and pre[3]['PRAR'] == 1, 'unexpected SCWE'
     assert [r['SEWN'] for r in reg] == list(range(21)) and reg[NEW_WEEK - 1]['PRAR'] == 1, 'unexpected SCWE'
-    # Year 1's preseason is 3 weeks, but from year 2 the user picks preseason
-    # opponents and the picker still offers 4 games, so week 3 keeps its row.
     pre[2]['PRAR'], pre[3]['PRAR'] = 1, 0     # preseason checkpoint: the 3rd week
     reg[NEW_WEEK - 1]['PRAR'] = 0             # period 3 now ends at the new week
     new = []
@@ -327,6 +333,10 @@ def executable(src):
     o = x.v2f(GENERATOR_CALL)
     assert buf[o - 1:o + 1] == b'\x56\xe8' and struct.unpack_from('<i', buf, o + 1)[0] == PLACE - (GENERATOR_CALL + 5)
     struct.pack_into('<i', buf, o + 1, CAVE_VA - (GENERATOR_CALL + 5))
+    for va, old, new in PRESEASON_PATCHES:
+        o = x.v2f(va)
+        assert buf[o:o + 2] == old, f'{va:#x}: unexpected code'
+        buf[o:o + 2] = new
     return buf
 
 

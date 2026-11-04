@@ -47,7 +47,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
   - all 154 music tracks
   - "performance" progression v2 (two seasons: production drives progression, 99s 5 → 11 vs stock 31); the default build
   - custom screens and the dashboard rename
-  - the 17-game, 18-week season with a 3-week preseason, through year 2 (`--season17`, opt-in); `--schedule` makes year 1 a real NFL season (2026)
+  - the 17-game, 18-week season with a 3-week preseason, through year 4, with no preseason picker (the default build; `--no-season17` opts out); `--schedule` makes year 1 a real NFL season (2026)
 - **Built, not tested:** the 07/08 awareness XBEs.
 
 ## Things that cost time before (avoid repeating)
