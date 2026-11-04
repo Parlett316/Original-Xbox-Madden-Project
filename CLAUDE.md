@@ -29,6 +29,8 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
 | Build everything | `tools/build_all.py` |
 | Fix quick-load bundles | `patches/qkl_sync.py` |
 | Coaching staffs and coach photos | `roster/coaches.py`, `roster/fetch_coach_photos.py` (photo = `uis_coac.dat` entry `CSXP`+1) |
+| Classic teams' real names | `roster/classic_names.py` (nflverse rosters in `nflverse_rosters/`; review CSV, then `--apply`) |
+| One-off custom players (name, size, photo) | `roster/custom_players.py` with a personal spec in `custom/` (never committed) |
 
 ## Environment notes
 - Windows. Bash (Git Bash) and PowerShell are both available, and paths contain spaces: quote them.

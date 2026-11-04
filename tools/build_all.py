@@ -19,6 +19,8 @@ Usage:
   --startscreen PNG  image for the "Press START" background (uis_fe.dat)
   --demo-delay MS    idle time on Press START before the attract-mode demo, in ms
                      (default 86400000 = 24 h, i.e. off; stock 75000; 0 = leave stock)
+  --classic-names CSV real names for the classic teams' players, from
+                     roster/classic_names.py (high and medium matches)
   --season17         17-game, 18-week franchise season (template.dat; not yet
                      hardware-tested, new franchises only)
 
@@ -68,8 +70,9 @@ def main():
     ap.add_argument('--startscreen')
     ap.add_argument('--demo-delay', type=int, default=86400000)
     ap.add_argument('--season17', action='store_true')
+    ap.add_argument('--classic-names')
     a = ap.parse_args()
-    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen'):
+    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
 
@@ -98,6 +101,12 @@ def main():
             for f in os.listdir(os.path.join(t, 'data')):
                 shutil.copy(os.path.join(t, 'data', f), out_data)
             shutil.copy(os.path.join(t, 'roster_report.csv'), a.out)
+
+    # 2a. classic teams' real names (DB_TEAMS.dat; only the classic teams' DBs change)
+    if a.classic_names:
+        teams = os.path.join(out_data, 'DB_TEAMS.dat')
+        run(os.path.join(R, 'classic_names.py'), '--apply',
+            teams if os.path.exists(teams) else os.path.join(stock, 'DB_TEAMS.dat'), a.classic_names, teams)
 
     # 2b. 17-game season: shifts template.dat's later DBs, so it comes after the roster
     if a.season17:
