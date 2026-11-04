@@ -12,16 +12,20 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
 - **Watch over more seasons:** the league OVR mean is drifting down slowly (−0.1/season), and generated rookies have to replace the real players.
 
 ## Ready but not hardware-tested
-- **17-game season: works on hardware** (2026-11-03, test 5). `patches/season17.py`, `build_all.py --season17` (not the default yet). Test files: `patched/Madden NFL 09 (USA)/season17_test/`.
-  - What it does: a 3-week preseason; 17 games over 18 weeks with a bye, where week 18 is an AFC division against an unplayed NFC division; playoffs in weeks 19–22 and the Pro Bowl in week 23. The Super Bowl box score can be viewed during Pro Bowl week, and then the season advances to the offseason.
-  - Changes needed: `template.dat` (schedules plus franchise tables sized for 22 weeks), `strmdata.db` (`OWFW` week 21 and `OACI`/`OFAC` week 17) and the XBE (offseason-start week 22 → 23).
+- **17-game season: works on hardware** (2026-11-03, years 1 and 2). `patches/season17.py`, `build_all.py --season17` (not the default yet). Test files: `patched/Madden NFL 09 (USA)/season17_test/`.
+  - What it does: a 3-week preseason; 17 games over 18 weeks with a bye; playoffs in weeks 19–22 and the Pro Bowl in week 23. The Super Bowl box score can be viewed during Pro Bowl week, and then the season advances to the offseason.
+  - Year 1 can be a real NFL season (`--schedule nflverse_schedule/games.csv`, from nflverse's nfldata; the 2026 schedule was checked on hardware). Years 2+ are the game's own generated schedule plus week 18: each AFC division against the NFC division it played two years earlier (the modern rule), computed by the XBE every year.
+  - Changes needed: `template.dat` (schedules plus franchise tables sized for 22 weeks), `strmdata.db` (`OWFW` week 21 and `OACI`/`OFAC` week 17) and the XBE (offseason-start week 22 → 23; a cave that adds week 18 after the year-2+ generator).
   - The hardware tests, in order:
     1. week 18 rematched week 1;
     2. the Super Bowl locked with the Pro Bowl at week 22;
     3. it still locked with no Pro Bowl;
     4. the missing `OWFW` row was fixed and the season reached the offseason, but the Super Bowl stats couldn't be viewed;
-    5. the Pro Bowl came back with the XBE week patch and everything worked.
-  - Still to check: year 2 (the second schedule, `SESI` 1) plays 18 weeks, and a second offseason works.
+    5. the Pro Bowl came back with the XBE week patch and everything worked;
+    6. year 2 had 17 weeks: the generator deletes week 18;
+    7. keeping week 18 through the generator hung "Advancing To Regular Season";
+    8. inserting week 18 after the generator worked: 18 weeks, 17 games each, no repeats (save checked).
+  - Still to check: a second offseason and year 3. From year 2 the preseason picker schedules 4 games (harmless; a 4th checkpoint row is kept).
   - Next: 7-team playoffs (findings §8).
 - **Awareness fix for 07 and 08:** `patched/Madden NFL 07 (USA)/default.xbe`, `…08…` ("Madden NFL 0x Modded"). Checked by disassembly only. The first test is simply that franchise seasons sim without crashing.
 

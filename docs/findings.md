@@ -120,9 +120,9 @@ Young players get ×1.25 on gains; veterans get ×0.75 on gains and ×1.25 on lo
 
 ## 8. Season structure and playoffs (09)
 
-Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). Not yet changed or tested.
+Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). The 18-week season is done (below); the playoffs aren't.
 
-**Schedules are data.** `template.dat` DB @`0x164480` holds `SCHD` (664/664 rows, full): two complete seasons, `SESI` 0 and 1, which alternate by franchise year (`SEAI.SESI`). At creation and each new season the game copies the matching rows into the franchise DB (`insert into SCHD … where SEST = ? and SESI = ?`, `0x3dd718`). Week types `SEWT`: 0 preseason (`SEST` 9, weeks 0–3), 25 regular season (weeks 0–16 = 16 games + bye), 50 wild card (week 17, 4 games), 75 divisional (18), 100 conference (19), 125 Super Bowl (20), 150 Pro Bowl (21, teams 214/215). `strmdata.db` `SCHD` (320 rows, dated 2004) looks like a leftover.
+**Schedules are data.** `template.dat` DB @`0x164480` holds `SCHD` (664/664 rows, full): two complete seasons, `SESI` 0 and 1. `SESI` 0 is year 1's only: at the preseason `0x41f2d7` sets `SESI` = (`SEYR` > 0), so every later year uses `SESI` 1. At creation and each new season the game copies the matching rows into the franchise DB (`insert into SCHD … where SEST = ? and SESI = ?`, `0x3dd718`). Week types `SEWT`: 0 preseason (`SEST` 9, weeks 0–3), 25 regular season (weeks 0–16 = 16 games + bye), 50 wild card (week 17, 4 games), 75 divisional (18), 100 conference (19), 125 Super Bowl (20), 150 Pro Bowl (21, teams 214/215). `strmdata.db` `SCHD` (320 rows, dated 2004) looks like a leftover.
 
 **Season counts are derived from the schedule.** `0x3c0ff0` counts `SCHD` rows by `SEWT` and writes `SEAI` (`SERW` regular-season weeks, `SEFP` first playoff week, `SNWP`/`SNDP`/`SNCP` games per round, …). A stock year-3 save has `SERW` 17, `SEFP` 17, 4/4/2. So the number of weeks and games per round isn't a constant in that path.
 
@@ -143,6 +143,8 @@ Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). Not 
 - **Weekly owner values:** `OACI`/`OFAC` (weeks 0–16) are read without an error check, so a missing week just leaves stale values.
 - **Offseason marker:** the offseason start (`0x3a9530`) hardcodes week 22 for `SEAI.SEWN` and its marker game, so with the Pro Bowl at week 22 it has to become 23.
 - **Box scores** (`BOFF`, `BDEF`, …) only hold the current week, so the Pro Bowl week is where the Super Bowl's stats can be viewed.
+- **Year 2+ is generated** (`0x41b8c0` → `0x41e280` when the year is > 0): copy the `SESI` 1 rows, then build 256 matchups from a formula (`0x41e150`: division games, the intra-conference rotation by `year & 1`, interconference by `(year + 6) & 3` through the table at `0x7261bc`, AFC division a vs NFC division `T[4a + k]`), place them in 17 weeks (`0x40c2e0`, per-week counts at `0x7261a8`: 16,16,14×8,16×7) and write them over the data (`0x41d970`). A stock year-2 save keeps 196 of the data's 256 matchups and only 14 in the same week. `0x41d970` deletes the Sunday-afternoon games (`GDAT` 3, `GTOD` 750–1097) and every regular-season game from week 17 on. Its cursor over the remaining rows (`0x41dc6b`) steps back after each row and only advances when a row is filled, so a row it has no game for hangs "Advancing To Regular Season" (hardware). The 18-week fix inserts week 17 after this step instead (`season17.py`, cave at `0x10f60`).
+- **Day and time:** `GDAT` counts days from Thursday (0 Thu, 1 Fri, 2 Sat, 3 Sun, 4 Mon); `GTOD` is minutes, Eastern (780 = 1:00 pm). `GFTG` = 1 marks the Thanksgiving games.
 - **Front end:** the stats screens label week 21 as the Pro Bowl (`0x130060`, `0x1300ec`); that's cosmetic. The `16, 17, 20, 21, 22` constants found in nearly every menu script are shared library code, not weeks.
 
 **Game rules aren't in tables.** Overtime and kickoff/touchback spots have no DB fields, only UI strings ("End of Overtime Quarter", "OVERTIME!!!", "Touchback"), so they live in gameplay code.
