@@ -21,9 +21,9 @@ Usage:
                      (default 86400000 = 24 h, i.e. off; stock 75000; 0 = leave stock)
   --classic-names CSV real names for the classic teams' players, from
                      roster/classic_names.py (high and medium matches)
-  --season17         17-game, 18-week franchise season (template.dat; not yet
-                     hardware-tested, new franchises only)
-  --schedule CSV     with --season17: year 1 is a real NFL season from nflverse's
+  --no-season17      keep the stock 16-game season (the default is 17 games over
+                     18 weeks; existing franchises need the matching build)
+  --schedule CSV     year 1 is a real NFL season from nflverse's
                      games.csv (github.com/nflverse/nfldata, data/games.csv)
   --schedule-season YEAR  which season (default: the latest complete one)
 
@@ -72,7 +72,7 @@ def main():
     ap.add_argument('--loadscreen')
     ap.add_argument('--startscreen')
     ap.add_argument('--demo-delay', type=int, default=86400000)
-    ap.add_argument('--season17', action='store_true')
+    ap.add_argument('--no-season17', dest='season17', action='store_false')
     ap.add_argument('--classic-names')
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
