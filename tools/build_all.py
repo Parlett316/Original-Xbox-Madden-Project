@@ -19,8 +19,10 @@ Usage:
   --startscreen PNG  image for the "Press START" background (uis_fe.dat)
   --demo-delay MS    idle time on Press START before the attract-mode demo, in ms
                      (default 86400000 = 24 h, i.e. off; stock 75000; 0 = leave stock)
+  --season17         17-game, 18-week franchise season (template.dat; not yet
+                     hardware-tested, new franchises only)
 
-Steps: awareness fix + rename, roster, music, progression, screens, demo, then
+Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
 copy of the game folder on the Xbox (keep the stock folder as is).
 """
@@ -65,6 +67,7 @@ def main():
     ap.add_argument('--loadscreen')
     ap.add_argument('--startscreen')
     ap.add_argument('--demo-delay', type=int, default=86400000)
+    ap.add_argument('--season17', action='store_true')
     a = ap.parse_args()
     for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen'):
         if getattr(a, k):
@@ -80,6 +83,8 @@ def main():
     xbe = os.path.join(a.out, 'default.xbe')
     run(os.path.join(P, 'madden_awareness_fix.py'), os.path.join(g09, 'default.xbe'), xbe)
     run(os.path.join(P, 'set_xbe_title.py'), xbe, xbe, a.title)
+    if a.season17:                        # offseason start follows the Pro Bowl, now a week later
+        run(os.path.join(P, 'season17.py'), xbe, xbe)
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:
@@ -93,6 +98,11 @@ def main():
             for f in os.listdir(os.path.join(t, 'data')):
                 shutil.copy(os.path.join(t, 'data', f), out_data)
             shutil.copy(os.path.join(t, 'roster_report.csv'), a.out)
+
+    # 2b. 17-game season: shifts template.dat's later DBs, so it comes after the roster
+    if a.season17:
+        tpl = os.path.join(out_data, 'template.dat')
+        run(os.path.join(P, 'season17.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
 
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')
@@ -108,6 +118,11 @@ def main():
             tmp = os.path.join(t, 'strmdata.db')
             run(os.path.join(P, 'progression_2005.py'), src05, strm, tmp, mode)
             shutil.copy(tmp, os.path.join(out_data, 'strmdata.db'))
+
+    # 4b. 17-game season: one more week in strmdata.db's per-week owner tables
+    if a.season17:
+        sdb = os.path.join(out_data, 'strmdata.db')
+        run(os.path.join(P, 'season17.py'), sdb if os.path.exists(sdb) else strm, sdb)
 
     # 5. screens (LZH1 runs the stock XBE's own code)
     os.environ['MADDEN09_XBE'] = os.path.join(g09, 'default.xbe')
