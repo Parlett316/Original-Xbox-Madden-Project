@@ -11,6 +11,7 @@ Usage:
   --title TEXT       dashboard name (default "Madden NFL 09 Modded")
   --roster JSON      EA ratings file from roster/fetch_ea_ratings.py; builds the modern roster
   --photos DIR       EA headshots from roster/fetch_headshots.py (with --roster)
+  --free-agents JSON extra free agents from roster/pick_free_agents.py (with --roster)
   --coach-photos DIR coach headshots from roster/fetch_coach_photos.py (with --roster;
                      the roster always gets the 2026 coaching staffs, roster/coaches.py)
   --progression M    stock | 2005 | half | performance   (default performance)
@@ -80,6 +81,7 @@ def main():
     ap.add_argument('--no-season17', dest='season17', action='store_false')
     ap.add_argument('--save-unlock', action='store_true')
     ap.add_argument('--playoffs7', action='store_true')
+    ap.add_argument('--free-agents')
     ap.add_argument('--classic-names')
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
@@ -87,7 +89,7 @@ def main():
     a = ap.parse_args()
     if a.playoffs7 and not a.season17:
         ap.error('--playoffs7 needs the 17-game season')
-    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo'):
+    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo', 'free_agents'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
 
@@ -116,6 +118,8 @@ def main():
                 args += ['--photos', a.photos]
             if a.coach_photos:
                 args += ['--coach-photos', a.coach_photos]
+            if a.free_agents:
+                args += ['--free-agents', a.free_agents]
             run(*args)
             for f in os.listdir(os.path.join(t, 'data')):
                 shutil.copy(os.path.join(t, 'data', f), out_data)

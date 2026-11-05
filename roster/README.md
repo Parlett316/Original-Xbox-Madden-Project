@@ -39,6 +39,10 @@ by querying per team and per position.
   agility = mean of agility and change of direction; defenders' awareness =
   mean of awareness and play recognition. A QB's awareness is at most 12 below
   his in-game overall.
+- Extra free agents (`--free-agents`, from `pick_free_agents.py`): players in the older
+  ratings file but not the current one, leaving out known retirements. They have no
+  photos, and players 32 or older lose speed, agility and strength. They don't change
+  any other player, and the free-agent DB in `DB_TEAMS.dat` grows to fit.
 - Headshots: EA's current photos, written into `uis_plyr.dat` (see `headshots.py`);
   players EA has no photo for show the blank picture.
 - Skin tone (PSKI): from the EA photo's face brightness, split in 09's own

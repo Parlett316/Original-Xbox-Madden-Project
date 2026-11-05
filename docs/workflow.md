@@ -2,6 +2,27 @@
 
 The practical rules for working on these mods. Most of them were learned the hard way on real hardware.
 
+## Starting a new chat
+
+Copy this in to pick up where the last chat stopped, and change the last line:
+
+```text
+Read CLAUDE.md and docs/outstanding.md first. Only open other docs when the task needs them: search findings.md, formats.md and roadmap.md for the part you need rather than reading them whole. Don't re-derive what they already record.
+
+To save tokens:
+- Use tools/ scripts and existing saves before writing new analysis.
+- Limit command output, and run long builds and sims in the background.
+- Take xemu screenshots only at the steps that matter.
+- Don't spawn subagents unless I ask.
+- Keep replies short, and tell me when you need the Xbox tested.
+
+When something's finished, update docs/outstanding.md.
+
+Today's task: <what to do, or "tell me what's next">
+```
+
+Starting a new chat for each big task also saves tokens, because a long chat's history is resent with every message. `docs/outstanding.md` is what makes that safe: keep it current before ending a chat.
+
 ## Working folder layout
 
 The scripts expect the extracted games next to the repository folders (or pass paths explicitly):
@@ -29,6 +50,8 @@ Everything at once:
         --commanders-logo custom/commanders_w.png --loadscreen my.png --startscreen my_start.png
 
 This full command, without the two screens, reproduced the hardware-tested files byte for byte (2026-11-04). `custom/` holds personal art and is never committed.
+
+Optional additions, each working on hardware: `--playoffs7` (7-team playoffs), `--save-unlock` (load edited saves), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
 
 Or step by step. The commands are in each component README ([patches](../patches/README.md), [roster](../roster/README.md), [loadscreen](../patches/loadscreen/README.md)). After changing any data file by hand, always re-run `patches/qkl_sync.py` for `fe.qkl` and `game.qkl`; see the rules below.
 
