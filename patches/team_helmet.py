@@ -17,6 +17,9 @@ stripe, the art rotated a quarter turn. Small y is the helmet's front, so mirror
 keeps the art facing forward on both sides, as the stock logo and the real helmet do.
 Writes UNIFORMS.dat (same size) and each --teams file.
 
+Flag 0x802abd makes the game load entry UFID + 343 instead. Those entries (626, 627
+here) share the helmet but not the jersey and pants, so they get the logo too.
+
 An entry's directory size must not change. The game keeps only every 20th entry's
 offset and adds up the rounded sizes to find the rest (0x377030), so a shorter
 size moves the following entries in that block of 20. A smaller stream is padded
@@ -38,6 +41,8 @@ from db_survey import find_dbs  # noqa: E402
 
 TGID = 26
 MOVES = {283: 287, 284: 288}            # repainted uniform -> where other teams go
+SECOND_SET = 343                        # 0x222223: when flag 0x802abd is set, entry = UFID + this
+REPAINT = [*MOVES, *(n + SECOND_SET for n in MOVES)]
 HELMET_TEX = 12                         # first of 4 mip levels
 OLD_LOGO = ((24, 42, 94, 106), (164, 34, 234, 106))     # left and right panel, erased
 PANEL_SAMPLE = (20, 70)
@@ -167,7 +172,7 @@ def main():
     with open(os.path.join(a.stock, 'UNIFORMS.dat'), 'rb') as f:
         buf = bytearray(f.read())
     data_at, _, entries, comp = archive(buf)
-    for n in MOVES:
+    for n in REPAINT:
         eo, es = entries[n]
         raw = lzh1emu.decompress(bytes(buf[data_at + eo:data_at + eo + es]), comp[n][1])[0]
         new = repaint(raw, logo)

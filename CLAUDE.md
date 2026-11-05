@@ -48,7 +48,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
   - all 154 music tracks
   - "performance" progression v2 (two seasons: production drives progression, 99s 5 → 11 vs stock 31); the default build
   - custom screens and the dashboard rename
-  - the Commanders' W in menus and on the white and burgundy helmets, with classic Redskins teams keeping their logo (`--commanders-logo`; alternates still have the old helmet)
+  - the Commanders' W in menus and on the white and burgundy helmets, with classic Redskins teams keeping their logo (`--commanders-logo`, including the training camp uniforms; alternates still have the old helmet)
   - the 17-game, 18-week season with a 3-week preseason, through year 4, with no preseason picker (the default build; `--no-season17` opts out); `--schedule` makes year 1 a real NFL season (2026)
   - loading and re-saving an edited franchise save (`--save-unlock`, off by default; tested with a jersey-only edit)
 - **Built, not tested:** the 07/08 awareness XBEs.
