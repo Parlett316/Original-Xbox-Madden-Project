@@ -156,6 +156,14 @@ Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). The 
 - **Save slots:** the game lists at most 8 franchise files. The folder name comes from the save name: `Fran1` is `18E7386A51E9`, and each later number adds 1.
 - **A later year isn't just `SEYR`.** With `SEYR` and `SSYE` set to 2 in a year 1 preseason save, advancing generated 272 games but left `SEWN` 2, `SEWT` 10 and `SERW` 0, with My Week saying Regular Season and the schedule screen saying Preseason, so `0x3c0ff0` didn't finish. Its rotation was column 3 of `ROTATION`, which is what `SEYR` 1 uses, not column 0 as in a real year 3. The cause isn't known.
 
+**Seven playoff teams** (2026-11-05, xemu; `patches/playoffs7.py`). The seed array moved to the unused padding after `.data` (`0x80dea4`), a cave replaces the seeding routine `0x41b590`, and `0x41b6f0` collects 3 wild-card winners per conference. Things worth knowing:
+- **Game numbers alternate by conference.** A round's games are AFC 0, 2, 4 and NFC 1, 3, 5, with the conference index added to the slot. The rows live out of order in `SCHD`: the two new wild-card rows sit after the Super Bowl's.
+- **`TEAM.TMPS` is playoff status:** 4 home field, 3 division winner, 2 wild card, 1 still in contention, 0 out. A week's jumped-in `TMPS` of 15 is replaced at the next sim.
+- **The draft order needs that status.** `0x3d42d0` runs after each playoff round and builds a 32-team list: teams with no 2-4 status, then the playoff losers, then the rest. A playoff team without a status goes in twice, overruns the heap block, and the game hangs on "Simulating Week" at the next `free`, with the music still playing. xemu showed it as `ECX = 0xC0000005` at `0x371fb5`. Stock's clinch step (`0x41aee0`, called at `0x41b56d`) marked only 2 wild cards, so `0x41b566` now passes 3.
+- **Round counts come from the data.** With 6 wild-card rows in the schedule, `SEAI.SNWP` became 6 by itself, and the schedule screen listed all 6.
+- **The XBE and `template.dat` must match.** A franchise with 4 wild-card rows (`SCHD` capacity 285) on the 7-team XBE stops at the end of the last regular-season week on hardware: all scores are in, and the week never advances. The stuck save had AFC games 0 and 2 and the #1 seed's next game filled in, and nothing for the NFC, so the seeding stopped at AFC game 4, which has no row. A 7-team franchise has `SCHD` capacity 287 and `SNWP` 6.
+- **Finding a crash in xemu:** QMP's `info registers` plus `x /64xw <esp>` show the exception code and return addresses on the stack.
+
 **Game rules aren't in tables.** Overtime and kickoff/touchback spots have no DB fields, only UI strings ("End of Overtime Quarter", "OVERTIME!!!", "Touchback"), so they live in gameplay code.
 
 ## 9. Team logos and uniforms (09)
