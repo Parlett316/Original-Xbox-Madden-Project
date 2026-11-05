@@ -21,7 +21,7 @@ Copy these in binary mode from `patched/Madden NFL 09 (USA)/free_agents_test/dat
 
 ## In progress
 
-- [ ] **Optional fullback:** test not finished. Set the fullback's `PLPS.PPIR` to 0 in `template.dat` (the only copy; saves don't carry `PLPS`) and sim preseason week 3 from `pre3.bin`, the save where the Bears' only fullback is injured, using the 4 Wild Card build with `--save-unlock`. If the refusal is gone, check that a team with no fullback can play a game, and how the CPU and depth chart cope. The test files are in the 2026-11-05 chat's scratchpad (`overlay_fb`, `jump.iso`, `x/`, `saves/pre3.bin`). xemu screenshots came back black after the PC sat idle for about 40 minutes, probably because the display was asleep, so run this while the PC is in use.
+- [ ] **Optional fullback:** the fix works in xemu on the save where the Bears' only fullback is injured: the prompt is gone, and it advanced and simmed week 1 (findings §8). Still to do: add it to the build as an option, test on hardware, watch a played game with no fullback, and see whether CPU teams still keep fullbacks after an offseason. If xemu screenshots are black, the display may be asleep: a one-pixel mouse nudge brought them back.
 
 ## Ready to do
 

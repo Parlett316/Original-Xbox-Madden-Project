@@ -164,6 +164,8 @@ Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). The 
 - **The XBE and `template.dat` must match.** A franchise with 4 wild-card rows (`SCHD` capacity 285) on the 7-team XBE stops at the end of the last regular-season week on hardware: all scores are in, and the week never advances. The stuck save had AFC games 0 and 2 and the #1 seed's next game filled in, and nothing for the NFC, so the seeding stopped at AFC game 4, which has no row. A 7-team franchise has `SCHD` capacity 287 and `SNWP` 6.
 - **Finding a crash in xemu:** QMP's `info registers` plus `x /64xw <esp>` show the exception code and return addresses on the stack.
 
+**Roster minimums** (2026-11-05, xemu). Three tables in `template.dat`'s stats DB, none in saves, hold `PPIR` (roster minimum) and `PPIA` (active minimum, counting healthy players): `PLPS` by position (21 rows), `DRPS` by position group (17, keyed by `PDRP`) and `POSG` by wider group (10, keyed by `PPGR`). They load into 40-byte rows at `0x723298`, `0x723558` and `0x723888`, with `PPIR` at +0xD and `PPIA` at +0xE, and are read through `0x386b20` and `0x386bc0`. The "do not meet the minimum requirements" prompt follows `DRPS`: with `PLPS` alone at 0 it still appeared; with `DRPS` at 0 too and `POSG` running backs lowered by one, the Bears with their only fullback injured got past it, advanced to the regular season and simmed week 1. `POSG` wasn't tested separately. Fullback defaults: `DRPS` 1 and 1, `POSG` running backs 4 and 2.
+
 **Game rules aren't in tables.** Overtime and kickoff/touchback spots have no DB fields, only UI strings ("End of Overtime Quarter", "OVERTIME!!!", "Touchback"), so they live in gameplay code.
 
 ## 9. Team logos and uniforms (09)
