@@ -37,7 +37,8 @@ by querying per team and per position.
 - Ratings: percentile within position in Madden 27, mapped onto 09's own
   distribution for that position. Throw accuracy = mean of short/mid/deep;
   agility = mean of agility and change of direction; defenders' awareness =
-  mean of awareness and play recognition.
+  mean of awareness and play recognition. A QB's awareness is at most 12 below
+  his in-game overall.
 - Headshots: EA's current photos, written into `uis_plyr.dat` (see `headshots.py`);
   players EA has no photo for show the blank picture.
 - Skin tone (PSKI): from the EA photo's face brightness, split in 09's own

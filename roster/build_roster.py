@@ -11,7 +11,9 @@ OUT_DIR/data/uis_plyr.dat with those headshots and sets skin tone from them.
 How values are produced:
   - Ratings: each EA rating is turned into a percentile within its position
     and mapped onto 09's own distribution for that rating and position, so
-    the league keeps the balance 09 was tuned for.
+    the league keeps the balance 09 was tuned for. A QB's awareness is then
+    raised to within QB_AWARENESS_GAP of his overall, because EA rates some
+    mobile starters far below their overall.
   - Appearance and equipment: copied from a 2008 player at the same position
     and skin tone with a generic face, close in weight.
   - Contracts: the 2008 contract at the same position and the same rank.
@@ -98,6 +100,7 @@ RATING_SOURCES = {
     'PTGH': _avg('toughness'), 'POVR': _avg('overall'), 'PIMP': _avg('overall'),
 }
 DEFENSE = {LE, RE, DT, LOLB, MLB, ROLB, CB, FS, SS}
+QB_AWARENESS_GAP = 12      # a QB's awareness is at most this far below his overall
 CONTRACT_FIELDS = ('PTSA', 'PSBO', 'PCON', 'PCYL', 'PTEN')
 
 
@@ -284,6 +287,8 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         if p['pos'] in DEFENSE:
             s['awareness'] = round((s['awareness'] + s['playRecognition']) / 2)
         p['r'] = {f: max(0, min(99, m[f](fn(s)))) for f, fn in RATING_SOURCES.items()}
+        if p['pos'] == QB:
+            p['r']['PAWR'] = max(p['r']['PAWR'], p['r']['POVR'] - QB_AWARENESS_GAP)
 
     # ---- appearance donors -----------------------------------------------------
     # Skin tone (PSKI 0 light .. 2 dark) from the EA headshot's face
