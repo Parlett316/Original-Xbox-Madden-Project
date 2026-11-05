@@ -52,6 +52,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
   - the Commanders' W in menus and on the white and burgundy helmets, with classic Redskins teams keeping their logo (`--commanders-logo`, including the training camp uniforms; alternates still have the old helmet)
   - the 17-game, 18-week season with a 3-week preseason, through year 4, with no preseason picker (the default build; `--no-season17` opts out); `--schedule` makes year 1 a real NFL season (2026)
   - loading and re-saving an edited franchise save (`--save-unlock`, off by default; tested with a jersey-only edit)
+- **Checked 2026-11-04:** the full `build_all.py` command in docs/workflow.md reproduces the hardware-tested files byte for byte, and its output boots in xemu.
 - **Built, not tested:** the 07/08 awareness XBEs.
 
 ## Things that cost time before (avoid repeating)
