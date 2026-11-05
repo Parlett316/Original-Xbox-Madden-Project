@@ -1,6 +1,6 @@
 # Roadmap and open work
 
-Last updated 2026-11-04.
+Last updated 2026-11-05.
 
 ## In progress
 
@@ -31,7 +31,7 @@ Test 2 (2026-11-03) met two of three criteria clearly: production drives progres
 - **Awareness fix for 07 and 08:** `patched/Madden NFL 07 (USA)/default.xbe`, `…08…` ("Madden NFL 0x Modded"). Checked by disassembly only. The first test is simply that franchise seasons sim without crashing.
 
 ## Future work
-Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first step is research. Suggested order: the save-jump tool (it makes playoff testing cheap), then 7-team playoffs, then classic-team photos.
+Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first step is research. Suggested order: 7-team playoffs (`tools/save_jump.py` makes them cheap to test), then classic-team photos.
 
 ### Modern NFL rules ([findings §8](findings.md#8-season-structure-and-playoffs-09))
 - **Varied or selectable preseason.** Small to large. Every year now plays the same 3 preseason weeks from the data; restoring a 3-game picker would mean reworking its builder (`0x40a000`) and pick limits (`0x40456c`, `0x40459d`).
@@ -52,7 +52,10 @@ Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first 
 
 ### Rosters and franchise
 - **Separate photo slots for the modern roster**, so 2008 roster saves keep their own photos. Medium to large. `uis_plyr.dat`'s directory is full, and its header is preloaded in both qkl bundles (fixed size), so this needs the qkl regions rebuilt.
-- **Edit franchise saves.** Loading works (2026-11-04): `--save-unlock` skips the signature check, see [formats](formats.md). Saving an edited franchise from the game and reloading it works too: the game writes new data and padding signatures and valid CRCs, and the edit survives offseason stages. Still to do: write the tool that jumps a franchise to a given week or year, which would cut many rounds of hardware testing. Roster saves appear to use the same stream driver, but haven't been tried.
+- **Edit franchise saves.** Loading works (2026-11-04): `--save-unlock` skips the signature check, see [formats](formats.md). Saving an edited franchise from the game and reloading it works too: the game writes new data and padding signatures and valid CRCs, and the edit survives offseason stages. Roster saves appear to use the same stream driver, but haven't been tried.
+- **Jump a franchise to a later week: works on hardware** (2026-11-05, a year 2 save from week 1 to week 18: simmed the postseason, signed coaches, reached the offseason's balance sheet). `tools/save_jump.py --week N`. In xemu (year 1), a save jumped from week 1 to week 18 simmed week 18, seeded the playoffs, played every round and the Pro Bowl, and reached the Owner's Box offseason. A jumped save also survives being saved by the game, reloaded in a fresh boot and simmed on. The hardware save went on through the whole offseason to week 1 of year 3: 272 games, 17 per team, and the same interconference rotation and week 18 divisions as a real year 3 save (`Season3Works`). Open: on that run the offseason start and draft-pick signing took a minute or two (usually 10 to 15 s) and the preseason sim was very slow. On the same XBE, a save that was never jumped (`Season3Works`) entered the offseason in the usual time, so the XBE isn't the cause and the jumped save's state is the likely one. Why is unknown. One lead: `TPMN` had 532 rows at week 1 of year 3 (353 of them `SEWN` 22), against 304 to 334 at the end of real seasons. It only slows the game down, so it doesn't block tests that stop before the next season. See [findings §8](findings.md#8-season-structure-and-playoffs-09).
+- **Jump a franchise to a later year.** Unknown, partly researched. Setting `SEAI.SEYR` and `SSYE` in a year 1 preseason save half-advances: the schedule is generated, but with the wrong rotation, and the week and season counts are never set (findings §8). A real year 2 preseason also differs in `FSCR`, `OTIS` and the stat tables. The first step is to find which step of the advance fails.
+- **Modern rosters and the fullback minimum.** Small, new. Leaving the preseason, the game refused the 2026 Bears ("do not have enough fullbacks"), and "CPU Sign Player" couldn't fix it because no free agent is a fullback. Every team but the Browns has one fullback, so this could block any user team. A second fullback on the team cleared it. Options: give each team a second fullback in the roster build, or keep a few fullbacks in free agency.
 - **Gameplay sliders and CPU tendencies.** Unknown, new idea: tune them from franchise reports, the way progression was tuned.
 - **Long-run progression check.** Mostly sim time: 5+ seasons, to see whether the slow OVR drift above matters.
 - **Coach contract lengths.** Small. They still come from the 2008 slot (Blough's ran one year).

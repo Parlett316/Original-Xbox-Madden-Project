@@ -24,7 +24,9 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
 | Read or edit any EA database | `roster/tdb.py` (`DB`, `Table.get/set/rows/raw/set_raw`, `fix`, `verify`, `resized`) |
 | TERF archives / MMAP textures / LZH1 | `roster/headshots.py:terf_entries`, `patches/loadscreen/{terf,eammap,lzh1emu}.py` |
 | Disassemble the XBE, find strings and callers | `tools/xdis.py` (DB query tags are byte-reversed: `'YALP'` = PLAY) |
-| Compare franchise saves | `tools/franchise_report.py` |
+| Compare franchise saves | `tools/franchise_report.py` (ratings across seasons), `tools/save_diff.py` (what changed, table by table) |
+| Jump a franchise to a later week | `tools/save_jump.py` (needs `--save-unlock`; docs/workflow.md) |
+| Move saves on an xemu drive | `tools/xbox_hdd.py` (qcow2 + FATX) |
 | List every table and field in a data file | `tools/db_survey.py` (results: docs/findings.md §7) |
 | Build everything | `tools/build_all.py` |
 | Fix quick-load bundles | `patches/qkl_sync.py` |
@@ -52,6 +54,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
   - the Commanders' W in menus and on the white and burgundy helmets, with classic Redskins teams keeping their logo (`--commanders-logo`, including the training camp uniforms; alternates still have the old helmet)
   - the 17-game, 18-week season with a 3-week preseason, through year 4, with no preseason picker (the default build; `--no-season17` opts out); `--schedule` makes year 1 a real NFL season (2026)
   - loading and re-saving an edited franchise save (`--save-unlock`, off by default; tested with a jersey-only edit)
+  - jumping a franchise to a later week (`tools/save_jump.py`; year 2, week 1 to 18, through the postseason into the offseason)
 - **Checked 2026-11-04:** the full `build_all.py` command in docs/workflow.md reproduces the hardware-tested files byte for byte, and its output boots in xemu.
 - **Built, not tested:** the 07/08 awareness XBEs.
 

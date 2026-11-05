@@ -78,7 +78,7 @@ python tools/build_all.py --games "<folder with the extracted games>" --out buil
 | [`patches/`](patches/README.md) | XBE patches (awareness fix, rename, 17-game season, save unlock), music import, progression tables, `fe.qkl` sync |
 | [`patches/loadscreen/`](patches/loadscreen/README.md) | Loading and start screen packers, TERF/MMAP/LZH1 helpers |
 | [`roster/`](roster/README.md) | EA ratings and headshot fetchers, the roster builder, 2026 coaching staffs (`coaches.py`, photo and record fetchers), TDB database library |
-| [`tools/`](tools/) | `build_all.py` (one-command build), `franchise_report.py` (compare franchise saves), `xdis.py` (XBE disassembly helper), `make_xiso.py` (disc image for testing in xemu) |
+| [`tools/`](tools/) | `build_all.py` (one-command build), `franchise_report.py` and `save_diff.py` (compare franchise saves), `save_jump.py` (jump a franchise to a later week), `xdis.py` (XBE disassembly helper), `make_xiso.py` and `xbox_hdd.py` (disc image and save access for testing in xemu) |
 | [`docs/`](docs/) | [workflow](docs/workflow.md), [file formats](docs/formats.md), [research findings](docs/findings.md), [roadmap and open tests](docs/roadmap.md) |
 | [`CLAUDE.md`](CLAUDE.md) | Orientation for AI coding agents working on this project |
 
