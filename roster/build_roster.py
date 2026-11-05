@@ -1,7 +1,7 @@
 """Build a Madden 09 (Xbox) default roster from EA ratings-site data.
 
 Usage: python build_roster.py RATINGS.json GAME_DIR OUT_DIR [--photos DIR] [--keep-team-names]
-                              [--keep-coaches] [--coach-photos DIR]
+                              [--keep-coaches] [--coach-photos DIR] [--free-agents JSON]
 
 GAME_DIR is the original 'Madden NFL 09 (USA)' folder (read only). Writes
 OUT_DIR/data/template.dat and OUT_DIR/data/DB_TEAMS.dat, plus a CSV report.
@@ -24,8 +24,12 @@ How values are produced:
     from coaches.py. --keep-team-names / --keep-coaches leave them stock.
     With --coach-photos (from fetch_coach_photos.py) it also writes
     OUT_DIR/data/uis_coac.dat with their photos.
+  - --free-agents (from pick_free_agents.py) adds players after everyone else, with
+    their own random numbers and no photo, so no other player changes. Their overall
+    is capped at FREE_AGENT_CAP in the game's scale. DB_TEAMS.dat's free-agent DB
+    grows to fit, and the archive entries after it move.
 """
-import bisect, collections, csv, json, os, random, sys, unicodedata
+import bisect, collections, csv, json, os, random, struct, sys, unicodedata
 
 from PIL import Image
 
@@ -101,6 +105,7 @@ RATING_SOURCES = {
 }
 DEFENSE = {LE, RE, DT, LOLB, MLB, ROLB, CB, FS, SS}
 QB_AWARENESS_GAP = 12      # a QB's awareness is at most this far below his overall
+FREE_AGENT_CAP = 80        # most a player added by --free-agents can be overall
 CONTRACT_FIELDS = ('PTSA', 'PSBO', 'PCON', 'PCYL', 'PTEN')
 
 
@@ -154,8 +159,26 @@ def find_dbs(buf):
     return out
 
 
+def repack(buf, replace):
+    """Rebuild a TERF archive with entries {index: new bytes}; others kept."""
+    align = 0x40
+    data_at, ents = headshots.terf_entries(buf)
+    d1 = struct.unpack_from('<I', buf, 4)[0]   # DIR1 follows the header
+    out = bytearray(buf[:data_at + align])
+    pos = align
+    for k, (o, s) in enumerate(ents):
+        body = replace.get(k, buf[data_at + o:data_at + o + s])
+        assert pos == len(out) - data_at
+        struct.pack_into('<II', out, d1 + 8 + 8 * k, pos, len(body))
+        out += body
+        pos = -(-(pos + max(len(body), 1)) // align) * align
+        out += bytes(pos - (len(out) - data_at))
+    struct.pack_into('<I', out, data_at + 4, len(out) - data_at)
+    return out
+
+
 def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False, keep_coaches=False,
-         coach_photos_dir=None):
+         coach_photos_dir=None, free_agents=None):
     rng = random.Random(2027)
     ea = json.load(open(ratings_path, encoding='utf8'))['items']
     tpl = bytearray(open(os.path.join(game_dir, 'data', 'template.dat'), 'rb').read())
@@ -268,13 +291,21 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
                 print(f'team {t}: signed {sign["ea"]["lastName"]} ({sign["ea_pos"]}), '
                       f'released {cut["ea"]["lastName"]} ({cut["ea_pos"]})')
 
+    # ---- added free agents: after every roster decision -------------------------
+    if free_agents:
+        for it in json.load(open(free_agents, encoding='utf8'))['items']:
+            s = {k: v['value'] for k, v in it['stats'].items()}
+            players.append(dict(ea=it, s=s, pos=EA_POS[it['playsAt']], ea_pos=it['position']['id'],
+                                team=FA_TEAM, ovr=s['overall'], added=True))
+
     # ---- ratings by percentile within position --------------------------------
     old_by_pos = collections.defaultdict(list)
     for r in old:
         old_by_pos[r['PPOS']].append(r)
     ea_by_pos = collections.defaultdict(list)
     for p in players:
-        ea_by_pos[p['ea_pos']].append(p)
+        if not p.get('added'):
+            ea_by_pos[p['ea_pos']].append(p)
     maps = {}
     for p in players:
         key = (p['ea_pos'], p['pos'])
@@ -289,6 +320,8 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         p['r'] = {f: max(0, min(99, m[f](fn(s)))) for f, fn in RATING_SOURCES.items()}
         if p['pos'] == QB:
             p['r']['PAWR'] = max(p['r']['PAWR'], p['r']['POVR'] - QB_AWARENESS_GAP)
+        if p.get('added'):
+            p['r']['POVR'] = p['r']['PIMP'] = min(p['r']['POVR'], FREE_AGENT_CAP)
 
     # ---- appearance donors -----------------------------------------------------
     # Skin tone (PSKI 0 light .. 2 dark) from the EA headshot's face
@@ -303,7 +336,7 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
     if photos_dir:
         for p in players:
             path = os.path.join(photos_dir, f"{p['ea']['id']}.png")
-            if os.path.exists(path):
+            if os.path.exists(path) and not p.get('added'):
                 p['photo'] = headshots.ea_photo(path)
                 p['bright'] = headshots.skin_brightness(p['photo'])
     lit = sorted((p for p in players if p.get('bright') is not None), key=lambda p: p['bright'])
@@ -337,14 +370,15 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         src = old_rookies if key == 'R' else old_rost[key]
         for k, p in enumerate(plist):
             p['contract'] = src[min(len(src) - 1, round(k * (len(src) - 1) / max(1, len(plist) - 1)))]
+    added_rng = random.Random(2026)
     for p in players:
         if p['team'] == FA_TEAM:
-            p['contract'] = rng.choice(old_fa)
+            p['contract'] = (added_rng if p.get('added') else rng).choice(old_fa)
 
     # ---- build records ---------------------------------------------------------
     unmatched_colleges = collections.Counter()
     next_id = 100
-    order = sorted(players, key=lambda p: (p['team'], ascii_name(p['ea']['lastName']),
+    order = sorted(players, key=lambda p: (p['team'], bool(p.get('added')), ascii_name(p['ea']['lastName']),
                                            ascii_name(p['ea']['firstName'])))
     assert len(order) <= PLAY.capacity
 
@@ -382,7 +416,7 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         if len(pool) < 3:
             pool = donors[p['pos'], None]
         cands = sorted(pool, key=lambda d: abs(d[0] - wt))[:6]
-        PLAY.set_raw(seq - 1, rng.choice(cands)[1])
+        PLAY.set_raw(seq - 1, (added_rng if p.get('added') else rng).choice(cands)[1])
         i = seq - 1
         first = fit_name(it['firstName'], PLAY.fields['PFNA'].bits // 8)
         last = fit_name(it['lastName'], PLAY.fields['PLNA'].bits // 8)
@@ -522,8 +556,20 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         write_chart(db['DCHT'], [t])
         rename(db['TEAM'])
         db.fix()
-    copy_players(fa_db, [p for p in order if p['team'] == FA_TEAM])
-    fa_db.fix()
+    fa_list = [p for p in order if p['team'] == FA_TEAM]
+    if len(fa_list) > fa_db['PLAY'].capacity:
+        data_at, entries = headshots.terf_entries(teams_buf)
+        entry = next(k for k, (o, s) in enumerate(entries) if data_at + o == fa_db.off)
+        assert entries[entry][1] == fa_db.size, 'free-agent DB does not fill its archive entry'
+        grown = tdb.DB(fa_db.resized({'PLAY': len(fa_list)}), 0)
+        copy_players(grown, fa_list)
+        grown.fix()
+        assert grown.verify()
+        teams_buf = repack(teams_buf, {entry: grown.buf})
+        print(f'free-agent DB grown to {len(fa_list)} players: entry {entry}, {fa_db.size:,} -> {grown.size:,} bytes')
+    else:
+        copy_players(fa_db, fa_list)
+        fa_db.fix()
 
     # ---- write -----------------------------------------------------------------
     os.makedirs(os.path.join(out_dir, 'data'), exist_ok=True)
@@ -546,7 +592,8 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
                         p['contract']['PCON']] +
                        [p['r'][k] for k in RATING_SOURCES if k not in ('POVR', 'PIMP')])
     fa = sum(p['team'] == FA_TEAM for p in order)
-    print(f'{len(order)} players: {len(order) - fa} rostered, {fa} free agents')
+    print(f'{len(order)} players: {len(order) - fa} rostered, {fa} free agents, '
+          f'{sum(bool(p.get("added")) for p in order)} added')
     print(f'commentary names matched: {sum(p["cmt"] != NO_COMMENTARY for p in order)}')
     print(f'colleges defaulted to N/A: {sum(unmatched_colleges.values())} '
           f'({", ".join(c for c, _ in unmatched_colleges.most_common(8))}...)')
@@ -557,6 +604,7 @@ if __name__ == '__main__':
     argv = sys.argv[1:]
     photos = argv[argv.index('--photos') + 1] if '--photos' in argv else None
     coach_photos = argv[argv.index('--coach-photos') + 1] if '--coach-photos' in argv else None
-    args = [a for a in argv if not a.startswith('--') and a not in (photos, coach_photos)]
+    added = argv[argv.index('--free-agents') + 1] if '--free-agents' in argv else None
+    args = [a for a in argv if not a.startswith('--') and a not in (photos, coach_photos, added)]
     main(*args, photos_dir=photos, keep_team_names='--keep-team-names' in argv,
-         keep_coaches='--keep-coaches' in argv, coach_photos_dir=coach_photos)
+         keep_coaches='--keep-coaches' in argv, coach_photos_dir=coach_photos, free_agents=added)

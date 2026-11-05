@@ -3,7 +3,7 @@
 ## What this is
 Reverse-engineered fixes and mods for original-Xbox **Madden NFL 2005–09**, mainly **09**. The user plays on a real softmodded Xbox (UnleashX dashboard) and copies files over FTP. Every change is proven on the console by the user, so treat a hardware test as the source of truth and make each test cheap and decisive.
 
-Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (rules that bite), [docs/formats.md](docs/formats.md) (file formats and table fields), [docs/findings.md](docs/findings.md) (what was learned, with addresses) and [docs/roadmap.md](docs/roadmap.md) (current test and next steps).
+Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) and keep it current. Open the rest only when the task needs them, and search them for the relevant part rather than reading them whole: [README.md](README.md), [docs/workflow.md](docs/workflow.md) (rules that bite, and the prompt for starting a new chat), [docs/formats.md](docs/formats.md) (file formats and table fields), [docs/findings.md](docs/findings.md) (what was learned, with addresses) and [docs/roadmap.md](docs/roadmap.md) (full list of work).
 
 ## Ground rules
 - **Never modify the stock game folders** (`Madden NFL 0x (USA)/`). Scripts take stock inputs and write to new paths (`patched/…`, scratch dirs).
@@ -61,7 +61,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
 
 ## Things that cost time before (avoid repeating)
 - **New data ignored on the console?** Check `fe.qkl`/`game.qkl` first (`qkl_sync.py`). That's what silenced the new music and hid the start screen.
-- **Wrong roster or photos?** Check for a roster save on the memory card (it overrides `template.dat`) and for mismatched roster files from different builds.
+- **Wrong roster or photos?** Check for a roster save on the hard drive or memory card (`Rost-` folders override `template.dat`; xemu's test drive has none, so xemu won't show this) and for mismatched roster files from different builds.
 - **Comparing players across a franchise's creation:** PGIDs are renumbered at creation. Match by name and position, or compare totals.
 - **The demo-exit freeze** happens on the stock game too. It isn't a mod bug. The build now delays the demo by 24 h (`patches/press_start_timer.py`, which needs `fe.qkl` re-synced).
 - **Never change a TERF entry's directory size in place.** The game adds up rounded sizes from the last multiple of 20 to find an entry (docs/formats.md), so a shorter entry breaks later, untouched ones. Keep the size and pad with zeros.
