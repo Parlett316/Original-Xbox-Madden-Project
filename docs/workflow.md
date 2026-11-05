@@ -86,6 +86,17 @@ To drive it from a script (tested on xemu 0.8.139):
 - Post `WM_KEYDOWN` and `WM_KEYUP` to the xemu window. It doesn't need focus. Hold a key for about 0.1 s, because 0.25 s can move a menu two steps.
 - Take screenshots with `PrintWindow`. This build's QMP has no `screendump`.
 - Add `-qmp tcp:127.0.0.1:44444,server,nowait` to read the status and to close that one instance with `quit`. The PID listening on the port identifies its window.
+- `tools/xbox_hdd.py` lists, copies and overwrites files on the drive image, so saves can move without FTP. It can read while xemu runs, but send the monitor command `qemu-io ide0-hd0 flush` first (`human-monitor-command` over QMP); otherwise a new file reads as zeros. Close xemu before `put`, and boot again before loading what you wrote.
+- Franchise menus: from the root menu, My Week → Play Week → Weekly Schedule. Press `Y` to untick your game, or Simulate Week stops at it, but not in a week your team doesn't play, because `Y` then ticks another game. Start opens Play/Simulate, where Simulate Week is the fourth item (the Super Bowl and Pro Bowl menus have three items, and Simulate Game is the third). Allow about 2 s between menu moves. Week 6 asks about the trade deadline once, and after 8 saves the last slot has to be overwritten.
+
+## Jumping a franchise to a later week
+
+To test the end of a season without simming it:
+
+    python tools/save_jump.py Fran-Fran1 Fran-Fran1.jumped --week 18
+    python tools/save_jump.py Fran-Fran1.jumped --show
+
+The save must already be in the regular season, and the XBE must be built with `--save-unlock`. The file stays 1,490,944 bytes. Back up the save, then upload the output over the original under its original name (`Fran-Fran1`), because the save's name is checked and the jump keeps it. A save folder holds one save plus its `SaveMeta.xbx` (which names it) and `saveimage.xbx`, and the folder name depends on the save's name: `Fran-Fran2` goes in `18E7386A51EA`, not `Fran1`'s `18E7386A51E9`. In the wrong folder or alongside another save, the game showed it as a damaged "???" save on hardware. Sim the last regular-season week to get the playoffs. Scores for skipped weeks are made up, and player stats stay empty, so this suits schedule, playoff and offseason-entry tests, not progression or awards.
 
 An overlay holds only changed files. Leaving out `--loadscreen` or `--startscreen` puts the stock screen in an image, but on an Xbox that already has custom screens you must also copy the stock `LOADDATA.dat` and `uis_fe.dat` over them and upload the new `fe.qkl`.
 
