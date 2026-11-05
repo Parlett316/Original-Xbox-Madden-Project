@@ -84,11 +84,13 @@ chunks after the header: (tag, u32 size): DIR1 (u32 offset from DATA start, u32 
 
 `template.dat`'s entries are 0x40-aligned from the DATA chunk (an empty entry still takes one slot), and the DATA chunk's size field covers everything after it; `patches/season17.py:repack` rebuilds the archive by that rule, and with no changes reproduces the stock file byte for byte. `fe.qkl` preloads `template.dat`'s header and directory (and entry 11), so re-sync it whenever an entry's size changes.
 
+**The directory's sizes also position entries.** The parser (`0x375a60`) keeps the offset of only every 20th entry, and `0x377030` finds the rest by adding each size, rounded up to the alignment, from the last multiple of 20. Changing an entry's size therefore moves every later entry in its block of 20 while their stored offsets still look right. To shrink an entry in place, keep its stock size and pad the stream with zeros (`patches/team_helmet.py`); that also leaves the header and the `.qkl` copies stock.
+
 Codec 5 is EA "LZH1"; `patches/loadscreen/lzh1emu.py` runs the game's own codec under unicorn. Readers: `patches/loadscreen/terf.py`, `roster/headshots.py:terf_entries`.
 
 ### MMAP texture packs (inside TERF entries)
 
-Texture table at 0x28 (w, h, format, size, offset); offsets are relative to +0x80. Format 0x0B = P8, Morton-swizzled (x bits on even positions, y on odd), 256-entry BGRA palette. Code: `patches/loadscreen/eammap.py`.
+Texture table at 0x28 (w, h, format, size, offset). A texture's top level starts at offset + 0x80, after a 0x80-byte zeroed header; its smaller mips start at their own offset with nothing added. (`eammap.render` adds 0x80 by default, so pass `shift=0` for a mip.) Format 0x0B = P8, Morton-swizzled (x bits on even positions, y on odd), 256-entry BGRA palette. Code: `patches/loadscreen/eammap.py`.
 
 | File | Entries |
 |---|---|
