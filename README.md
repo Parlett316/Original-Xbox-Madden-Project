@@ -11,6 +11,7 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 | **Soundtracks from 2005–08** (107 songs) added as four extra EA Trax soundtracks | 09 | Working on hardware |
 | **Progression tuning**: 2005's in-season progression, or a "performance" mode where good seasons develop players, bad ones cost them, and 99s stay rare | 09 | Working on hardware; `performance` is the default (results in [docs/findings.md](docs/findings.md)) |
 | **Edited franchise saves**: load a save changed on a PC; opt-in with `--save-unlock` | 09 | Load, save and reload tested on hardware with a jersey edit only |
+| **The Commanders' W** in menus and on the white, burgundy and training camp helmets; classic Redskins teams keep their logo. Opt-in with `--commanders-logo` and your own image | 09 | Working on hardware; the alternate uniforms keep the old helmet |
 | **Custom loading and start screens** | 09 | Working on hardware (bring your own image) |
 | **Dashboard rename** so the modded copy sits next to the stock game | 07–09 | Working on hardware |
 | **Attract-mode demo off** (leaving it hard-locks the console, even on the stock game) | 09 | Timer confirmed on hardware |
@@ -29,7 +30,7 @@ Taken on a real (softmodded) Xbox, straight off the TV.
 </tr>
 <tr>
 <td>The Madden 27 roster with EA's current headshots, ratings and contracts</td>
-<td>Modern team names on 09's teams (the logo art is still 2008's)</td>
+<td>Modern team names on 09's teams (this shot predates the W logo)</td>
 <td>The 2026 head coaches, with their team-site photos</td>
 </tr>
 <tr>

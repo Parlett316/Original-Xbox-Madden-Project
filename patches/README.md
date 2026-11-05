@@ -54,5 +54,19 @@ Adds 107 licensed songs (2005: 21, 06: 21, 07: 36, 08: 29) as four extra soundtr
 
 Sets the idle time (ms) on the Press START screen before the CPU-vs-CPU demo starts (stock 75000). Leaving the demo hard-locks the console, even on the stock game, so the build uses 24 h. The script's entry is recompressed into its old slot; a rebuild with 75000 reproduces the stock file byte for byte. **Run `qkl_sync.py` afterwards:** `fe.qkl` preloads this part of `uis_all.dat`.
 
+## `team_logo.py`: a team's menu logo
+
+    python team_logo.py "<09>/data" my_logo.png out/data --teams template.dat DB_TEAMS.dat strmdata.db
+
+Replaces entry 26 of `uis_tmlo.dat` (64×64) and `UIS_TMLL.dat` (128×128), the modern Washington team by default. `--teams` also moves any other team using that logo to `--classic-entry` (default 37, the classic Redskins' image). Solid art must have alpha 255: a logo with solid areas at 248–253 looked grainy on hardware.
+
+## `team_helmet.py`: a team's helmet logo
+
+    python team_helmet.py "<09>/data" my_logo.png out/data --teams template.dat DB_TEAMS.dat
+
+Repaints the helmet in `UNIFORMS.dat` entries 283 and 284 (Washington's white and burgundy) and 626 and 627 (the copies training camp uses), and moves every other team's `TUNI` rows from 283 and 284 to 287 and 288. The art must be a gold outline on burgundy, because the helmet logo is drawn inverted: gold panels with burgundy seams. It's mirrored across the crown stripe so it faces forward on both sides.
+
+Each entry keeps its stock directory size, with zeros after the shorter stream, so `fe.qkl` and `game.qkl` stay stock. Changing a size freezes the console: see [formats](../docs/formats.md#terf-archives-dat-asset-files). `build_all.py --commanders-logo` runs both scripts. Details: [findings §9](../docs/findings.md#9-team-logos-and-uniforms-09).
+
 ## `loadscreen/`: custom loading and start screens
 See [loadscreen/README.md](loadscreen/README.md).

@@ -23,8 +23,12 @@ Stock game folders are read-only inputs. Every script writes to a separate outpu
 
 Everything at once:
 
-    python tools/build_all.py --games . --out patched/build --roster roster/madden27.json \
-        --photos roster/headshots_raw --progression performance --loadscreen my.png --startscreen my_start.png
+    python tools/build_all.py --games . --out patched/build --roster roster/madden27_week7.json \
+        --photos roster/headshots_raw --coach-photos roster/coach_photos \
+        --classic-names nflverse_rosters/classic_matches.csv --schedule nflverse_schedule/games.csv \
+        --commanders-logo custom/commanders_w.png --loadscreen my.png --startscreen my_start.png
+
+This full command, without the two screens, reproduced the hardware-tested files byte for byte (2026-11-04). `custom/` holds personal art and is never committed.
 
 Or step by step. The commands are in each component README ([patches](../patches/README.md), [roster](../roster/README.md), [loadscreen](../patches/loadscreen/README.md)). After changing any data file by hand, always re-run `patches/qkl_sync.py` for `fe.qkl` and `game.qkl`; see the rules below.
 
@@ -52,6 +56,10 @@ The user's setup is a softmodded Xbox with the UnleashX dashboard, with files se
 5. **The Z: cache.** The game copies 36 data files (template.dat, strmdata.db, uis_plyr.dat, the qkl bundles…; not BGM.dat) to the hard drive's cache partition and refreshes them when the source changes. That's been reliable; nothing needs clearing by hand.
 6. **The EA Trax playlist lives in the profile.** Switching back to a `strmdata.db` without the extra songs, while the profile has them enabled, makes the now-playing banner show garbage. Turn the extra songs off first, or use another profile.
 7. **The attract-mode demo can hard-lock.** Pressing a button to leave the demo freezes the console. This also happens on the untouched stock game, so it isn't caused by any of these mods. The build delays the demo by 24 hours (`--demo-delay`); if you ship `uis_all.dat`, ship `fe.qkl` with it.
+8. **Don't change a TERF entry's size in place.** The game finds most entries by adding up directory sizes, so a shorter entry breaks later entries that were never edited. Keep the stock size and pad with zeros ([formats](formats.md#terf-archives-dat-asset-files)).
+9. **Leaving a custom file out doesn't remove it from the Xbox.** An overlay holds only changed files. To go back to a stock screen, copy the stock `LOADDATA.dat` and `uis_fe.dat` over the custom ones and upload the new `fe.qkl`.
+10. **Base a test overlay on the current build.** A test file from an older build quietly replaces newer work on the console. Helmet tests based on a pre-17-game `template.dat` removed the 17-game data until it was restored. Compare sizes with a full build first (`template.dat` is 2,161,408 bytes with the 17-game season and 2,160,320 without).
+11. **Franchises keep the data they were created with.** New `TUNI` rows don't reach an existing franchise, so classic Redskins teams in it keep pointing at the uniforms that now have the W.
 
 ## Testing a change
 

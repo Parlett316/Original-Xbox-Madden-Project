@@ -149,3 +149,27 @@ Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). The 
 - **Front end:** the stats screens label week 21 as the Pro Bowl (`0x130060`, `0x1300ec`); that's cosmetic. The `16, 17, 20, 21, 22` constants found in nearly every menu script are shared library code, not weeks.
 
 **Game rules aren't in tables.** Overtime and kickoff/touchback spots have no DB fields, only UI strings ("End of Overtime Quarter", "OVERTIME!!!", "Touchback"), so they live in gameplay code.
+
+## 9. Team logos and uniforms (09)
+
+All of this was tested on hardware on 2026-11-04 unless it says otherwise. The tools are `patches/team_logo.py` and `patches/team_helmet.py`.
+
+**Menu logos.** Entry = `TLGL` + 1. "All Redskins" (TGID 208) shared the modern team's logo in `TLGL`/`TLGS` in `template.dat` (3 DBs) and `strmdata.db`. Those are the copies the menus read: changing `TLGS` in `DB_TEAMS.dat` alone did nothing.
+
+**Uniform tables.** `TUNI` (`UFID`, `TGID`, `TUCO`) lists a team's uniforms, in `template.dat` (3 DBs) and `DB_TEAMS.dat`, and it isn't sorted. Washington's rows are `TUCO` 0 = 283 white, 1 = 284 burgundy, 2 = 281, 3 = 282, 4 = 286, 5 = 285. The Y screen calls them Default Home, Default Away and Alternate N. The modern team shared 283 and 284 with four classic Redskins teams (TGIDs 102, 117, 151, 208). Moving those to 287 and 288, which other classic Redskins teams already wear, is safe. Uniform clashes are settled by `UNIF.ULTF` (`0x39e2e0`): with the same lightness, the road team switches.
+
+**The freeze.** The directory parser (`0x375a60`) keeps the offset of only every 20th entry, and `0x377030` adds rounded sizes from there. Saving smaller sizes for 283 and 284 put entries 284 to 299 2,816 or 6,400 bytes early, while entry 300 was correct again. So uniforms the build hadn't edited froze too, and it took a baseline build to show the helmet work was the cause.
+
+Running the game's decoder at those wrong offsets gave status 3 for 284 and 286, and status 1 with no output for 285 and 288; the real offsets give status 1 and full output. Status 3 fits the freezes. No output may explain why the screen showed a stale uniform (Eagles whites; entry 131 is an Eagles white that `fe.qkl` preloads), but neither link was traced on hardware. The earlier lock on UFID 292 is in the same block of 20, though that build's contents weren't rechecked.
+
+The fix keeps stock sizes and pads with zeros, which also leaves the header and `.qkl` copies stock. `lzh1emu.compress` reproduces stock entries 283, 284 and 292 byte for byte.
+
+**Theories that were wrong.** A picker loop (`0xe30d0` ends on a fetch error), the Y screen itself, dark road uniforms in general (the Cowboys can pick all of theirs), and the moved `TUNI` rows. The dotted rings on the crown are on every team's helmet; the user reads them as the stadium lights, and they aren't from this mod.
+
+**Writing the art.** Only the top mip follows the 0x80-byte header. Writing the smaller mips 0x80 late scrambled them and damaged the next texture's header. Reducing the palette caused rough edges and stray dots at a distance, so the logo now uses the stock palette's nearest colours and only touched pixels change.
+
+**Placement.** Stock logos centre near (186, 65) on the right panel, the median of the 31 home helmets measured. The final W's gold spans x 172–197 and y 39–85, so its front edge is level with the Falcons' and Cowboys' logos. A logo must be mirrored between the panels to face forward on both sides, as the stock logos and the real helmet do.
+
+**Training camp.** Commanders showed the old helmet there. Entries 626 and 627 have the same helmet as 283 and 284 but different jersey and pants textures, and the game loads them under flag `0x802abd`. Repainting them fixed training camp. What sets the flag isn't traced.
+
+**Not traced.** `0x377305` reads a per-entry cache through the handle at `+0x90` and the table at `+0x94` when `0x7b68c4` is set, and `0x37a790` fills it. Whether it lasts between boots isn't known, and it caused no known trouble here.

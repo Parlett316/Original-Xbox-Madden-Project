@@ -99,6 +99,16 @@ Texture table at 0x28 (w, h, format, size, offset). A texture's top level starts
 | `uis_plyr.dat` | 3,286 menu headshots, fixed 17,948-byte entries: 128×128 P8 at +0x100, palette at +0x4200, photo is a 66×66 crop at (15,15) with a light outline; entry 1 = blank |
 | `uis_load.dat` | rookie-spotlight loading screens (unmodified) |
 | `plyrface.dat` | 532 in-game face textures, 256×256 (unmodified) |
+| `uis_tmlo.dat`, `UIS_TMLL.dat` | team logos, 64×64 and 128×128; entry = `TEAM.TLGL` + 1, so the modern Washington team is 26 and the classic Redskins 37 |
+| `UNIFORMS.dat` | 725 entries, indexed by `TUNI.UFID`; see below |
+
+### UNIFORMS.dat
+
+Each filled entry is an LZH1-compressed MMAP, 1,289,104 bytes unpacked, with 28 textures and 33 palettes. Its named parts (`Hip`, `Thigh`, `Torso`, `Helmet`, `Shoulder`, `Facemask`, ...) are in the table at the offset stored at `0x20`, 16 bytes per name, and a part's index picks its palette.
+
+The helmet is textures 12–15 (256×128 down to 32×16) with palette 3. It holds two side panels, mirrored across the crown stripe at x 128. Small y is the helmet's front, and each panel holds the art rotated a quarter turn with its top toward the stripe. Texture 20 is the shine, and palette 21 (`SpecHelm`) reads the same pixel indices as the helmet, so changing the helmet's palette also affects the shine. Draw new art in colours the palette already has.
+
+With flag `0x802abd` set, the game loads entry UFID + 343 instead (`0x222223`). Only 112 entries from 343 up are filled, so this second set covers only some uniforms.
 
 ### BGM.dat (music)
 
