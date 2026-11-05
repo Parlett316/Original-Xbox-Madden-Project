@@ -24,6 +24,8 @@ Usage:
   --save-unlock      let the game load edited saves (skips their signature check)
   --no-season17      keep the stock 16-game season (the default is 17 games over
                      18 weeks; existing franchises need the matching build)
+  --playoffs7        7 playoff teams per conference with one bye; needs the 17-game
+                     season, and a franchise created on this build
   --schedule CSV     year 1 is a real NFL season from nflverse's
                      games.csv (github.com/nflverse/nfldata, data/games.csv)
   --schedule-season YEAR  which season (default: the latest complete one)
@@ -77,11 +79,14 @@ def main():
     ap.add_argument('--demo-delay', type=int, default=86400000)
     ap.add_argument('--no-season17', dest='season17', action='store_false')
     ap.add_argument('--save-unlock', action='store_true')
+    ap.add_argument('--playoffs7', action='store_true')
     ap.add_argument('--classic-names')
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
     ap.add_argument('--commanders-logo')
     a = ap.parse_args()
+    if a.playoffs7 and not a.season17:
+        ap.error('--playoffs7 needs the 17-game season')
     for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
@@ -100,6 +105,8 @@ def main():
         run(os.path.join(P, 'season17.py'), xbe, xbe)
     if a.save_unlock:
         run(os.path.join(P, 'save_unlock.py'), xbe, xbe)
+    if a.playoffs7:
+        run(os.path.join(P, 'playoffs7.py'), xbe, xbe)
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:
@@ -125,6 +132,8 @@ def main():
         tpl = os.path.join(out_data, 'template.dat')
         real = [a.schedule] + ([a.schedule_season] if a.schedule_season else []) if a.schedule else []
         run(os.path.join(P, 'season17.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl, *real)
+    if a.playoffs7:
+        run(os.path.join(P, 'playoffs7.py'), tpl, tpl)
 
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')

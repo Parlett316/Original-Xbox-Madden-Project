@@ -56,6 +56,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
   - loading and re-saving an edited franchise save (`--save-unlock`, off by default; tested with a jersey-only edit)
   - jumping a franchise to a later week (`tools/save_jump.py`; year 2, week 1 to 18, through the postseason into the offseason)
 - **Checked 2026-11-04:** the full `build_all.py` command in docs/workflow.md reproduces the hardware-tested files byte for byte, and its output boots in xemu.
+- **Working on hardware, off by default:** 7-team playoffs (`--playoffs7`), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Needs a franchise created on that build; an older franchise sticks at the end of its last regular-season week.
 - **Built, not tested:** the 07/08 awareness XBEs.
 
 ## Things that cost time before (avoid repeating)
