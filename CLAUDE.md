@@ -31,6 +31,7 @@ Start with [README.md](README.md), then [docs/workflow.md](docs/workflow.md) (ru
 | Coaching staffs and coach photos | `roster/coaches.py`, `roster/fetch_coach_photos.py` (photo = `uis_coac.dat` entry `CSXP`+1) |
 | Classic teams' real names | `roster/classic_names.py` (nflverse rosters in `nflverse_rosters/`; review CSV, then `--apply`) |
 | One-off custom players (name, size, photo) | `roster/custom_players.py` with a personal spec in `custom/` (never committed) |
+| Test a build in xemu | `tools/make_xiso.py` and docs/workflow.md ("Testing in xemu") |
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
 
 ## Environment notes

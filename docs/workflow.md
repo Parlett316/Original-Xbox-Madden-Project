@@ -64,6 +64,23 @@ The user's setup is a softmodded Xbox with the UnleashX dashboard, with files se
   Always test the untouched game too. The demo freeze above turned out to be stock behaviour.
 - **Diagnostic builds.** When something fails in a way the code doesn't explain, build a small variant that separates the hypotheses. Example: a `strmdata.db` that lists one new track inside 09's own soundtrack and one 09 track inside a new soundtrack. That proved the problem was track numbers past 47, and led to the `fe.qkl` directory copy.
 
+## Testing in xemu
+
+xemu is a quick first check before an FTP upload. A pass doesn't replace the Xbox: timing, disc and drive speed, and graphics all differ.
+
+1. Pack an image, which only reads its inputs: `python tools/make_xiso.py pack "<game folder>" "<overlay>" out.iso`, then `python tools/make_xiso.py verify out.iso "<game folder>" "<overlay>"`.
+2. Boot it with a modded BIOS such as Complex 4627. An untouched XBE signature check would reject our XBE.
+3. To keep your own setup separate, copy `xemu.toml` and the `.qcow2` drive, point the copy at them, and run `xemu.exe -config_path <copy.toml>`. The game writes its cache and saves to the drive. xemu rewrites its config when it exits, so check the settings before each run.
+
+To drive it from a script (tested on xemu 0.8.139):
+
+- Set `port1 = 'keyboard'` under `[input.bindings]`. A/B/X/Y are their own letter keys, Enter is Start, and the arrows are the D-pad.
+- Post `WM_KEYDOWN` and `WM_KEYUP` to the xemu window. It doesn't need focus. Hold a key for about 0.1 s, because 0.25 s can move a menu two steps.
+- Take screenshots with `PrintWindow`. This build's QMP has no `screendump`.
+- Add `-qmp tcp:127.0.0.1:44444,server,nowait` to read the status and to close that one instance with `quit`. The PID listening on the port identifies its window.
+
+An overlay holds only changed files. Leaving out `--loadscreen` or `--startscreen` puts the stock screen in an image, but on an Xbox that already has custom screens you must also copy the stock `LOADDATA.dat` and `uis_fe.dat` over them and upload the new `fe.qkl`.
+
 ## Franchise progression tests
 
 Used to compare progression tables. The setup that gives a clean comparison:
