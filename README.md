@@ -66,7 +66,7 @@ python tools/build_all.py --games "<folder with the extracted games>" --out buil
     --loadscreen my_loading.png --startscreen my_start.png
 ```
 
-`--games` must contain `Madden NFL 09 (USA)`, plus `Madden NFL 2005 (USA)`, `Madden NFL 06 (USA)`, `Madden NFL 07 (USA)` and `Madden NFL 08 (USA)` for the music and for 2005 progression. Run `python tools/build_all.py -h` for all options, including `--progression`, `--no-music`, `--no-season17` (keep the stock 16-game season), `--schedule` (real NFL schedule for year 1) and `--save-unlock` (load edited saves).
+`--games` must contain `Madden NFL 09 (USA)`, plus `Madden NFL 2005 (USA)`, `Madden NFL 06 (USA)`, `Madden NFL 07 (USA)` and `Madden NFL 08 (USA)` for the music and for 2005 progression. Run `python tools/build_all.py -h` for all options, including `--progression`, `--no-music`, `--no-season17` (keep the stock 16-game season), `--schedule` (real NFL schedule for year 1) and `--save-unlock` (load edited saves). `--commanders-logo` takes your own W image for Washington's menu logo and helmets.
 
 **Install:** on the Xbox, copy the whole game folder to a new folder (for example `E:\Games\Madden NFL 09 Modded\`). Then copy the overlay over it, replacing files. Keep the stock folder untouched. The renamed XBE shows up as "Madden NFL 09 Modded" and shares saves with the original. A franchise needs the build it was started on, because the season format differs (17 or 16 games). Read [docs/workflow.md](docs/workflow.md) before installing: it covers the memory-card roster that overrides the default roster, file sets that must match, and how to test changes.
 
@@ -77,7 +77,7 @@ python tools/build_all.py --games "<folder with the extracted games>" --out buil
 | [`patches/`](patches/README.md) | XBE patches (awareness fix, rename, 17-game season, save unlock), music import, progression tables, `fe.qkl` sync |
 | [`patches/loadscreen/`](patches/loadscreen/README.md) | Loading and start screen packers, TERF/MMAP/LZH1 helpers |
 | [`roster/`](roster/README.md) | EA ratings and headshot fetchers, the roster builder, 2026 coaching staffs (`coaches.py`, photo and record fetchers), TDB database library |
-| [`tools/`](tools/) | `build_all.py` (one-command build), `franchise_report.py` (compare franchise saves), `xdis.py` (XBE disassembly helper) |
+| [`tools/`](tools/) | `build_all.py` (one-command build), `franchise_report.py` (compare franchise saves), `xdis.py` (XBE disassembly helper), `make_xiso.py` (disc image for testing in xemu) |
 | [`docs/`](docs/) | [workflow](docs/workflow.md), [file formats](docs/formats.md), [research findings](docs/findings.md), [roadmap and open tests](docs/roadmap.md) |
 | [`CLAUDE.md`](CLAUDE.md) | Orientation for AI coding agents working on this project |
 

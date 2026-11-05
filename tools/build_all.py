@@ -27,8 +27,10 @@ Usage:
   --schedule CSV     year 1 is a real NFL season from nflverse's
                      games.csv (github.com/nflverse/nfldata, data/games.csv)
   --schedule-season YEAR  which season (default: the latest complete one)
+  --commanders-logo PNG  W with transparency, gold outline on burgundy: menu logo and the
+                     helmet of Washington's white and burgundy uniforms; classic Redskins keep theirs
 
-Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, then
+Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
 copy of the game folder on the Xbox (keep the stock folder as is).
 """
@@ -78,8 +80,9 @@ def main():
     ap.add_argument('--classic-names')
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
+    ap.add_argument('--commanders-logo')
     a = ap.parse_args()
-    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule'):
+    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
 
@@ -160,6 +163,16 @@ def main():
     if a.demo_delay:
         run(os.path.join(P, 'press_start_timer.py'), os.path.join(stock, 'uis_all.dat'),
             os.path.join(out_data, 'uis_all.dat'), str(a.demo_delay))
+
+    # 6b. Commanders' menu logo and helmet (UNIFORMS.dat's LZH1 also runs the stock XBE's code)
+    if a.commanders_logo:
+        def current(name):
+            f = os.path.join(out_data, name)
+            return f if os.path.exists(f) else os.path.join(stock, name)
+        run(os.path.join(P, 'team_logo.py'), stock, a.commanders_logo, out_data, '--teams',
+            current('template.dat'), current('DB_TEAMS.dat'), current('strmdata.db'))
+        run(os.path.join(P, 'team_helmet.py'), stock, a.commanders_logo, out_data, '--teams',
+            current('template.dat'), current('DB_TEAMS.dat'))
 
     # 7. quick-load bundles: copy preloaded parts of every changed file
     for qkl in ('fe.qkl', 'game.qkl'):
