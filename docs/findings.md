@@ -191,3 +191,37 @@ The fix keeps stock sizes and pads with zeros, which also leaves the header and 
 **Training camp.** Commanders showed the old helmet there. Entries 626 and 627 have the same helmet as 283 and 284 but different jersey and pants textures, and the game loads them under flag `0x802abd`. Repainting them fixed training camp. What sets the flag isn't traced.
 
 **Not traced.** `0x377305` reads a per-entry cache through the handle at `+0x90` and the table at `+0x94` when `0x7b68c4` is set, and `0x37a790` fills it. Whether it lasts between boots isn't known, and it caused no known trouble here.
+
+## 10. Commentary team names (09)
+
+`patches/commentary_team.py` is built on this. Read from the code and data. The surname recording works on the Xbox and sounds good to the user, and the '91 Redskins still get "Redskins" (2026-11-05). The city recording worked too but was quieter than "Cowboys". `tools/speech_clips.py` decodes clips to WAV and measures them, and the numbers agree: RMS over the active parts is about -12 to -13.5 dB for his "Cowboys" takes, against -15.8 and -18.1 for the two city takes the first build mostly uses. The surname takes are -16.3, -15.3 (the sentence-ending take) and -14.4.
+
+**MicroTalk, as the game decodes it (`0x445db3`–`0x447080`).** A `SCDl` block is a `u32` sample count (big-endian in `GSTR` streams, little-endian in `PT` ones), `u32`, a byte, a marker byte, then frames of 432 samples. The stream's first block starts with a header: 1 bit reduced bandwidth, 4 bits for the multi-pulse threshold (32 - x), 4 bits for the first gain (8 × (x + 1)), 6 bits for the gain step (1.04 + x × 0.001). Reflection coefficients 0–3 are 6 bits, and 4–11 are 5 bits with 16 added to the index. The pitch memory holds the excitation, copied before the filter runs. Frames are byte-aligned: the last byte the reader has loaded after a frame is a marker, and 0xee means the next frame is followed by raw samples (big-endian offset, count, then the samples). The tables are at `0x727cd8` (rc), `0x727dd8` (codebooks) and `0x727fd8` (commands). The check that the decode stays in step is that each block's frames use all but 2 or 3 of its bytes, which held for all 21 clips tested.
+
+**Other recordings of the name.** `0x000a`, sub-bank 1351 (descriptor `0x237e`, audio `0xaad`) is the player surname, the `--clip surname` option. Sentences use its takes 0 and 2 mid-sentence and take 1 only as the last slot. The surname bank's audio starts at `0x566`, and project 2 has its own recording in `0x412b`, sub-bank 958. `0x2026` (project 1, 13 sentences) sounds like the in-stadium announcer to the user (2026-11-05), so it doesn't suit Al's lines. `0x414f` also holds the name, in project 2, and whose voice that is isn't known.
+
+**Name lookup.** `0x4ec3a`–`0x4ece1` read each team's `TDNA` and `TLNA`, upper-case them (`0x4e800`) and binary-search name tables in `SOUNDDAT.dat`, using the comparer at `0x2aa700`. A table is `u32 count`, then `(u32 string offset, s32 value)` rows sorted by name, then the strings. A missing name takes the fallback, which is why the renamed team became "the home team" or "the visiting team": the fallbacks are those tables' `HOME TEAM` and `VISITING TEAM` rows. The results go to `0x7cf5a0` (home) and `0x7cf5b0` (away), one byte per slot:
+
+| Slot | Table (`SOUNDDAT.dat` entry) | Input | Fallback, home/away | Bank, descriptors, audio (`SPCHDATA.dat` entries) |
+|---|---|---|---|---|
+| +0 | 4 | `TDNA` | 63/64 | `0x419`, `0x33ca`, `0x1af9`; home team only (`0x2a5256`). Al's "Welcome to <sponsor> Stadium" with invented sponsors, by ear: 32 (Redskins) is Global Domination Bank, 63 (`HOME`) is New Road Fidelity. When it plays isn't known |
+| +1 | 5 | `TLNA` | 33/34 | `0x2026`, `0x3433`, `0x1b62`; project 1 |
+| +7 | 7 | `TDNA` | 56/57 | `0x08d`, `0x29cb`, `0x10fa`, and `0x7f1`, `0x2a24`, `0x1153` (first 50 only) |
+| +8 | 8 | `TLNA` | 46/47 | `0x1f0`, `0x2a56`, `0x1185` |
+| +9 | 18 (`0x12`) | `TDNA` | 62/63 | Not traced; event `0x4038` is project 2, not project 0 |
+| +a | 19 (`0x13`) | `TLNA` | none seen | `0x414f`, `0x2ac8`, `0x11f7`; project 2 |
+
+The rest hold coaches and stadiums. A value `v` loads descriptor `base + v - 1` and audio `base + v - 1` (`0x2b3660`, called from `0x2b3e10` and `0x2b4xxx`). Past value 59 in table 7, sub-bank numbers stop matching the values, so a borrowed slot has to be 50 or lower to be valid in both nickname banks.
+
+**Speech files.** `SPCHDATA.dat`: entries 2–9 are the event files of projects 0–7 (`03 12 3c 07`; a project is event ID >> 13). Project 0 is the main file, with the play-by-play banks. After them come audio entries (`SCHl` streams, codec 4, 36 kHz, which should be EA MicroTalk), then sub-bank descriptors from `0x1e37`.
+
+A descriptor is `u16 bank, u16 sub-bank, u8 type, u8 samples, u16, u32 total`, then each sample's big-endian `u16` offset (256-byte units) and `type` parameter bytes, then one `u32` mask per parameter listing the values present. The sample's stream is the audio between its offset and the next (or `total`), so zeros after a stream are harmless.
+
+**Sentences.** A sentence is a header (`?? WW ?? ?? 00 00 00 00`, `WW` is usually 0x64) and a table of offsets in 4-byte units from the header. Each offset leads to a slot: `u16 bank, u8 event parameter, u8 flag, u32 rule count`, then 8-byte rules holding a mask and an argument. Slots play in order. The third rule selects `p2`, the take: mask 5 allows 0 or 2, and 6 allows 1 or 2.
+
+**No sentence uses both a nickname and a city.** A scan found 114 sentences with a name bank and none mixes them, so "Washington Washington" shouldn't happen. Two hits, `0x1d6c` and `0x9ab0`, weren't resolved to a sentence.
+
+**Real stadium names** come from table 17 (`SOUNDDAT.dat` entry 0x11, read at `0x4e640`, stored at `0x7cf598`), keyed on the stadium's name rather than the team's. `FEDEX FIELD` is 26. This patch doesn't touch it.
+
+**The change.** In table 7, `COMMANDERS` takes `GALAXY`'s value, 34. No team uses Galaxy, an NFL Europe name. Sub-bank 34 of `0x08d` and `0x7f1` then holds Al's "Washington", keeping each slot's parameters. With `--clip surname` (take 2 mid-sentence, take 1 at the end), `0x08d`'s rows get takes 2, 2, 1 and `0x7f1` gets take 2. With `--clip city`, `0x08d`'s rows get (0,6,0), (0,6,1), (0,0,0) and `0x7f1` gets (0,6,1). In table 4, `COMMANDERS` joins the Redskins at 32, so it behaves as stock Washington does and bank `0x419` isn't changed. The first two test images put "Washington" in that bank, which was a mistake. Each table loses `GALAXY` and a spare row (`NFL-E ALUMNI`, `MILLENIUM`) because the new name is longer and an entry can't change size. `--check` rebuilds both tables unchanged and compares them with stock. Tables 6, 16 and 18 and John Madden's team references aren't changed.
+

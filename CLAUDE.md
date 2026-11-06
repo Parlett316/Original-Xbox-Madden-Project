@@ -35,6 +35,8 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | One-off custom players (name, size, photo) | `roster/custom_players.py` with a personal spec in `custom/` (never committed) |
 | Test a build in xemu | `tools/make_xiso.py` and docs/workflow.md ("Testing in xemu") |
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
+| What the announcers call a team | `patches/commentary_team.py` (`build_all.py --commanders-commentary`; docs/findings.md §10) |
+| Listen to or measure commentary clips | `tools/speech_clips.py` (decodes `SPCHDATA.dat` to WAV) |
 
 ## Environment notes
 - Windows. Bash (Git Bash) and PowerShell are both available, and paths contain spaces: quote them.
@@ -58,6 +60,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Checked 2026-11-04:** the full `build_all.py` command in docs/workflow.md reproduces the hardware-tested files byte for byte, and its output boots in xemu.
 - **Working on hardware, off by default:** 7-team playoffs (`--playoffs7`), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Needs a franchise created on that build; an older franchise sticks at the end of its last regular-season week.
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
+- **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
 - **Built, not tested:** the 07/08 awareness XBEs.
 
 ## Things that cost time before (avoid repeating)
