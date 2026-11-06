@@ -27,6 +27,7 @@ Usage:
                      18 weeks; existing franchises need the matching build)
   --playoffs7        7 playoff teams per conference with one bye; needs the 17-game
                      season, and a franchise created on this build
+  --optional-fullback  a team can carry no fullback (lowers the position minimums)
   --schedule CSV     year 1 is a real NFL season from nflverse's
                      games.csv (github.com/nflverse/nfldata, data/games.csv)
   --schedule-season YEAR  which season (default: the latest complete one)
@@ -81,6 +82,7 @@ def main():
     ap.add_argument('--no-season17', dest='season17', action='store_false')
     ap.add_argument('--save-unlock', action='store_true')
     ap.add_argument('--playoffs7', action='store_true')
+    ap.add_argument('--optional-fullback', action='store_true')
     ap.add_argument('--free-agents')
     ap.add_argument('--classic-names')
     ap.add_argument('--schedule')
@@ -109,6 +111,8 @@ def main():
         run(os.path.join(P, 'save_unlock.py'), xbe, xbe)
     if a.playoffs7:
         run(os.path.join(P, 'playoffs7.py'), xbe, xbe)
+    if a.optional_fullback:
+        run(os.path.join(P, 'optional_fullback.py'), xbe, xbe)
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:
@@ -138,6 +142,11 @@ def main():
         run(os.path.join(P, 'season17.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl, *real)
     if a.playoffs7:
         run(os.path.join(P, 'playoffs7.py'), tpl, tpl)
+
+    # 2c. optional fullback: position minimums in template.dat (same size)
+    if a.optional_fullback:
+        tpl = os.path.join(out_data, 'template.dat')
+        run(os.path.join(P, 'optional_fullback.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
 
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')
