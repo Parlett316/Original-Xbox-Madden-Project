@@ -15,7 +15,6 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 - [ ] **FedEx Field:** listen for it in a Commanders home game, which wasn't reported. The patch doesn't touch that lookup.
 - [ ] **Full build:** run `build_all.py --commanders-commentary` through a whole build. So far the patcher and `qkl_sync.py` have only been run directly.
-- [ ] **Madden in a Commanders game:** his team references aren't changed or traced. Note what he says, if it matters.
 
 **Optional fullback, with the lock fix.** Copy these two files in binary mode from `patched/Madden NFL 09 (USA)/optional_fullback_test/` to the game folder, keeping the same layout. Everything else stays in place. To undo them, copy back `default.xbe` from `playoffs7_test/` and `template.dat` from `free_agents_test/data/`.
 
