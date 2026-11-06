@@ -51,7 +51,7 @@ Everything at once:
 
 This full command, without the two screens, reproduced the hardware-tested files byte for byte (2026-11-04). `custom/` holds personal art and is never committed.
 
-Optional additions, each working on hardware: `--playoffs7` (7-team playoffs), `--save-unlock` (load edited saves), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). `--optional-fullback` (a team can carry no fullback) is partly tested on hardware; see [outstanding](outstanding.md). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
+Optional additions, each working on hardware: `--playoffs7` (7-team playoffs), `--save-unlock` (load edited saves), `--commanders-commentary` (Al Michaels says "Washington"; adds 447 MB of files to the overlay and hasn't been run through a full build), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). `--optional-fullback` (a team can carry no fullback) is partly tested on hardware; see [outstanding](outstanding.md). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
 
 Or step by step. The commands are in each component README ([patches](../patches/README.md), [roster](../roster/README.md), [loadscreen](../patches/loadscreen/README.md)). After changing any data file by hand, always re-run `patches/qkl_sync.py` for `fe.qkl` and `game.qkl`; see the rules below.
 

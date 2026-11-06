@@ -59,8 +59,9 @@ by querying per team and per position.
 - Not available from EA, so set to defaults: draft round/pick (undrafted),
   Pro Bowl flag, years with team (= years pro).
 - Team renames: LA Chargers, LV Raiders, LA Rams, Washington Commanders
-  (text only; logos, uniforms and commentary audio are unchanged). Use
-  `--keep-team-names` to skip.
+  (text only; logos, uniforms and commentary audio are unchanged here, and
+  `build_all.py` has `--commanders-logo` and `--commanders-commentary` for the
+  Commanders). Use `--keep-team-names` to skip.
 - Coaches: all four staff per team (head coach and coordinators) from 2026
   lists, except the Bucs DC. Coaches already in 09 keep their own ratings and
   3D head; new ones take the replaced coach's ratings. Everyone gets his real

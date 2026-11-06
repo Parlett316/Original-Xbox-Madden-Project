@@ -114,6 +114,10 @@ With flag `0x802abd` set, the game loads entry UFID + 343 instead (`0x222223`). 
 
 A TERF archive with one EA SCHl audio stream per song, entries 0x800-aligned. All five games use 22,050 Hz stereo, codec 0x0A, version 3, with identical SCDl block layout. 2005's SCHl header lacks the `0b 01 02` platform tag and has tag 0x8C = 0x04 (06–09: 0x24). `MUSO.MSOR` is the entry index; `MSOI` is the song's position in its soundtrack (alphabetical by artist).
 
+### SPCHDATA.dat (commentary) and its name tables in SOUNDDAT.dat
+
+TERF archives. `SOUNDDAT.dat` entries 2-21 include name tables that turn a team, city, stadium or player name into a sub-bank number. `SPCHDATA.dat` holds the speech event files, MicroTalk audio and sub-bank descriptors. Layouts and addresses: [findings §10](findings.md#10-commentary-team-names-09). `tools/speech_clips.py` decodes clips to WAV.
+
 ## QL01 quick-load bundles (`fe.qkl`, `game.qkl`)
 
 ```
