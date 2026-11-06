@@ -21,7 +21,7 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 **Skins loading and start screens.** Copy `LOADDATA.dat`, `uis_fe.dat` and `fe.qkl` from `patched/Madden NFL 09 (USA)/skins_screens_test/data/` to the game's `data` folder. They're built on the optional fullback build, and everything else in that build is byte-identical. Art is in `custom/`: `load_screen_640x480_skins.png` (1536×1024, for `--startscreen`) and its 4:3 crop `skins_screen_4x3.png` (for `--loadscreen`).
 
 - [x] **xemu (2026-11-05):** the start screen shows the whole picture, then Start leads to the main menu. The cover loading screen didn't appear in the boots checked.
-- [ ] **Xbox:** check the loading screen and the start screen, including the NFL Players logo, which sits on the raised glove.
+- [x] **Xbox (2026-11-05):** the user reports that both screens look good on hardware.
 
 **Free agents and other checks** (the free-agent files are on the Xbox):
 
@@ -44,7 +44,6 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [ ] **Older-franchise guard:** on the 7-team XBE, a franchise with 4 Wild Card games sticks at the end of the regular season with no error. Detect or refuse the mismatch.
 - [ ] **Make `--playoffs7` the default?** It's off by default and has worked over two simmed seasons on hardware.
 - [ ] **xemu helpers:** the key-press, screenshot and snapshot scripts live only in a chat's scratchpad, and each chat rebuilds them. Move them into `tools/` to save tokens.
-- [ ] **Docs:** add `playoffs7.py` to `patches/README.md`.
 
 ## To research
 

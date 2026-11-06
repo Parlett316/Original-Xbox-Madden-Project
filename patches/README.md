@@ -68,5 +68,19 @@ Repaints the helmet in `UNIFORMS.dat` entries 283 and 284 (Washington's white an
 
 Each entry keeps its stock directory size, with zeros after the shorter stream, so `fe.qkl` and `game.qkl` stay stock. Changing a size freezes the console: see [formats](../docs/formats.md#terf-archives-dat-asset-files). `build_all.py --commanders-logo` runs both scripts. Details: [findings §9](../docs/findings.md#9-team-logos-and-uniforms-09).
 
+## `playoffs7.py`: seven playoff teams per conference
+
+    python playoffs7.py <in default.xbe> <out default.xbe>
+    python playoffs7.py <in template.dat> <out template.dat>
+
+Gives each conference one bye and three wild-card games. Apply it to both files, after `season17.py`. It needs a franchise created on this build: an older one sticks at the end of its last regular-season week. `build_all.py --playoffs7` runs it. Details are in the script.
+
+## `optional_fullback.py`: a team with no fullback
+
+    python optional_fullback.py <in default.xbe> <out default.xbe>
+    python optional_fullback.py <in template.dat> <out template.dat>
+
+Lowers the position minimums in `template.dat` so a team can carry no fullback. The XBE change guards a divide by zero those minimums would otherwise cause when a team trims its roster, so use both files. Saves don't carry these tables. `build_all.py --optional-fullback` runs it. Details: [findings §8](../docs/findings.md).
+
 ## `loadscreen/`: custom loading and start screens
 See [loadscreen/README.md](loadscreen/README.md).
