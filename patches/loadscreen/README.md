@@ -17,9 +17,9 @@ To start from the original art (for example to keep the background and only chan
 
     python packstart.py "<game>/data/uis_fe.dat" "<out>/data/uis_fe.dat" my_start.png
 
-- A 512×256 P8 texture, uncompressed, stretched to full screen by the game. Any image size works; it's resized.
-- "Press START", the NFL Players logo and the sparkles are separate overlays and stay as they are.
-- `start_preview.png` is written next to you for a quick check.
+- A 512×256 P8 texture, uncompressed. The game shows only columns 64–448 and rows 4–252, at about 585×425 on a 640×480 screen with a black margin around it (measured in xemu). Any image size works: it's centre-cropped to that shape and fitted into that part, with its edges repeated into the hidden margins.
+- "Press START" (top right), the NFL Players logo (top left) and the sparkles are separate overlays and stay as they are, so keep those corners clear.
+- `start_preview.png`, the visible part only, is written next to you for a quick check.
 
 **You must also update `data/fe.qkl`.** The game loads the front end from that quick-load bundle, which holds a copy of the uis_fe.dat entries, so patching uis_fe.dat alone changes nothing on screen:
 
