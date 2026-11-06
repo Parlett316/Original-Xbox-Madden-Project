@@ -14,7 +14,7 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 | `game.qkl` | 15,884,437 bytes | `270ef90954f7c44e84f1ee38d1b0d0c7431dc657` |
 
 - [ ] **FedEx Field:** listen for it in a Commanders home game, which wasn't reported. The patch doesn't touch that lookup.
-- [ ] **Full build:** run `build_all.py --commanders-commentary` through a whole build. So far the patcher and `qkl_sync.py` have only been run directly.
+- [x] **Full build (2026-11-05):** `build_all.py` with `--commanders-commentary`, the usual roster options, the skins art, `--free-agents`, `--playoffs7`, `--optional-fullback` and `--save-unlock` reproduces the Xbox-tested files byte for byte. The XBE was checked by applying `save_unlock.py` to a run made without that flag.
 
 **Optional fullback, with the lock fix.** Copy these two files in binary mode from `patched/Madden NFL 09 (USA)/optional_fullback_test/` to the game folder, keeping the same layout. Everything else stays in place. To undo them, copy back `default.xbe` from `playoffs7_test/` and `template.dat` from `free_agents_test/data/`.
 
