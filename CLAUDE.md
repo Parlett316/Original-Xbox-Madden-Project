@@ -24,7 +24,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Read or edit any EA database | `roster/tdb.py` (`DB`, `Table.get/set/rows/raw/set_raw`, `fix`, `verify`, `resized`) |
 | TERF archives / MMAP textures / LZH1 | `roster/headshots.py:terf_entries`, `patches/loadscreen/{terf,eammap,lzh1emu}.py` |
 | Disassemble the XBE, find strings and callers | `tools/xdis.py` (DB query tags are byte-reversed: `'YALP'` = PLAY) |
-| Compare franchise saves | `tools/franchise_report.py` (ratings across seasons), `tools/save_diff.py` (what changed, table by table) |
+| Compare franchise saves | `tools/franchise_report.py` (ratings across seasons), `tools/save_diff.py` (what changed, table by table), `tools/table_growth.py` (table counts against capacity) |
 | Jump a franchise to a later week | `tools/save_jump.py` (needs `--save-unlock`; docs/workflow.md) |
 | Move saves on an xemu drive | `tools/xbox_hdd.py` (qcow2 + FATX) |
 | List every table and field in a data file | `tools/db_survey.py` (results: docs/findings.md §7) |
@@ -62,6 +62,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
 - **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
 - **Built, not tested:** the 07/08 awareness XBEs.
+- **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 
 ## Things that cost time before (avoid repeating)
 - **New data ignored on the console?** Check `fe.qkl`/`game.qkl` first (`qkl_sync.py`). That's what silenced the new music and hid the start screen.
