@@ -1,6 +1,6 @@
 # Outstanding work
 
-A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-05. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
+A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-06. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
 
 ## Waiting on an Xbox test
 
@@ -59,7 +59,9 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## To research
 
-- [ ] **Long franchises (recommended next):** the franchise `PLAY` table has 2,754 rows, reaches 2,634 by the end of year 4, and starts about 97 higher with the free agents. Find out what happens when it fills.
+- [ ] **Online play (the user's idea):** a private server for just this game. The 09 XBE links `XONLINE` and `XNET` and names `xblmadden09.ea.com`, so it needs an answer for both Xbox Live sign-in (Insignia's layer) and EA's own server, whose protocol isn't documented. Start by checking Insignia's list and what the game sends to that address in xemu.
+- [ ] **Keep career stats in long franchises:** `PCDE` fills by year 5, and players after that lose career rows (findings §11). Check it on the screen, then see if raising its capacity is safe.
+- [ ] **Long franchise with the free agents, on hardware:** years 5 to 10 passed in xemu on the build without them (findings §11). Test the current build, and a user-run team, when convenient.
 - [ ] **Coaches and progression:** do better coaches improve ratings over a season or more? Compare multi-season saves or trace the code.
 - [ ] **Overall recalculation:** by week 1, players on teams have new overalls with no rating changes, and unsigned free agents don't. Confirm the formula in the code.
 - [ ] **QB awareness floor:** compare sim stats for Daniels, Murray, Ward and Willis with and without it.
