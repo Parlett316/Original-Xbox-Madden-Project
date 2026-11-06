@@ -33,6 +33,8 @@ Usage:
   --schedule-season YEAR  which season (default: the latest complete one)
   --commanders-logo PNG  W with transparency, gold outline on burgundy: menu logo and the
                      helmet of Washington's white and burgundy uniforms; classic Redskins keep theirs
+  --commanders-commentary  Al Michaels says "Washington" for the Commanders; classic Redskins
+                     keep their line (adds SOUNDDAT.dat and SPCHDATA.dat, 447 MB; needs --roster)
 
 Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
@@ -88,6 +90,7 @@ def main():
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
     ap.add_argument('--commanders-logo')
+    ap.add_argument('--commanders-commentary', action='store_true')
     a = ap.parse_args()
     if a.playoffs7 and not a.season17:
         ap.error('--playoffs7 needs the 17-game season')
@@ -195,6 +198,10 @@ def main():
             current('template.dat'), current('DB_TEAMS.dat'), current('strmdata.db'))
         run(os.path.join(P, 'team_helmet.py'), stock, a.commanders_logo, out_data, '--teams',
             current('template.dat'), current('DB_TEAMS.dat'))
+
+    # 6c. Al Michaels says "Washington" for the Commanders
+    if a.commanders_commentary:
+        run(os.path.join(P, 'commentary_team.py'), stock, out_data)
 
     # 7. quick-load bundles: copy preloaded parts of every changed file
     for qkl in ('fe.qkl', 'game.qkl'):

@@ -68,6 +68,13 @@ Repaints the helmet in `UNIFORMS.dat` entries 283 and 284 (Washington's white an
 
 Each entry keeps its stock directory size, with zeros after the shorter stream, so `fe.qkl` and `game.qkl` stay stock. Changing a size freezes the console: see [formats](../docs/formats.md#terf-archives-dat-asset-files). `build_all.py --commanders-logo` runs both scripts. Details: [findings §9](../docs/findings.md#9-team-logos-and-uniforms-09).
 
+## `commentary_team.py`: Al Michaels says "Washington"
+
+    python commentary_team.py "<09>/data" out/data
+    python qkl_sync.py "<09>/data/game.qkl" "<09>/data" out/data out/data/game.qkl    # and fe.qkl
+
+Gives `COMMANDERS` its own slot in the commentary name tables, taken from the unused NFL Europe Galaxy, and puts Al's existing "Washington" audio there. Classic Redskins teams keep "Redskins". Entries keep their directory sizes. It uses his player surname recording by default. `--clip city` uses his city recording, which is quieter than his nicknames. `--check` rebuilds the name tables with no changes, compares them with stock, and writes nothing. `build_all.py --commanders-commentary` runs it. Details: [findings §10](../docs/findings.md#10-commentary-team-names-09).
+
 ## `playoffs7.py`: seven playoff teams per conference
 
     python playoffs7.py <in default.xbe> <out default.xbe>

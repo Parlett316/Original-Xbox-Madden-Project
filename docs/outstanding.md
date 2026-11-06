@@ -4,6 +4,22 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Waiting on an Xbox test
 
+**Al Michaels says "Washington" (not tested yet).** Copy these four files in binary mode from `patched/Madden NFL 09 (USA)/commentary_test/data/` to the game's `data` folder. They're built on the skins screens files, and everything else stays in place. `build_all.py --commanders-commentary` builds them; details are in [findings §10](findings.md#10-commentary-team-names-09).
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `SOUNDDAT.dat` | 292,063,232 bytes | `9cd74a72ae54fd8a1df00036e4bc9eb7e0fc9ffa` |
+| `SPCHDATA.dat` | 155,363,328 bytes | `854ae9be46bd2263c4084914e950a4b1ee151b41` |
+| `fe.qkl` | 10,424,200 bytes | `4988feb59664aa7c657cb73e3dcca003f8e85207` |
+| `game.qkl` | 15,884,437 bytes | `30a4345c1ec627a5b24598e232237d6c5d2e7fe7` |
+
+- [x] **Commanders (2026-11-05):** the user heard Al say "Washington", but quieter than he says "Cowboys". This was the city recording, on `commentary_test.iso`.
+- [x] **Louder recording (2026-11-05):** `commentary_test3.iso` uses his player surname "Washington", now the default, and fixes the "Welcome to" stadium line, which the first two images wrongly changed. The user says it sounds good. On the Xbox, use these from `commentary_test3/data/` instead of the table above: `SOUNDDAT.dat` 292,063,232 bytes, `0d33548591b6cd855bff5936b737b6d5e4da31ac`; `SPCHDATA.dat` 155,363,328 bytes, `04d073afe619b52752c47c68d5b3aca4df7d5a21`; `fe.qkl` 10,424,200 bytes, `4988feb59664aa7c657cb73e3dcca003f8e85207`; `game.qkl` 15,884,437 bytes, `270ef90954f7c44e84f1ee38d1b0d0c7431dc657`.
+- [x] **Classic Redskins (2026-11-05):** Al still says "Redskins" for the '91 Redskins.
+- [x] **Xbox (2026-11-05):** the `commentary_test3` files work on the console: the Commanders are called Washington. In Dallas @ All Redskins, Al used the city lines ("Dallas and Washington", stock behaviour) and Madden said "Cowboys and Redskins", which the user is happy with.
+- [ ] **FedEx Field:** listen for it in a Commanders home game, which wasn't reported.
+- [ ] **Full build:** run `build_all.py --commanders-commentary` through a whole build.
+
 **Optional fullback, with the lock fix.** Copy these two files in binary mode from `patched/Madden NFL 09 (USA)/optional_fullback_test/` to the game folder, keeping the same layout. Everything else stays in place. To undo them, copy back `default.xbe` from `playoffs7_test/` and `template.dat` from `free_agents_test/data/`.
 
 | File | Size | SHA-1 |
