@@ -26,6 +26,13 @@ the stock value (the 35); anything else keeps the stock value (the 20). A punt
 snapped from exactly the 35 would also get the 35, and a kickoff moved by a
 penalty keeps the 20.
 
+Out of bounds: 0x291611 is the 2008 penalty for a kickoff out of bounds: the
+receiving team's ball 30 yards from the kick (kick spot - 30.0, in its own
+coordinates), or where the ball went out if that's better for it. From the 35
+that gave the receiving 35. The modern rule is the receiving 40, so the first
+part now loads -10.0 (the read-only constant at 0x709408) instead. Safety
+kicks out of bounds probably go through it too.
+
 Run after madden_awareness_fix.py, which identifies the stock .text by its
 digest and makes the loader map the header page the caves sit in. Like the
 other code patches, this doesn't recompute the digest.
@@ -71,6 +78,13 @@ def file_offset(buf, va):
     raise SystemExit(f'no section holds {va:#x}')
 
 
+# fld dword ptr [esi]; fsub dword ptr [0x7093e4] (30.0) -> fld dword ptr [0x709408] (-10.0); nop; nop
+OOB_VA = 0x291618
+OOB_STOCK = bytes.fromhex('d906d825e4937000')
+OOB_NEW = bytes.fromhex('d905089470009090')
+MINUS_TEN_VA = 0x709408
+
+
 def touchback_cave(stock, kickoff):
     # eax and the flags are dead after both hooked stores (0x268f01 reloads eax)
     return (bytes.fromhex('a1') + struct.pack('<I', 0x803504)      # mov eax, [0x803504]
@@ -100,8 +114,18 @@ def patch_touchbacks(buf):
     print(f'kickoff touchbacks -> the 35, caves {TOUCHBACK_CAVE_VA:#x}-{at:#x}')
 
 
+def patch_out_of_bounds(buf):
+    o = file_offset(buf, MINUS_TEN_VA)
+    assert bytes(buf[o:o + 4]) == struct.pack('<f', -10.0), 'no -10.0 constant'
+    o = file_offset(buf, OOB_VA)
+    assert bytes(buf[o:o + 8]) == OOB_STOCK, 'unexpected code at the out-of-bounds kickoff rule'
+    buf[o:o + 8] = OOB_NEW
+    print(f'kickoff out of bounds -> the receiving 40 at {OOB_VA:#x}')
+
+
 def patch(buf):
     patch_touchbacks(buf)
+    patch_out_of_bounds(buf)
     o = file_offset(buf, FIFTEEN_VA)
     assert bytes(buf[o:o + 4]) == struct.pack('<f', 15.0), 'no 15.0 constant'
     o = file_offset(buf, FSUB_VA)
