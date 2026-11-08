@@ -13,10 +13,23 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 | `data/fe.qkl` | 10,424,200 bytes | `12b01c5770c5eee103d8d69f6f668c5fa607a9ac` |
 
 - [ ] **Landing short of the receiving 20:** a new rule with no stock code, which goes to the receiving 40. It needs the spot where the kick first lands, which hasn't been found. The play-result rules are at `0x2687d0`.
+- [x] **CPU catch in the end zone (2026-11-08):** it wasn't a fair catch. The CPU returner caught the ball, everyone moved after the catch (the hold worked), and he knelt for a touchback.
 - [ ] **Untouched in the end zone:** a touchback with no touch hasn't been tried. Neither has a ball that lands in the landing zone and is downed in the end zone (it should go to the 20).
 - [ ] **Penalties during a kickoff:** check where they're enforced from now that the ball is on the 35.
 - [ ] **Rest of the lineup test:** do blockers engage, since their run distances are stock and may overshoot?
 - [ ] **Known quirk:** the kicking team drifts about a yard toward the sidelines during the kicker's motion, visible only in replays. Turning them doesn't remove it.
+
+**Any number and uncapped free agents: waiting on an Xbox test.** `build_all.py --any-number` (`patches/any_number.py`) sets the edit screen's number table to 0-99 for every position. Rookies and signings still get traditional numbers. The free agents no longer have their overall capped at 80, and their PIMP now comes from the same mapping as everyone else's, about 24 below overall (the cap had set it equal to overall). Copy these from `patched/Madden NFL 09 (USA)/any_number_test/`. Delete any `Rost-` roster saves first, and start a new franchise for the free agents. The full build matches `modern_kickoff_build` in every other file, and the XBE is `minicamp_test` plus this patch.
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `default.xbe` | 7,766,016 bytes (same size as the one it replaces) | `f02eeff72a24ec11b65836448ea95de7fa3f3b3d` |
+| `data/template.dat` | 2,161,472 bytes | `2de08d94e582c4185de858f74c4491a7ffd2241b` |
+| `data/DB_TEAMS.dat` | 2,591,680 bytes | `e922ed1904e4a80c744a646c2f77369ad163e9c2` |
+
+- [x] **Edit screen (2026-11-08):** numbers work as intended on the Xbox.
+- [ ] **PIMP:** a hidden `PLAY` field the game rewrites itself (`update PLAY set PIMP` at `0x387e8d`, `0x387f6b` and `0x39f544`), read with `POVR` in team and depth queries. Its purpose isn't traced: maybe value for signings and trades.
+- [ ] **Free agents:** the best ones show their real overall (some above 80) in a new franchise, and CPU teams still sign players into roster holes.
 
 **Minicamp team mix-up: fixed on the Xbox (2026-11-08).** The minicamp, a game scenario and a city table found Washington by `TDNA` = "Redskins", a name stored in the XBE, which the roster's rename broke ([findings §4](findings.md#4-modern-rosters)). `patches/team_name_keys.py` changes the four strings to "Commanders", and `build_all.py` runs it with `--roster`. On the Xbox, the Commanders are back in the minicamp, at their practice facility. Tested file: `patched/Madden NFL 09 (USA)/minicamp_test/default.xbe` (7,766,016 bytes, SHA-1 `db28745a70779e016e951208e82928016d37b386`), which is `kickoff35_test3` plus this patch.
 
@@ -60,13 +73,11 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [x] **Free agents, Play Now and offseason speed (2026-11-05):** a Play Now game and a franchise game both work, and progressing through the franchise runs at normal speed.
 - [x] **Free agents, year 2 (2026-11-05):** a franchise with them got through the offseason and is simming year 2 at normal speed on hardware.
 - [x] **#0 on a uniform (2026-11-05):** Mike Sainristil's 0 shows cleanly on the back, front and sleeve of the white jersey on hardware, though no stock 09 player wears it. Not checked: the burgundy jersey and the menus.
-- [ ] **Edit screen:** edit a WR's number and note which numbers it offers.
+- [x] **Edit screen (2026-11-08):** the numbers it offers by position are WR 10-19 and 80-89; HB/FB 20-49 and 89; TE 80-89; QB 0-19; tackles and guards 60-79; C 50-79; DE/DT 60-79 and 90-99; LB 50-59 and 90-99; S 20-49; K/P 1-19. QB already gets 0, so the table allows it. These are 2004-era rules, used as the starting point for "any position, any number".
 - [ ] **Playoffs, if convenient:** play a playoff game by hand, look for a bracket screen, and check that the 8-9 Eagles type of #7 seed was really the next team in line.
 
 ## Ready to do
 
-- [ ] **Remove the 80 overall cap:** agreed. Take out `FREE_AGENT_CAP` at the next roster rebuild, because a player's overall resets once he signs. Older players keep their lost step.
-- [ ] **Any position, any number:** set the table at `0x61ee18` and `0x61eec0` to 0-99. Decide whether rookies stay on traditional numbers (leaning yes).
 - [ ] **Older-franchise guard:** on the 7-team XBE, a franchise with 4 Wild Card games sticks at the end of the regular season with no error. Detect or refuse the mismatch.
 - [ ] **Make `--playoffs7` the default?** It's off by default and has worked over two simmed seasons on hardware.
 - [ ] **xemu helpers:** the key-press, screenshot and snapshot scripts live only in a chat's scratchpad, and each chat rebuilds them. Move them into `tools/` to save tokens.

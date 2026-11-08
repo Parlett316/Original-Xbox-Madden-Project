@@ -25,8 +25,7 @@ How values are produced:
     With --coach-photos (from fetch_coach_photos.py) it also writes
     OUT_DIR/data/uis_coac.dat with their photos.
   - --free-agents (from pick_free_agents.py) adds players after everyone else, with
-    their own random numbers and no photo, so no other player changes. Their overall
-    is capped at FREE_AGENT_CAP in the game's scale. DB_TEAMS.dat's free-agent DB
+    their own random numbers and no photo, so no other player changes. DB_TEAMS.dat's free-agent DB
     grows to fit, and the archive entries after it move.
 """
 import bisect, collections, csv, json, os, random, struct, sys, unicodedata
@@ -105,7 +104,6 @@ RATING_SOURCES = {
 }
 DEFENSE = {LE, RE, DT, LOLB, MLB, ROLB, CB, FS, SS}
 QB_AWARENESS_GAP = 12      # a QB's awareness is at most this far below his overall
-FREE_AGENT_CAP = 80        # most a player added by --free-agents can be overall
 CONTRACT_FIELDS = ('PTSA', 'PSBO', 'PCON', 'PCYL', 'PTEN')
 
 
@@ -320,8 +318,6 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         p['r'] = {f: max(0, min(99, m[f](fn(s)))) for f, fn in RATING_SOURCES.items()}
         if p['pos'] == QB:
             p['r']['PAWR'] = max(p['r']['PAWR'], p['r']['POVR'] - QB_AWARENESS_GAP)
-        if p.get('added'):
-            p['r']['POVR'] = p['r']['PIMP'] = min(p['r']['POVR'], FREE_AGENT_CAP)
 
     # ---- appearance donors -----------------------------------------------------
     # Skin tone (PSKI 0 light .. 2 dark) from the EA headshot's face
