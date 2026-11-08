@@ -47,7 +47,8 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 | `data/GAMEDATA.dat` | 4,518,272 bytes | `d31e6fea0fdbee42542d6ee5c16eb36643862417` |
 | `data/fe.qkl` | 10,424,200 bytes | `12b01c5770c5eee103d8d69f6f668c5fa607a9ac` |
 
-- [ ] **Xbox:** a kickoff touchback on the 35, a punt touchback on the 20, and the CPU kicker held after the kick. Madden 09 has no kickoff out-of-bounds penalty: the out-of-bounds and landing-short spots aren't found yet.
+- [x] **Xbox (2026-11-08):** a kickoff touchback is on the 35, and a punt out the back of the end zone (the CPU called the touchback) on the 20. Both teams' kickers stay put until the ball is touched, and the user couldn't move a human-controlled kicker before then either.
+- [ ] **Next:** a kickoff out of bounds or landing short of the receiving 20 should go to the receiving 40. Not found yet, and what this build does with a kickoff out of bounds hasn't been seen. Madden 09 has no kickoff out-of-bounds penalty: the out-of-bounds and landing-short spots aren't found yet.
 - [ ] Then: the touchback spot, out-of-bounds placement, and penalties enforced on a kickoff.
 - [x] **Xbox (2026-11-07):** the user reports that the modern kickoff works on hardware. Files: `GAMEDATA.dat` (4,508,672 bytes, `b3ee0324da91c23a50cb6ebca5ddcdbc86f801bf`) and `fe.qkl` (10,424,200 bytes, `1903e69bc73a552211d5350dd7ae2455ad94c928`) from `patched/Madden NFL 09 (USA)/kickoff_modern_test/data/`. `GAMEDATA.dat` is 640 bytes larger than stock. To undo, copy back the stock `GAMEDATA.dat` and `fe.qkl` from `commentary_test3/data/`.
 - [ ] **Rest of the lineup test:** do blockers engage, since their run distances are stock and may overshoot? What happens on an untouched kick into the end zone or out of bounds? Does the next play load in a real game?
