@@ -35,8 +35,11 @@ Usage:
                      helmet of Washington's white and burgundy uniforms; classic Redskins keep theirs
   --commanders-commentary  Al Michaels says "Washington" for the Commanders; classic Redskins
                      keep their line (adds SOUNDDAT.dat and SPCHDATA.dat, 447 MB; needs --roster)
+  --modern-kickoff   kick from the 35 with the NFL's hybrid lineup, everyone held until the
+                     receiving team touches the ball; touchbacks to the 35, out of bounds to
+                     the receiving 40 (default.xbe and GAMEDATA.dat)
 
-Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, then
+Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
 copy of the game folder on the Xbox (keep the stock folder as is).
 """
@@ -91,6 +94,7 @@ def main():
     ap.add_argument('--schedule-season')
     ap.add_argument('--commanders-logo')
     ap.add_argument('--commanders-commentary', action='store_true')
+    ap.add_argument('--modern-kickoff', action='store_true')
     a = ap.parse_args()
     if a.playoffs7 and not a.season17:
         ap.error('--playoffs7 needs the 17-game season')
@@ -116,6 +120,8 @@ def main():
         run(os.path.join(P, 'playoffs7.py'), xbe, xbe)
     if a.optional_fullback:
         run(os.path.join(P, 'optional_fullback.py'), xbe, xbe)
+    if a.modern_kickoff:                  # ball on the 35, touchbacks and out of bounds
+        run(os.path.join(P, 'kickoff_spot.py'), xbe, xbe)
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:
@@ -202,6 +208,11 @@ def main():
     # 6c. Al Michaels says "Washington" for the Commanders
     if a.commanders_commentary:
         run(os.path.join(P, 'commentary_team.py'), stock, out_data)
+
+    # 6d. modern kickoff: lineup and hold in the playbooks (LZH1 runs the stock XBE's code)
+    if a.modern_kickoff:
+        run(os.path.join(P, 'kickoff_setup.py'), os.path.join(stock, 'GAMEDATA.dat'),
+            os.path.join(out_data, 'GAMEDATA.dat'), '--hold', '255', '--lineup', '--ball', '35')
 
     # 7. quick-load bundles: copy preloaded parts of every changed file
     for qkl in ('fe.qkl', 'game.qkl'):

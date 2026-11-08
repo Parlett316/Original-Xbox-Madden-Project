@@ -89,5 +89,12 @@ Gives each conference one bye and three wild-card games. Apply it to both files,
 
 Lowers the position minimums in `template.dat` so a team can carry no fullback. The XBE change guards a divide by zero those minimums would otherwise cause when a team trims its roster, so use both files. Saves don't carry these tables. `build_all.py --optional-fullback` runs it. Details: [findings §8](../docs/findings.md).
 
+## `kickoff_spot.py` and `kickoff_setup.py`: the modern kickoff
+
+    python kickoff_spot.py <in default.xbe> <out default.xbe>
+    python kickoff_setup.py <in GAMEDATA.dat> <out GAMEDATA.dat> --hold 255 --lineup --ball 35
+
+`kickoff_spot.py` moves the kickoff to the kicking team's 35, sends kickoff touchbacks to the 35 (punts keep the 20), and spots a kickoff out of bounds at the receiving 40. `kickoff_setup.py` edits the playbooks: the NFL's hybrid lineup, and copied kickoff and return scripts that hold everyone, CPU kickers included, until the receiving team touches the ball. Use both, then re-sync `fe.qkl`. `build_all.py --modern-kickoff` runs them. Details: [findings §7](../docs/findings.md).
+
 ## `loadscreen/`: custom loading and start screens
 See [loadscreen/README.md](loadscreen/README.md).
