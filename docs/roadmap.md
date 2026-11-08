@@ -36,7 +36,8 @@ Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first 
 
 ### Modern NFL rules ([findings §8](findings.md#8-season-structure-and-playoffs-09))
 - **Varied or selectable preseason.** Small to large. Every year now plays the same 3 preseason weeks from the data; restoring a 3-game picker would mean reworking its builder (`0x40a000`) and pick limits (`0x40456c`, `0x40459d`).
-- **Overtime and kickoff rules.** Unknown. They have no table fields, so they're in gameplay code.
+- **Modern kickoff: the lineup and hold work on hardware** (2026-11-07). The playbooks in `GAMEDATA.dat` set both teams' spots and scripts, and a wait step holds everyone until the receiving team touches the ball (`patches/kickoff_setup.py`; findings §7). Still to do: add it to `build_all.py`; move the ball to the 35 (then the kicking team's `y` becomes 25); and the touchback and landing-zone rules. Those three are gameplay code. The kicking team drifts about a yard toward the sidelines during the kicker's motion, visible only in replays.
+- **Overtime rules.** Unknown. They have no table fields, so they're in gameplay code. The user plays 5-6 minute quarters, so a fixed 10-minute overtime is too long; prefer two-thirds of the quarter length, or the stock length if it already follows the quarter setting.
 - **Varied kickoff times in generated week 18s.** Small to medium. The cave uses Sunday 1:00 for all 16 games and has 11 bytes free, so a Saturday and Sunday-night mix may need more cave space.
 - **2027 schedule in year 1.** Very small: re-download `games.csv` after the NFL releases it (about May 2027) and rebuild.
 

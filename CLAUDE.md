@@ -36,6 +36,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Test a build in xemu | `tools/make_xiso.py` and docs/workflow.md ("Testing in xemu") |
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
 | What the announcers call a team | `patches/commentary_team.py` (`build_all.py --commanders-commentary`; docs/findings.md §10) |
+| Playbooks: formations, player spots, assignment scripts | `patches/kickoff_setup.py` (unpack, edit and repack `GAMEDATA.dat`), `tools/play_scripts.py` (docs/findings.md §7) |
 | Listen to or measure commentary clips | `tools/speech_clips.py` (decodes `SPCHDATA.dat` to WAV) |
 
 ## Environment notes
@@ -61,6 +62,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** 7-team playoffs (`--playoffs7`), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Needs a franchise created on that build; an older franchise sticks at the end of its last regular-season week.
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
 - **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
+- **Working on hardware, not in `build_all.py` yet:** the modern kickoff lineup, with both teams holding until the ball is touched (`patches/kickoff_setup.py --hold 255 --lineup`, which edits `GAMEDATA.dat`'s playbooks). The ball is still on the 30, and the touchback and landing-zone rules aren't done.
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 

@@ -4,6 +4,46 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Waiting on an Xbox test
 
+**Kickoff alignment, one-player test.** Kicking-team spots are data in `GAMEDATA.dat`'s playbooks, not code ([findings §7](findings.md#7-tuning-table-survey-09)). `patches/kickoff_setup.py` (not committed yet) moved one coverage player 10 yards in `y` in all 50 playbooks with a kickoff. Copy these from `patched/Madden NFL 09 (USA)/kickoff_test/data/`, built on the `commentary_test3` bundles. To undo them, copy back stock `GAMEDATA.dat` and `fe.qkl` from `commentary_test3/data/`.
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `GAMEDATA.dat` | 4,508,032 bytes | `fcdd1323d750dc7780b03094fac3eaaeb225604d` |
+| `fe.qkl` | 10,424,200 bytes | `648c4711da2dd8e2a3378790f25ce6763771bf4a` |
+
+- [x] **Alignment in xemu (2026-11-06):** on an image of the stock game with this edit and an `fe.qkl` synced from stock, the moved player lines up at about the 35, 10 yards ahead of the line at about the 25. So one `y` unit looks like one yard and `+y` is upfield.
+- [x] **Kick in xemu (2026-11-06):** the moved player ran straight to the end zone, ignoring where the ball went, so the play's script runs from his new spot.
+- [x] **Hold test in xemu (2026-11-06):** with Kickoff Middle's coverage script starting with a wait (`--hold 160`, PSAL code 51; `patched/Madden NFL 09 (USA)/kickoff_hold_test/data/`, stock positions), the kicking team moved about a yard and stopped. The user could still move the kicker. Not reported: whether they ever started again.
+- [x] **Short hold in xemu (2026-11-06, `--hold 64`):** the kicking team moves about a yard during the kicker's windup and stops. The kicker kicks, and the whole team starts running as the kicker lands. So code 51 is a timer running from before the kick, and the chase step then runs.
+- [x] **160 hold in xemu practice mode (2026-11-06):** the coverage team stayed put until the receiving team fielded the ball. The kicker moved on his own, as his script is unchanged.
+- [x] **Squib with the 160 hold (2026-11-06):** no one moved until the receiving team touched the ball, and they moved even when it wasn't caught cleanly. So a wait ends on its timer or on that touch.
+- [x] **Modern lineup and hold in xemu (2026-11-06):** `kickoff_setup.py --hold 255 --lineup` (`patched/Madden NFL 09 (USA)/kickoff_modern_test/data/`) puts the kicking team on the receiving 40 and the blockers on the receiving 35 and 30, with returners near the 5 and 15. A screenshot confirms those spots, and the user reports that the hold and touch logic works. The archive repack loads.
+- [x] **Play Now in xemu (2026-11-06):** the kickoff behaves the same as in practice mode, and everyone holds. The kicking team still creeps about a yard during the kicker's motion.
+- [x] **Creep cause (2026-11-06):** in a split test, the half of the kicking team facing downfield (`dir_` 64) barely moved during the kicker's motion, and the half in the stock inward stance (`dir_` 0 and 128) stepped forward over the line, judging by screenshots. So the stance is the main cause.
+- [x] **Downfield stance in xemu (2026-11-07):** with all ten facing downfield on the 40, they no longer step forward. Instead, each side drifts about a yard toward its sideline during the kicker's motion, visible only in instant replay. That fits a sidestep relative to their facing, one way on each side, so no facing removes it. The returners stay in place until the touch (the second returner now uses script 1195, since 43 is shared with punts), and blocking looks correct.
+- [x] **Out of bounds in xemu (2026-11-07):** an untouched kick out of bounds caused no problem.
+- [ ] **Untouched in the end zone:** a touchback with no touch hasn't been tried.
+- [x] **Ball on the 35 in xemu (2026-11-07):** `patches/kickoff_spot.py` with `kickoff_setup.py --hold 255 --lineup --ball 35`. The ball is on the 35 in practice mode and Play Now, the scoreboard says 35, the kicking team is on the receiving 40, and a safety free kick is on the 20. Play Now's spot comes from `0x30c730`; practice uses the `[0x801c50]` paths.
+- [x] **Safety kick froze (2026-11-07):** after the safety, nobody moved, because safety kicks and their returns shared the held scripts. The hold now gives kickoff and kick-return plays their own copies of their scripts (the `PSAL` table grows, and so do the entries' unpacked sizes), and the stock scripts stay as they were.
+- [x] **Copied scripts in xemu (2026-11-07):** a regular kickoff still holds until the touch. On a safety free kick, the kicking team ran, but the receiving team's players ran away from the ball instead of fielding it. The safety return's data is stock (checked: no shared script or position changed). Comparison in xemu (2026-11-07): the unmodified game fields the safety free kick (a "SAFETY PUNT" from the 20). So do split image A (the new playbooks with the stock XBE) and split image B (the new XBE with stock playbooks). The full combination failed again: both returners did the "you got it?" back-off. At the user's suggestion, the kickoff returners are now stacked as in stock (the deep one on the 5 fields, the other blocks from the 15), each on a held copy of his own script, so the earlier swap of the deep returner to script 1195 is gone. On that build (2026-11-07, xemu) the user reports it "seems better".
+
+**Ball on the 35, Xbox test.** Copy these from `patched/Madden NFL 09 (USA)/kickoff35_test/`. `default.xbe` is the optional fullback XBE plus `kickoff_spot.py`, changing the same 11 bytes tested in xemu. `fe.qkl` is synced from `commentary_test3`, and `game.qkl` is unchanged. To undo, copy back `default.xbe` from `optional_fullback_test/`, the stock `GAMEDATA.dat`, and `fe.qkl` from `commentary_test3/data/`.
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `default.xbe` | 7,766,016 bytes (same size as the current one) | `1c74ee87e404a2d5d0957eb247589aa85b8df2e7` |
+| `data/GAMEDATA.dat` | 4,516,224 bytes | `4cc4ec02605a68454174e2b891b64c44d57edac7` |
+| `data/fe.qkl` | 10,424,200 bytes (same size as the current one) | `7ff12412f3aecf27bae77b926da358f72b18d46e` |
+
+- [x] **Xbox (2026-11-07):** the user reports everything seems fine. Players seemed a little faster, which the user put down to having just played in slow xemu.
+- [x] **CPU kicker hold (xemu, 2026-11-07):** kickoff and squib kickers' copied scripts now hold right after the kick (code 45, then the wait). With the CPU kicking, he stays in place until the touch. A human-controlled kicker can't be held with data. Not on the Xbox yet.
+- [ ] **Landing zone and kick results:** short of the receiving 20 and out of bounds go to the receiving 40, a touchback to the 35, and a ball that lands in the zone then is downed in the end zone to the 20. The result code is in `0x2687d0` (findings §7). Touchbacks: `kickoff_spot.py` now hooks the two touchback stores. Caves at `0x10e80`-`0x10eac` write ±15 (the 35) when the play type is 0 (a kickoff), and the stock ±30 (the 20) otherwise. In xemu (`kick35g.iso`, on the awareness-fixed XBE), check a kickoff touchback (the 35) and a punt touchback (the 20). Madden 09 has no kickoff out-of-bounds penalty: the out-of-bounds and landing-short spots aren't found yet.
+- [ ] Then: the touchback spot, out-of-bounds placement, and penalties enforced on a kickoff.
+- [x] **Xbox (2026-11-07):** the user reports that the modern kickoff works on hardware. Files: `GAMEDATA.dat` (4,508,672 bytes, `b3ee0324da91c23a50cb6ebca5ddcdbc86f801bf`) and `fe.qkl` (10,424,200 bytes, `1903e69bc73a552211d5350dd7ae2455ad94c928`) from `patched/Madden NFL 09 (USA)/kickoff_modern_test/data/`. `GAMEDATA.dat` is 640 bytes larger than stock. To undo, copy back the stock `GAMEDATA.dat` and `fe.qkl` from `commentary_test3/data/`.
+- [ ] **Rest of the lineup test:** do blockers engage, since their run distances are stock and may overshoot? What happens on an untouched kick into the end zone or out of bounds? Does the next play load in a real game?
+- [x] **Diagram lineup in xemu (2026-11-06):** the build matching the NFL hybrid kickoff diagram the user supplied loads, per the user's screenshots (`kickoff_setup.py --hold 255 --lineup`; `patched/Madden NFL 09 (USA)/kickoff_modern_test/data/`): kicking team evenly spaced at the receiving 40, seven blockers on the 35, two on the 32, and two returners side by side on the 5.
+- [ ] **Still to build:** the ball on the 35 (the kicking team's `y` then becomes 25), and the touchback and landing-zone rules.
+
 **Al Michaels says "Washington": works on the Xbox (2026-11-05).** Commanders are called Washington, and the '91 Redskins keep "Redskins". In Dallas @ All Redskins, Al used his city lines ("Dallas and Washington", stock behaviour) and Madden said "Cowboys and Redskins", which the user is happy with. `build_all.py --commanders-commentary` builds it, and details are in [findings §10](findings.md#10-commentary-team-names-09). The tested files are in `patched/Madden NFL 09 (USA)/commentary_test3/data/`, built on the skins screens files:
 
 | File | Size | SHA-1 |
@@ -44,6 +84,10 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [x] **#0 on a uniform (2026-11-05):** Mike Sainristil's 0 shows cleanly on the back, front and sleeve of the white jersey on hardware, though no stock 09 player wears it. Not checked: the burgundy jersey and the menus.
 - [ ] **Edit screen:** edit a WR's number and note which numbers it offers.
 - [ ] **Playoffs, if convenient:** play a playoff game by hand, look for a bracket screen, and check that the 8-9 Eagles type of #7 seed was really the next team in line.
+
+## Reported, not looked at yet
+
+- [ ] **Minicamp game (2026-11-07):** the Commanders/Redskins are missing, apparently replaced by the Cardinals. The Bengals are there, but they wear Bears uniforms and play in Chicago. Seen on the Xbox with the full build. Not yet known: whether the stock game does it (check `stock.iso` in xemu). A team-index mismatch between the minicamp data and the modern roster is the first guess.
 
 ## In progress
 
