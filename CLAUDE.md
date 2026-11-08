@@ -24,7 +24,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Read or edit any EA database | `roster/tdb.py` (`DB`, `Table.get/set/rows/raw/set_raw`, `fix`, `verify`, `resized`) |
 | TERF archives / MMAP textures / LZH1 | `roster/headshots.py:terf_entries`, `patches/loadscreen/{terf,eammap,lzh1emu}.py` |
 | Disassemble the XBE, find strings and callers | `tools/xdis.py` (DB query tags are byte-reversed: `'YALP'` = PLAY) |
-| Compare franchise saves | `tools/franchise_report.py` (ratings across seasons), `tools/save_diff.py` (what changed, table by table) |
+| Compare franchise saves | `tools/franchise_report.py` (ratings across seasons), `tools/save_diff.py` (what changed, table by table), `tools/table_growth.py` (table counts against capacity) |
 | Jump a franchise to a later week | `tools/save_jump.py` (needs `--save-unlock`; docs/workflow.md) |
 | Move saves on an xemu drive | `tools/xbox_hdd.py` (qcow2 + FATX) |
 | List every table and field in a data file | `tools/db_survey.py` (results: docs/findings.md §7) |
@@ -36,6 +36,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Test a build in xemu | `tools/make_xiso.py` and docs/workflow.md ("Testing in xemu") |
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
 | What the announcers call a team | `patches/commentary_team.py` (`build_all.py --commanders-commentary`; docs/findings.md §10) |
+| Playbooks: formations, player spots, assignment scripts | `patches/kickoff_setup.py` (unpack, edit and repack `GAMEDATA.dat`), `tools/play_scripts.py` (docs/findings.md §7) |
 | Listen to or measure commentary clips | `tools/speech_clips.py` (decodes `SPCHDATA.dat` to WAV) |
 
 ## Environment notes
@@ -61,7 +62,9 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** 7-team playoffs (`--playoffs7`), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Needs a franchise created on that build; an older franchise sticks at the end of its last regular-season week.
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
 - **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
+- **Working on hardware, off by default (branch `modern-kickoff`):** the modern kickoff (`--modern-kickoff`). The ball is on the 35, kickoff touchbacks come out to the 35, and a kickoff out of bounds goes to the receiving 40 (`patches/kickoff_spot.py`, default.xbe). The hybrid lineup holds until the ball is touched, kickers included, with stacked returners (`patches/kickoff_setup.py --hold 255 --lineup --ball 35`, `GAMEDATA.dat`). Not done: a kickoff landing short of the 20.
 - **Built, not tested:** the 07/08 awareness XBEs.
+- **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 
 ## Things that cost time before (avoid repeating)
 - **New data ignored on the console?** Check `fe.qkl`/`game.qkl` first (`qkl_sync.py`). That's what silenced the new music and hid the start screen.

@@ -1,8 +1,22 @@
 # Outstanding work
 
-A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-05. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
+A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-08. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
 
 ## Waiting on an Xbox test
+
+**Modern kickoff: works on the Xbox (2026-11-08), now `build_all.py --modern-kickoff`.** The ball is on the 35 (a safety kick stays on the 20). Kickoff touchbacks come out to the 35 and punts' stay on the 20. A kick out of bounds draws the penalty and goes to the receiving 40. Everyone, CPU kickers included, holds in the NFL's hybrid lineup until the receiving team touches the ball, with the returners stacked as in stock. A human-controlled kicker can't move before then either. Details are in [findings §7](findings.md#7-tuning-table-survey-09). The full build with the usual options plus `--modern-kickoff` reproduced every hardware-tested file byte for byte (2026-11-08): `default.xbe` and `GAMEDATA.dat` match `kickoff35_test3`, and the other 16 files match the earlier tested builds.
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `default.xbe` | 7,766,016 bytes | `6b7266ab6de5497a0d0e961631c3d3562a4c444c` |
+| `data/GAMEDATA.dat` | 4,518,272 bytes | `d31e6fea0fdbee42542d6ee5c16eb36643862417` |
+| `data/fe.qkl` | 10,424,200 bytes | `12b01c5770c5eee103d8d69f6f668c5fa607a9ac` |
+
+- [ ] **Landing short of the receiving 20:** a new rule with no stock code, which goes to the receiving 40. It needs the spot where the kick first lands, which hasn't been found. The play-result rules are at `0x2687d0`.
+- [ ] **Untouched in the end zone:** a touchback with no touch hasn't been tried. Neither has a ball that lands in the landing zone and is downed in the end zone (it should go to the 20).
+- [ ] **Penalties during a kickoff:** check where they're enforced from now that the ball is on the 35.
+- [ ] **Rest of the lineup test:** do blockers engage, since their run distances are stock and may overshoot?
+- [ ] **Known quirk:** the kicking team drifts about a yard toward the sidelines during the kicker's motion, visible only in replays. Turning them doesn't remove it.
 
 **Al Michaels says "Washington": works on the Xbox (2026-11-05).** Commanders are called Washington, and the '91 Redskins keep "Redskins". In Dallas @ All Redskins, Al used his city lines ("Dallas and Washington", stock behaviour) and Madden said "Cowboys and Redskins", which the user is happy with. `build_all.py --commanders-commentary` builds it, and details are in [findings §10](findings.md#10-commentary-team-names-09). The tested files are in `patched/Madden NFL 09 (USA)/commentary_test3/data/`, built on the skins screens files:
 
@@ -45,9 +59,14 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [ ] **Edit screen:** edit a WR's number and note which numbers it offers.
 - [ ] **Playoffs, if convenient:** play a playoff game by hand, look for a bracket screen, and check that the 8-9 Eagles type of #7 seed was really the next team in line.
 
+## Reported, not looked at yet
+
+- [ ] **Minicamp game (2026-11-07):** the Commanders/Redskins are missing, apparently replaced by the Cardinals. The Bengals are there, but they wear Bears uniforms and play in Chicago. Seen on the Xbox with the full build. Not yet known: whether the stock game does it (check `stock.iso` in xemu). A team-index mismatch between the minicamp data and the modern roster is the first guess.
+
 ## In progress
 
-- [ ] **Optional fullback:** `build_all.py --optional-fullback` (`patches/optional_fullback.py`) is committed on the `optional-fullback` branch, not merged, and off by default. It changes `template.dat` and `default.xbe`. It passed a season and an offseason on hardware. If xemu screenshots are black, the display may be asleep: a one-pixel mouse nudge brought them back.
+- [ ] **Merge to `main`:** `modern-kickoff` (from `commentary-washington`, which is from `optional-fullback`) isn't merged. Every option on it is off by default and its full build is verified, so it's ready to merge.
+- [ ] **Optional fullback:** `build_all.py --optional-fullback` (`patches/optional_fullback.py`) is off by default. It changes `template.dat` and `default.xbe`. It passed a season and an offseason on hardware. If xemu screenshots are black, the display may be asleep: a one-pixel mouse nudge brought them back.
 
 ## Ready to do
 
@@ -59,7 +78,9 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## To research
 
-- [ ] **Long franchises (recommended next):** the franchise `PLAY` table has 2,754 rows, reaches 2,634 by the end of year 4, and starts about 97 higher with the free agents. Find out what happens when it fills.
+- [ ] **Online play (the user's idea):** a private server for just this game. The 09 XBE links `XONLINE` and `XNET` and names `xblmadden09.ea.com`, so it needs an answer for both Xbox Live sign-in (Insignia's layer) and EA's own server, whose protocol isn't documented. Start by checking Insignia's list and what the game sends to that address in xemu.
+- [ ] **Keep career stats in long franchises:** `PCDE` fills by year 5, and players after that lose career rows (findings §11). Check it on the screen, then see if raising its capacity is safe.
+- [ ] **Long franchise with the free agents, on hardware:** years 5 to 10 passed in xemu on the build without them (findings §11). Test the current build, and a user-run team, when convenient.
 - [ ] **Coaches and progression:** do better coaches improve ratings over a season or more? Compare multi-season saves or trace the code.
 - [ ] **Overall recalculation:** by week 1, players on teams have new overalls with no rating changes, and unsigned free agents don't. Confirm the formula in the code.
 - [ ] **QB awareness floor:** compare sim stats for Daniels, Murray, Ward and Willis with and without it.

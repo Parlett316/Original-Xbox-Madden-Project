@@ -168,6 +168,12 @@ Investigated 2026-11-03 for modern rules (17-game season, 7-team playoffs). The 
 
 **Game rules aren't in tables.** Overtime and kickoff/touchback spots have no DB fields, only UI strings ("End of Overtime Quarter", "OVERTIME!!!", "Touchback"), so they live in gameplay code.
 
+**Playbooks and kickoff alignment.** `GAMEDATA.dat` entries are LZH1-compressed TDBs. Kickoff plays (`PLYL` 5, 9, 10, 3372-3374) use `SETL` 5 (`FORM` 6) in 50 playbooks, with identical positions in all of them. Onside uses `SETL` 67, safety kickoff `SETL` 8, and the return teams `SETL` 6 and 70 in 49 playbooks. Each `SETP` row is a player (`poso` 0 = kicker, 1-10 = coverage) and `SETG` holds his spot as floats in `x___`/`y___` and mirrored `fx__`/`fy__`, apparently yards from the ball: kicker (-3.5, -3.8), coverage line `x` ±24.5 at `y` -6 to -7.5. In xemu, adding 10 to one player's `y` put him about 10 yards upfield, so `+y` points downfield toward the receiving team. Assignments are `PLYS` → `PSAL` steps: all coverage players share `PSAL` 22, so the same script runs for each. Step code 51 is a wait, and it ends on its timer (`val1`, 0-255) or when the receiving team touches the ball (seen in xemu, including on a muffed squib). At 64 it ran out as the kicker landed, and at 160 it outlasted a deep kick's flight. `patches/kickoff_setup.py` changes these and repacks the archive, since recompressing changes stream sizes; `fe.qkl`'s header copies then need `qkl_sync.py`. The return set uses the same `y` from the ball: returners at 65 and 55, front line at 15.
+
+**Field coordinates and the kickoff spot.** Read from xemu memory at a kickoff lineup, through the gdb stub (`-gdb tcp:127.0.0.1:1234`, physical RAM at VA `0x80000000`; QMP `pmemsave` hung and crashed xemu). Live positions are yards from midfield, with the kicking team's half negative: the kicker at (-3.8, -24.0) against his playbook spot (-3.5, -3.8) from a ball at -20, its own 30. The game state at `[0x801c50]` holds the ball spot, `+0x34` across and `+0x38` downfield. Six paths (`0x45bef`, `0x45fbd`, `0x4660d`, `0x4715e`, `0x16a96d`, `0x293bc9`) set a kickoff to (0, -20.0) when `+0x3c` is 0 and call `0x294180`. `0x293e4d` turns a -20.0 spot into -30.0 (the 20) for a safety kick. `patches/kickoff_spot.py` moves all seven to -15.0. Play Now's kickoff is `0x30c730` instead: an adjustment `[[0x8034f0]+0x4c]` (normally 0) minus the shared 20.0 at `0x6fc624`, passed to the setter `0x294180` (called every frame from `0x30c75d` while a kickoff is set up). The safety free kick is `0x30c7e0` (-30.0). `0x1b83f7` picks -20.0 for situation 0.
+
+**Play results (in progress).** After a play, `0x269c50` calls `0x2699b0`, which runs the result rules (`0x2672e0`, `0x2687d0`, `0x269020`), then `0x293ba0` with the dead-ball spot, stored at `[0x803504]+0x24/+0x28`. In `0x2687d0`, `0x268eab` is a touchback: the spot becomes +30.0 or -30.0 (the 20 on one side or the other, by direction flag `[ebp+0x14]&1`), unless `0x267140` finds an event of type 0x14 or 0x15 between -50 and 50 and uses its spot. It isn't yet known whether this path is kickoff-only or shared with punts and interceptions. Field constants: `0x709434` -50.0, `0x7093e0` 50.0 (goal lines), `0x7093e4` 30.0, `0x709914` -49.0. Debugger breakpoints and watches make xemu unplayable, so use them only when nobody is playing.
+
 ## 9. Team logos and uniforms (09)
 
 All of this was tested on hardware on 2026-11-04 unless it says otherwise. The tools are `patches/team_logo.py` and `patches/team_helmet.py`.
@@ -225,3 +231,38 @@ A descriptor is `u16 bank, u16 sub-bank, u8 type, u8 samples, u16, u32 total`, t
 
 **The change.** In table 7, `COMMANDERS` takes `GALAXY`'s value, 34. No team uses Galaxy, an NFL Europe name. Sub-bank 34 of `0x08d` and `0x7f1` then holds Al's "Washington", keeping each slot's parameters. With `--clip surname` (take 2 mid-sentence, take 1 at the end), `0x08d`'s rows get takes 2, 2, 1 and `0x7f1` gets take 2. With `--clip city`, `0x08d`'s rows get (0,6,0), (0,6,1), (0,0,0) and `0x7f1` gets (0,6,1). In table 4, `COMMANDERS` joins the Redskins at 32, so it behaves as stock Washington does and bank `0x419` isn't changed. The first two test images put "Washington" in that bank, which was a mistake. Each table loses `GALAXY` and a spare row (`NFL-E ALUMNI`, `MILLENIUM`) because the new name is longer and an entry can't change size. `--check` rebuilds both tables unchanged and compares them with stock. Tables 6, 16 and 18 and John Madden's team references aren't changed.
 
+
+## 11. Long franchises and full tables (09)
+
+Tested 2026-11-06 in xemu, not on hardware: the `Season4Works` save, on the 17-game build without free agents, with `--save-unlock`. The user's team was set to CPU control in `OWNR` (the `CF*` flags) and every game was simmed. Offseasons were skipped with Start New Season. Years 5 to 10 each finished through the Pro Bowl with no stuck week, and every save passed its CRC check. `tools/table_growth.py` compares table counts across saves.
+
+| Table | Capacity | Y5 | Y6 | Y7 | Y8 | Y9 | Y10 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `PLAY` | 2,754 | 2,635 | 2,635 | 2,635 | 2,635 | 2,635 | 2,635 |
+| `PSDE` | 6,000 | 4,817 | 5,474 | **6,000** | **6,000** | **6,000** | **6,000** |
+| `PSNG` | 9,000 | 6,632 | 7,460 | 8,253 | 8,791 | **9,000** | **9,000** |
+| `PSOF` | 3,600 | 2,104 | 2,325 | 2,558 | 2,728 | 2,813 | 2,813 |
+| `PSOL` | 3,000 | 1,331 | 1,564 | 1,749 | 1,888 | 1,946 | 1,974 |
+| `PCDE` | 1,550 | **1,550** | **1,550** | **1,550** | **1,550** | **1,550** | **1,550** |
+| `PCNG` | 2,100 | 2,013 | 2,013 | 2,023 | 2,055 | 2,055 | 2,064 |
+| `PCOF` | 900 | 805 | 812 | 830 | 854 | 854 | 854 |
+| `PCOL` | 430 | 415 | 420 | 424 | 424 | 424 | 424 |
+
+- **`PLAY` doesn't fill.** It stays at 2,635, including the 104 Pro Bowl rows that exist until the offseason. Retired players (`TGID` 1014) and some free agents leave each offseason as rookies arrive. The code that decides this hasn't been traced, so the cause of the flat count is inferred.
+- **Full season tables lose the oldest season first.** `PSDE` rows for the first season go 893, 786, 642, 155, 0, 0 across Y5 to Y10, and `PSNG` goes 1,233, 1,093, 964, 806, 517, 286. The latest season stays complete: about 1,030 `PSDE` rows and 32,000 tackles a year, before and after the table filled. So a long franchise keeps a rolling history, not its full history.
+- **A full `PCDE` loses career rows.** Players with season rows and no career row go 26, 32, 52, 96, 83, 112 across Y5 to Y10. Their career defensive totals are presumably missing. Not checked on the screen.
+- **Unexplained:** `PCOF`, `PCOL` and `PCKP` stop growing below capacity (854 of 900, 424 of 430, 183 of 325).
+- **Player IDs are reused.** New players get the lowest free `PGID` (`0x39f910`), and 152 changed owner in one offseason. In one year 5 preseason save, 22 players with `PYRP` 0 had career game rows. The end-of-season saves show 0 or 1 such player above 17 career games, so inherited stats aren't confirmed.
+- **The save file isn't the limit.** It's always 1,490,944 bytes. A table with flag `0x10` stores nothing while empty and its full capacity once it has rows, so the DB's size depends on which tables have rows, not on how full they are (1,335,932 bytes at years 3 and 4).
+- **Stock does the same, sooner.** The stock template has the same capacities, and the roster's real career history is preloaded (`PSNG` rows from `SEYR` -10). The stock-roster saves `FranchisePreseasonYear2` and `Year3` have `PSNG` full at 9,000 of 9,000 by year 2. Between them, the rows for `SEYR` -10 to -7 (120, 1, 288 and 410) disappear while year 2 grows from 609 to 1,447, so stock also drops the oldest season first. `PCDE` is 1,379 of 1,550 there and growing by about 180 a year, so it should fill around year 3 or 4. The modern roster starts with no history, so it keeps every franchise season for longer.
+
+Not tested: the free-agent build, which starts about 97 `PLAY` rows higher; a user-run team, including its draft and free agency; and years past 10.
+
+Driving this in xemu:
+
+- **Season sims:** Play/Simulate's fifth item is Simulate Preseason, Simulate Season or Simulate Playoffs. A trade deadline notice can come first, then a confirmation that defaults to No. The Super Bowl and Pro Bowl menus have three items.
+- **Sign Player:** a CPU-controlled user team still gets this prompt. Answering CPU Sign Player carries on a sim that's running.
+- **Saving:** leaving the franchise from its root menu autosaves. A save made at the Pro Bowl reloads into the season menus, and opening Weekly Schedule then shows the offseason prompt.
+- **Offseason:** the task list's Start New Season, then Accept, skips every remaining task. Retirement notices can come first, in any number.
+- **Don't idle on the main menu:** the attract demo starts, and leaving it is the known freeze.
+- **The window can't be minimised:** `PrintWindow` then returns an empty image.
