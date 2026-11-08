@@ -63,11 +63,6 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 - [ ] **Minicamp game (2026-11-07):** the Commanders/Redskins are missing, apparently replaced by the Cardinals. The Bengals are there, but they wear Bears uniforms and play in Chicago. Seen on the Xbox with the full build. Not yet known: whether the stock game does it (check `stock.iso` in xemu). A team-index mismatch between the minicamp data and the modern roster is the first guess.
 
-## In progress
-
-- [ ] **Merge to `main`:** `modern-kickoff` (from `commentary-washington`, which is from `optional-fullback`) isn't merged. Every option on it is off by default and its full build is verified, so it's ready to merge.
-- [ ] **Optional fullback:** `build_all.py --optional-fullback` (`patches/optional_fullback.py`) is off by default. It changes `template.dat` and `default.xbe`. It passed a season and an offseason on hardware. If xemu screenshots are black, the display may be asleep: a one-pixel mouse nudge brought them back.
-
 ## Ready to do
 
 - [ ] **Remove the 80 overall cap:** agreed. Take out `FREE_AGENT_CAP` at the next roster rebuild, because a player's overall resets once he signs. Older players keep their lost step.
