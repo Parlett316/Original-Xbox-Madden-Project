@@ -19,7 +19,7 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [ ] **Rest of the lineup test:** do blockers engage, since their run distances are stock and may overshoot?
 - [ ] **Known quirk:** the kicking team drifts about a yard toward the sidelines during the kicker's motion, visible only in replays. Turning them doesn't remove it.
 
-**Any number and uncapped free agents: waiting on an Xbox test.** `build_all.py --any-number` (`patches/any_number.py`) sets the edit screen's number table to 0-99 for every position. Rookies and signings still get traditional numbers. The free agents no longer have their overall capped at 80, and their PIMP now comes from the same mapping as everyone else's, about 24 below overall (the cap had set it equal to overall). Copy these from `patched/Madden NFL 09 (USA)/any_number_test/`. Delete any `Rost-` roster saves first, and start a new franchise for the free agents. The full build matches `modern_kickoff_build` in every other file, and the XBE is `minicamp_test` plus this patch.
+**Any number and uncapped free agents: work on the Xbox (2026-11-08).** `build_all.py --any-number` (`patches/any_number.py`) sets the edit screen's number table to 0-99 for every position. Rookies and signings still get traditional numbers. The free agents no longer have their overall capped at 80, and their PIMP now comes from the same mapping as everyone else's, about 24 below overall (the cap had set it equal to overall). Copy these from `patched/Madden NFL 09 (USA)/any_number_test/`. Delete any `Rost-` roster saves first, and start a new franchise for the free agents. The full build matches `modern_kickoff_build` in every other file, and the XBE is `minicamp_test` plus this patch.
 
 | File | Size | SHA-1 |
 |---|---|---|
@@ -31,7 +31,7 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [ ] **PIMP:** a hidden `PLAY` field the game rewrites itself (`update PLAY set PIMP` at `0x387e8d`, `0x387f6b` and `0x39f544`), read with `POVR` in team and depth queries. Its purpose isn't traced: maybe value for signings and trades.
 - [x] **Free agents listed (2026-11-08):** they show up in a new franchise on the Xbox.
 - [x] **Uncapped overalls (2026-11-08):** Wagner (96) and Milano (94) top the free agents on the Xbox.
-- [ ] **CPU signings:** check that CPU teams still sign free agents into roster holes, now that free agents' PIMP is lower.
+- [x] **CPU signings (2026-11-08):** CPU teams signed the top free agents, leaving Leonard Floyd and N. Harris as the best still unsigned.
 
 **Minicamp team mix-up: fixed on the Xbox (2026-11-08).** The minicamp, a game scenario and a city table found Washington by `TDNA` = "Redskins", a name stored in the XBE, which the roster's rename broke ([findings §4](findings.md#4-modern-rosters)). `patches/team_name_keys.py` changes the four strings to "Commanders", and `build_all.py` runs it with `--roster`. On the Xbox, the Commanders are back in the minicamp, at their practice facility. Tested file: `patched/Madden NFL 09 (USA)/minicamp_test/default.xbe` (7,766,016 bytes, SHA-1 `db28745a70779e016e951208e82928016d37b386`), which is `kickoff35_test3` plus this patch.
 

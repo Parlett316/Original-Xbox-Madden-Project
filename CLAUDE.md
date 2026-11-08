@@ -63,6 +63,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
 - **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
 - **Working on hardware, off by default:** the modern kickoff (`--modern-kickoff`). The ball is on the 35, kickoff touchbacks come out to the 35, and a kickoff out of bounds goes to the receiving 40 (`patches/kickoff_spot.py`, default.xbe). The hybrid lineup holds until the ball is touched, kickers included, with stacked returners (`patches/kickoff_setup.py --hold 255 --lineup --ball 35`, `GAMEDATA.dat`). Not done: a kickoff landing short of the 20.
+- **Working on hardware, off by default:** any jersey number at any position in the edit screen (`--any-number`); rookies and signings keep traditional numbers. The free agents are no longer capped at 80 overall, and CPU teams sign them.
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 
