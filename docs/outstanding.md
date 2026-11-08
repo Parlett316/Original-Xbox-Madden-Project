@@ -29,7 +29,9 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 - [x] **Edit screen (2026-11-08):** numbers work as intended on the Xbox.
 - [ ] **PIMP:** a hidden `PLAY` field the game rewrites itself (`update PLAY set PIMP` at `0x387e8d`, `0x387f6b` and `0x39f544`), read with `POVR` in team and depth queries. Its purpose isn't traced: maybe value for signings and trades.
-- [ ] **Free agents:** the best ones show their real overall (some above 80) in a new franchise, and CPU teams still sign players into roster holes.
+- [x] **Free agents listed (2026-11-08):** they show up in a new franchise on the Xbox.
+- [x] **Uncapped overalls (2026-11-08):** Wagner (96) and Milano (94) top the free agents on the Xbox.
+- [ ] **CPU signings:** check that CPU teams still sign free agents into roster holes, now that free agents' PIMP is lower.
 
 **Minicamp team mix-up: fixed on the Xbox (2026-11-08).** The minicamp, a game scenario and a city table found Washington by `TDNA` = "Redskins", a name stored in the XBE, which the roster's rename broke ([findings §4](findings.md#4-modern-rosters)). `patches/team_name_keys.py` changes the four strings to "Commanders", and `build_all.py` runs it with `--roster`. On the Xbox, the Commanders are back in the minicamp, at their practice facility. Tested file: `patched/Madden NFL 09 (USA)/minicamp_test/default.xbe` (7,766,016 bytes, SHA-1 `db28745a70779e016e951208e82928016d37b386`), which is `kickoff35_test3` plus this patch.
 
