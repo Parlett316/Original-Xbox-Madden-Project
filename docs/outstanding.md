@@ -82,7 +82,7 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 - [ ] **Older-franchise guard:** on the 7-team XBE, a franchise with 4 Wild Card games sticks at the end of the regular season with no error. Detect or refuse the mismatch.
 - [ ] **Make `--playoffs7` the default?** It's off by default and has worked over two simmed seasons on hardware.
-- [ ] **xemu helpers:** the key-press, screenshot and snapshot scripts live only in a chat's scratchpad, and each chat rebuilds them. Move them into `tools/` to save tokens.
+- [ ] **xemu franchise pilot:** `tools/xemu.py` has the basics (2026-11-08). The scripts that sim whole years unattended (`year.py`, `pilot.py`, `pick.py`) are still in an old scratchpad and need a reference screenshot of the Sign Player prompt, which can't be committed. Move them when the long-franchise test comes up.
 
 ## To research
 

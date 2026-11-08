@@ -33,7 +33,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Coaching staffs and coach photos | `roster/coaches.py`, `roster/fetch_coach_photos.py` (photo = `uis_coac.dat` entry `CSXP`+1) |
 | Classic teams' real names | `roster/classic_names.py` (nflverse rosters in `nflverse_rosters/`; review CSV, then `--apply`) |
 | One-off custom players (name, size, photo) | `roster/custom_players.py` with a personal spec in `custom/` (never committed) |
-| Test a build in xemu | `tools/make_xiso.py` and docs/workflow.md ("Testing in xemu") |
+| Test a build in xemu | `tools/make_xiso.py`, `tools/xemu.py` (boot, keys, screenshots, QMP, gdb) and docs/workflow.md ("Testing in xemu") |
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
 | What the announcers call a team | `patches/commentary_team.py` (`build_all.py --commanders-commentary`; docs/findings.md §10) |
 | Playbooks: formations, player spots, assignment scripts | `patches/kickoff_setup.py` (unpack, edit and repack `GAMEDATA.dat`), `tools/play_scripts.py` (docs/findings.md §7) |

@@ -103,7 +103,7 @@ xemu is a quick first check before an FTP upload. A pass doesn't replace the Xbo
 2. Boot it with a modded BIOS such as Complex 4627. An untouched XBE signature check would reject our XBE.
 3. To keep your own setup separate, copy `xemu.toml` and the `.qcow2` drive, point the copy at them, and run `xemu.exe -config_path <copy.toml>`. The game writes its cache and saves to the drive. xemu rewrites its config when it exits, so check the settings before each run.
 
-To drive it from a script (tested on xemu 0.8.139):
+To drive it from a script (tested on xemu 0.8.139), use `tools/xemu.py`: `setup` makes a work folder with its own config, drive and EEPROM, then `boot`, `keys` (key presses, waits and screenshots, with a contact sheet), `hmp`, `flush`, `snap` (copy the newest franchise save), `quit`, and `ram`/`break` over the gdb stub. What it relies on:
 
 - Set `port1 = 'keyboard'` under `[input.bindings]`. A/B/X/Y are their own letter keys, Enter is Start, and the arrows are the D-pad.
 - Post `WM_KEYDOWN` and `WM_KEYUP` to the xemu window. It doesn't need focus. Hold a key for about 0.1 s, because 0.25 s can move a menu two steps.
