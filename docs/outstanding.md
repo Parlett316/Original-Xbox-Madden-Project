@@ -108,6 +108,8 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Ready to do
 
+- [ ] **Modern kickoff in `build_all.py`:** add an option (for example `--modern-kickoff`) that runs `kickoff_spot.py` on the XBE after the other XBE patches, and `kickoff_setup.py --hold 255 --lineup --ball 35` on `GAMEDATA.dat`, then re-syncs `fe.qkl`. The work is on the `modern-kickoff` branch (from `commentary-washington`). Then check that the full build still reproduces the other tested files byte for byte.
+
 - [ ] **Remove the 80 overall cap:** agreed. Take out `FREE_AGENT_CAP` at the next roster rebuild, because a player's overall resets once he signs. Older players keep their lost step.
 - [ ] **Any position, any number:** set the table at `0x61ee18` and `0x61eec0` to 0-99. Decide whether rookies stay on traditional numbers (leaning yes).
 - [ ] **Older-franchise guard:** on the 7-team XBE, a franchise with 4 Wild Card games sticks at the end of the regular season with no error. Detect or refuse the mismatch.
