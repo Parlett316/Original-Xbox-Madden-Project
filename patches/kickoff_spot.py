@@ -18,9 +18,13 @@ memory). The ball spot goes through the setter 0x294180.
 
 Touchbacks: 0x268eab in the play-result rules (0x2687d0) puts every touchback
 on the 20, +30.0 at 0x268ecc or -30.0 at 0x268efa depending on direction.
-Interceptions and punts share it. The play type is at [esp+0x18] there
-([0x803504]+0x40, 0 for a kickoff), so each store calls a cave that writes
-half the stock value (the 35) for a kickoff and the stock value otherwise.
+Interceptions and punts share it. The play type ([0x803504]+0x40) is 0 for
+punts too by then (tested), so the cave checks where the ball was snapped
+instead: [0x803504]+0x10, negated when the field flips on a change of
+possession. A snap at exactly +-15.0 is a kickoff from the 35, and gets half
+the stock value (the 35); anything else keeps the stock value (the 20). A punt
+snapped from exactly the 35 would also get the 35, and a kickoff moved by a
+penalty keeps the 20.
 
 Run after madden_awareness_fix.py, which identifies the stock .text by its
 digest and makes the loader map the header page the caves sit in. Like the
@@ -30,8 +34,9 @@ Use patches/kickoff_setup.py --ball 35 with it so the lineup follows the ball.
 import struct
 import sys
 
+NEW_SPOT = -15.0
 STOCK = struct.pack('<f', -20.0)
-NEW = struct.pack('<f', -15.0)
+NEW = struct.pack('<f', NEW_SPOT)
 # VA of the instruction, and its bytes before the float
 SITES = (
     (0x45bef, 'c74238'),     # mov dword ptr [edx+0x38], -20.0
@@ -67,7 +72,11 @@ def file_offset(buf, va):
 
 
 def touchback_cave(stock, kickoff):
-    return (bytes.fromhex('837c241c00')                             # cmp dword ptr [esp+0x1c], 0 (play type)
+    # eax and the flags are dead after both hooked stores (0x268f01 reloads eax)
+    return (bytes.fromhex('a1') + struct.pack('<I', 0x803504)      # mov eax, [0x803504]
+            + bytes.fromhex('8b4010')                               # mov eax, [eax+0x10] (snap spot)
+            + bytes.fromhex('25ffffff7f')                           # and eax, 0x7fffffff (abs)
+            + bytes.fromhex('3d') + struct.pack('<f', -NEW_SPOT)    # cmp eax, 15.0
             + bytes.fromhex('c74508') + struct.pack('<f', stock)    # mov dword ptr [ebp+8], stock
             + bytes.fromhex('7507')                                 # jne done
             + bytes.fromhex('c74508') + struct.pack('<f', kickoff)  # mov dword ptr [ebp+8], kickoff
