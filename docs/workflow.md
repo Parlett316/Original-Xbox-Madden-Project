@@ -107,7 +107,7 @@ To drive it from a script (tested on xemu 0.8.139):
 
 - Set `port1 = 'keyboard'` under `[input.bindings]`. A/B/X/Y are their own letter keys, Enter is Start, and the arrows are the D-pad.
 - Post `WM_KEYDOWN` and `WM_KEYUP` to the xemu window. It doesn't need focus. Hold a key for about 0.1 s, because 0.25 s can move a menu two steps.
-- Take screenshots with `PrintWindow`. This build's QMP has no `screendump`.
+- Take screenshots with `PrintWindow`. This build's QMP has no `screendump`. If they come back black, the display may be asleep: a one-pixel mouse nudge brings it back.
 - Add `-qmp tcp:127.0.0.1:44444,server,nowait` to read the status and to close that one instance with `quit`. The PID listening on the port identifies its window.
 - `tools/xbox_hdd.py` lists, copies and overwrites files on the drive image, so saves can move without FTP. It can read while xemu runs, but send the monitor command `qemu-io ide0-hd0 flush` first (`human-monitor-command` over QMP); otherwise a new file reads as zeros. Close xemu before `put`, and boot again before loading what you wrote.
 - Franchise menus: from the root menu, My Week → Play Week → Weekly Schedule. Press `Y` to untick your game, or Simulate Week stops at it, but not in a week your team doesn't play, because `Y` then ticks another game. Start opens Play/Simulate, where Simulate Week is the fourth item (the Super Bowl and Pro Bowl menus have three items, and Simulate Game is the third). Allow about 2 s between menu moves. Week 6 asks about the trade deadline once, and after 8 saves the last slot has to be overwritten.
