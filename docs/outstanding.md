@@ -18,6 +18,10 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [ ] **Rest of the lineup test:** do blockers engage, since their run distances are stock and may overshoot?
 - [ ] **Known quirk:** the kicking team drifts about a yard toward the sidelines during the kicker's motion, visible only in replays. Turning them doesn't remove it.
 
+**Minicamp team mix-up: fixed on the Xbox (2026-11-08).** The minicamp, a game scenario and a city table found Washington by `TDNA` = "Redskins", a name stored in the XBE, which the roster's rename broke ([findings §4](findings.md#4-modern-rosters)). `patches/team_name_keys.py` changes the four strings to "Commanders", and `build_all.py` runs it with `--roster`. On the Xbox, the Commanders are back in the minicamp, at their practice facility. Tested file: `patched/Madden NFL 09 (USA)/minicamp_test/default.xbe` (7,766,016 bytes, SHA-1 `db28745a70779e016e951208e82928016d37b386`), which is `kickoff35_test3` plus this patch.
+
+- [ ] **Bengals in Bears uniforms, in Chicago:** reported in the same note, but the user doesn't remember which mode it was in. No Bengals lookup uses a renamed name. If it shows up again, note the mode and check the stock game.
+
 **Al Michaels says "Washington": works on the Xbox (2026-11-05).** Commanders are called Washington, and the '91 Redskins keep "Redskins". In Dallas @ All Redskins, Al used his city lines ("Dallas and Washington", stock behaviour) and Madden said "Cowboys and Redskins", which the user is happy with. `build_all.py --commanders-commentary` builds it, and details are in [findings §10](findings.md#10-commentary-team-names-09). The tested files are in `patched/Madden NFL 09 (USA)/commentary_test3/data/`, built on the skins screens files:
 
 | File | Size | SHA-1 |
@@ -58,10 +62,6 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 - [x] **#0 on a uniform (2026-11-05):** Mike Sainristil's 0 shows cleanly on the back, front and sleeve of the white jersey on hardware, though no stock 09 player wears it. Not checked: the burgundy jersey and the menus.
 - [ ] **Edit screen:** edit a WR's number and note which numbers it offers.
 - [ ] **Playoffs, if convenient:** play a playoff game by hand, look for a bracket screen, and check that the 8-9 Eagles type of #7 seed was really the next team in line.
-
-## Reported, not looked at yet
-
-- [ ] **Minicamp game (2026-11-07):** the Commanders/Redskins are missing, apparently replaced by the Cardinals. The Bengals are there, but they wear Bears uniforms and play in Chicago. Seen on the Xbox with the full build. Not yet known: whether the stock game does it (check `stock.iso` in xemu). A team-index mismatch between the minicamp data and the modern roster is the first guess.
 
 ## Ready to do
 

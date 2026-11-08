@@ -89,6 +89,12 @@ Gives each conference one bye and three wild-card games. Apply it to both files,
 
 Lowers the position minimums in `template.dat` so a team can carry no fullback. The XBE change guards a divide by zero those minimums would otherwise cause when a team trims its roster, so use both files. Saves don't carry these tables. `build_all.py --optional-fullback` runs it. Details: [findings §8](../docs/findings.md).
 
+## `team_name_keys.py`: the XBE's team-name lookups
+
+    python team_name_keys.py <in default.xbe> <out default.xbe>
+
+The minicamp, one game scenario and a city table find Washington by the nickname "Redskins", stored in the XBE. After the roster's rename to Commanders, those lookups found no team, and the minicamp showed another team in Washington's place. This changes the four strings to "Commanders". `build_all.py` runs it whenever it builds the roster. Details are in the script.
+
 ## `kickoff_spot.py` and `kickoff_setup.py`: the modern kickoff
 
     python kickoff_spot.py <in default.xbe> <out default.xbe>

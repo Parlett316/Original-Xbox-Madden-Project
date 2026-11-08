@@ -120,6 +120,8 @@ def main():
         run(os.path.join(P, 'playoffs7.py'), xbe, xbe)
     if a.optional_fullback:
         run(os.path.join(P, 'optional_fullback.py'), xbe, xbe)
+    if a.roster:                          # the XBE's "Redskins" lookups follow the rename
+        run(os.path.join(P, 'team_name_keys.py'), xbe, xbe)
     if a.modern_kickoff:                  # ball on the 35, touchbacks and out of bounds
         run(os.path.join(P, 'kickoff_spot.py'), xbe, xbe)
 
