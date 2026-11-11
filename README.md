@@ -25,6 +25,36 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 
 There's nothing here for Madden 06 yet: it has no role system, so the awareness bug can't happen there.
 
+## The Tony Bruno Show is back
+
+Madden 2005, 06 and 07 had EA SPORTS Radio in franchise mode: Tony Bruno talking about last week's games, taking calls, interviewing coaches and running trivia. Madden 08 and 09 dropped it. It now plays in Madden 09's franchise menus again, on a real Xbox, with today's rosters. In one test franchise he reported that Rhamondre Stevenson of the Patriots was unhappy about his playing time.
+
+Each week you get one show when you reach the franchise menu: an intro, a few segments, a sign-off, and then the menu music comes back. Nothing plays on the load screens, in a fantasy draft or while weeks are simulating.
+
+### How it was found
+
+The roadmap had this down as unrealistic: the show is game code plus audio, and 09 has neither. Then the pieces turned up one at a time.
+
+1. **08 only switched it off.** Madden 08 ships Madden 07's 228 MB radio audio file byte for byte, but its loader skips the show's part. Madden 09 cut the file down to 2.3 MB of draft announcements. So 07 was the last game that played it, and the closest to 09.
+2. **09 can still play the audio.** The show's clips are in the same format as the play-by-play commentary, and 09 kept the whole speech engine. With 07's file loaded and one event fired by hand, 09 picked the clips but stayed silent: its menus only turn the speech volume up for the draft's "on the clock" line. With that check removed, Tony asked a caller how heavy a football is.
+3. **09 never stopped writing the show.** Its story engine still adds a row to the franchise save whenever something newsworthy happens, for a radio show nobody plays. Madden 07's code turned those rows into a week's show. That code is gone from 09.
+4. **07's show code moves across.** It is one block of about 10 KB that calls eight functions in the rest of the game. Seven of them are still in 09, byte for byte apart from addresses, and the eighth is 54 bytes. `patches/radio_transplant.py` copies the block out of a Madden 07 XBE and fixes every call, jump table, string and variable so it runs inside 09's. It stops if it finds an address it can't account for.
+5. **The rest is new.** 07 started the show from a radio screen that 09 doesn't have, so a small hook decides when it plays. Getting that right took several rounds on the console: Tony talking over the load screen, a show that played twice, a new show for every week of a season sim, and players called by the wrong name ("Mike Brown" for Chase Brown, because the old commentary IDs point at 2006 players). He now uses surnames only.
+
+The full notes, with addresses, are in [docs/findings.md §12](docs/findings.md#12-the-radio-show-2005-to-07).
+
+### Trying it
+
+It's a test build for now, applied on top of a finished `build_all.py` build, and it needs your own copy of Madden 07 as well as 09:
+
+```
+python patches/radio_show.py "<built>/default.xbe" "<out>/default.xbe" --show "Madden NFL 07 (USA)/default.xbe"
+```
+
+Then copy Madden 07's `DATA/SPCHFEDT.dat` into the build's `data` folder as `spchfe07.dat` (228,714,976 bytes). The new `default.xbe` is 16,384 bytes larger than the one it replaces. The stock speech file stays where it is.
+
+What it doesn't have yet: an option in `build_all.py`, a way to turn the show off, and 07's radio screen for skipping or replaying a segment. A player whose surname EA never recorded gets no story.
+
 ## Screenshots
 
 Taken on a real (softmodded) Xbox, straight off the TV.

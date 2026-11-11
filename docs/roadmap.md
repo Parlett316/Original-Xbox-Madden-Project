@@ -80,7 +80,8 @@ Effort is a rough estimate. "Unknown" means nobody has looked yet, so the first 
 - **Improved textures generally** (sharper uniforms, fields, menus). Unknown: the tools can replace textures, but larger ones may not fit the Xbox's memory or the file's slots. A single replaced texture would be a cheap first test.
 - **Older stadiums and uniforms in 09.** Judged not realistic, not tested: art formats changed between years.
 - **Commentary.** New names need recorded audio, and the announcers only have 2008-era names, but existing clips can be reused for a team ([findings §10](findings.md#10-commentary-team-names-09)).
-- **The radio show (the Tony Bruno Show, 2005 to 07) and newspaper storylines.** Looked at on 2026-11-10 ([findings §12](findings.md#12-the-radio-show-2005-to-07)): the audio is in a format 09 still reads, and 07 is the port source, since 08 only switched the show off and 09 dropped the data. The unknown is the code that picks and fires the show's segments. Next steps are in [outstanding.md](outstanding.md).
+- **The radio show (the Tony Bruno Show, 2005 to 07): done as a test build (2026-11-11).** 07's show code and audio run in 09's franchise menus on hardware ([findings §12](findings.md#12-the-radio-show-2005-to-07), README). Left: a `build_all.py` option, an off switch, and 07's radio screen for skipping or replaying a segment.
+- **Newspaper storylines.** Not looked at. 09 still ships the story text files, and its story engine still runs, as the radio show found.
 
 ### Music
 - **Raise the 40-song EA Trax limit.** Medium. It's in three places: `MUPL` capacity (template.dat and the fe.qkl copy), the constant at `0x18cebb`, and the playback array (`0x370` bytes = 55 entries, allocated at `0x2a9e65`). The profile save also stores the playlist.
