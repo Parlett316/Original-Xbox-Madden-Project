@@ -25,8 +25,8 @@ Usage:
   --save-unlock      let the game load edited saves (skips their signature check)
   --no-season17      keep the stock 16-game season (the default is 17 games over
                      18 weeks; existing franchises need the matching build)
-  --playoffs7        7 playoff teams per conference with one bye; needs the 17-game
-                     season, and a franchise created on this build
+  --no-playoffs7     keep 6 playoff teams per conference (the default is 7, with one
+                     bye, on the 17-game season; a franchise created before keeps 6)
   --optional-fullback  a team can carry no fullback (lowers the position minimums)
   --schedule CSV     year 1 is a real NFL season from nflverse's
                      games.csv (github.com/nflverse/nfldata, data/games.csv)
@@ -88,7 +88,8 @@ def main():
     ap.add_argument('--demo-delay', type=int, default=86400000)
     ap.add_argument('--no-season17', dest='season17', action='store_false')
     ap.add_argument('--save-unlock', action='store_true')
-    ap.add_argument('--playoffs7', action='store_true')
+    ap.add_argument('--no-playoffs7', dest='playoffs7', action='store_false')
+    ap.add_argument('--playoffs7', action='store_true', help=argparse.SUPPRESS)   # the default now
     ap.add_argument('--optional-fullback', action='store_true')
     ap.add_argument('--free-agents')
     ap.add_argument('--classic-names')
@@ -99,8 +100,7 @@ def main():
     ap.add_argument('--modern-kickoff', action='store_true')
     ap.add_argument('--any-number', action='store_true')
     a = ap.parse_args()
-    if a.playoffs7 and not a.season17:
-        ap.error('--playoffs7 needs the 17-game season')
+    a.playoffs7 = a.playoffs7 and a.season17   # 7 teams need the 17-game season
     for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo', 'free_agents'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))

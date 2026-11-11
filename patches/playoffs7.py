@@ -21,10 +21,14 @@ Executable:
 - 0x41b6f0 collects 3 winners, in a buffer moved down one slot so it stays in its frame.
 - The clinch routine (0x41aee0) marks 3 wild cards per conference. The draft order needs
   every playoff team marked (see PATCHES).
+- Each of these follows the franchise: SEAI.SNWP (wild-card games) is 6 in one created
+  on this build and 4 in an older one, which gets stock's 6-team code and counts, so it
+  no longer sticks at the end of the regular season. Not tested: the older franchise's
+  next season, whose 286 schedule rows are copied into a table with room for 285.
 
 template.dat: two more wild-card rows in both schedules, and room for them in the
-franchise database (a season now has 286 rows), so a franchise needs this build from
-its creation. The rounds' game counts are read from the schedule (0x3c0ff0).
+franchise database (a season now has 286 rows), so 7 teams need a franchise created on
+this build. The rounds' game counts are read from the schedule (0x3c0ff0).
 """
 import os
 import struct
@@ -36,7 +40,7 @@ import season17 as S  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'loadscreen'))
 from xbe import XBE  # noqa: E402
 
-CAVE_VA = 0x10b40               # zero padding in the header page, up to 0x10f00
+CAVE_VA, CAVE_END = 0x10b40, 0x10e80   # zero padding in the header page, up to kickoff_spot.py's cave
 SEEDING = 0x41b590
 SEEDS = 0x80dea4                # 2 conferences x 7 words, up to the next section at 0x80dec0
 OLD_SEEDS = 0x7ba428
@@ -46,6 +50,8 @@ EXTRA_GAMES = 2                 # one more game per conference
 # Sun 8:15, Mon 8:15.
 KICKOFFS = ((2, 990), (2, 1200), (3, 780), (3, 990), (3, 1215), (4, 1215))
 
+QUERY, SEAI_QUERY = 0x427eb0, 0x650370   # select SEWN, SEWT, SERW, SNWP from SEAI
+COLLECT_AT, COLLECT_STOCK = 0x41b746, bytes.fromhex('6a02 50 8d5c2434 b832000000')
 COUNT_CONFERENCES, CONFERENCE, COUNT_DIVISIONS = 0x3a3660, 0x3a36d0, 0x3a3670
 LIST_WINNERS, LIST_WILD_CARDS, SET_GAME = 0x41aa10, 0x41ab00, 0x3d7a80
 IS_ACTIVE, NOTE_A, NOTE_B = 0x422d80, 0x423530, 0x4234c0
@@ -68,10 +74,12 @@ PATCHES = (
     # Clinch status (TEAM.TMPS): 3 wild cards per conference, not 2. A team without a
     # status counts as a non-playoff team in the draft order (0x3d42d0), so a losing #7
     # seed went into its 32-entry list twice, overran the heap block and crashed.
-    (0x41b566, bytes.fromhex('8b542414d1ea'), bytes.fromhex('ba0300000090')),       # mov edx, 3
-    # After the wild-card round: 3 winners at [frame+0x24..0x2c], best seed first.
-    (0x41b746, bytes.fromhex('6a02'), bytes.fromhex('6a03')),                       # collect 3
-    (0x41b749, bytes.fromhex('8d5c2434'), bytes.fromhex('8d5c2430')),               # buffer one slot lower
+    # Stock passed TPOM.TWNO / 2; now SEAI.SNWP / 2 (wild-card games per conference), read
+    # by the same routine, so a franchise made before this build keeps 2.
+    (0x41b566, bytes.fromhex('8b542414d1ea'), bytes.fromhex('8b542424d1ea')),       # mov edx, [esp+0x24]
+    # After the wild-card round, a stub (wild_card_stub) collects 3 winners at
+    # [frame+0x24..0x2c], best seed first, or 2 at [frame+0x28..0x2c] with 0x3ff in
+    # [frame+0x24] for a 6-team franchise.
     # Game conf + 2: the best winner hosts the other. [frame+0x2c], the worst, still goes to #1.
     (0x41b78a, bytes.fromhex('52') + b'\x68' + struct.pack('<I', UNSET),
      bytes.fromhex('52') + bytes.fromhex('ff74242c') + b'\x90'),                    # push away; push home
@@ -111,14 +119,61 @@ class Asm:
                 out += b'\xe8' + struct.pack('<i', it[1] - (self.va + len(out) + 5))
             else:
                 end = len(out) + len(it[1]) + 4
-                out += it[1] + struct.pack('<i', self.labels[it[2]] - end)
+                target = it[2] - self.va if isinstance(it[2], int) else self.labels[it[2]]
+                out += it[1] + struct.pack('<i', target - end)
         assert len(out) == self.size
         return bytes(out)
 
 
+def wild_cards(a):
+    """f() -> wild cards per conference: 3 when SEAI.SNWP is 6 (or unreadable), 2 when 4.
+    Keeps ebx, esi, edi and ebp."""
+    a.code('83ec10')                        # sub esp, 0x10: SEWN, SEWT, SERW, SNWP
+    a.code('8d44240c 50' * 4)               # push &SNWP, &SERW, &SEWT, &SEWN
+    a.code('68' + struct.pack('<I', SEAI_QUERY).hex() + ' 6a00')
+    a.call(QUERY)
+    a.code('83c418 85c0 8b44240c')          # add esp, 0x18; test eax, eax; mov eax, [esp+0xc]
+    a.jump('0f84', 'wc_read')
+    a.code('b806000000')                    # failed: 7 teams
+    a.label('wc_read')
+    a.code('d1e8 83f802')                   # shr eax, 1; cmp eax, 2
+    a.jump('0f84', 'wc_done')
+    a.code('b803000000')
+    a.label('wc_done')
+    a.code('83c410 c3')
+
+
+def wild_card_stub(a):
+    """Called from COLLECT_AT in 0x41b6f0 with the conference id in eax. Pushes the count
+    and the conference for 0x41abf0, sets its buffer (ebx) and round type (eax)."""
+    a.code('50')
+    a.call(a.va + a.labels['wild_cards'])
+    a.code('8bc8 58 5a 51 50')              # ecx = count; pop eax; pop edx (return); push ecx; push eax
+    a.code('8d5c2430 83f903')               # lea ebx, [esp+0x30]; cmp ecx, 3
+    a.jump('0f84', 'stub_seven')
+    a.code('83c304 c743fc' + struct.pack('<I', UNSET).hex())   # add ebx, 4; mov [ebx-4], UNSET
+    a.label('stub_seven')
+    a.code('b832000000 ffe2')               # mov eax, 50; jmp edx
+
+
 def seeding_cave(va):
-    """cdecl f(last regular week). Frame: t[7] at +0, conference index +0x1c, count +0x20."""
+    """Helpers, then the seeding entry: cdecl f(last regular week). A 6-team franchise
+    runs stock's code; a 7-team one this frame: t[7] at +0, conference index +0x1c,
+    count +0x20."""
     a = Asm(va)
+    a.label('wild_cards')
+    wild_cards(a)
+    a.label('stub')
+    wild_card_stub(a)
+    a.label('seeding')
+    a.call(a.va + a.labels['wild_cards'])
+    a.code('83f803')
+    a.jump('0f84', 'seven')
+    for conf in (0, 1):                     # no stale 7th seed from a 7-team franchise
+        a.code('66c705' + struct.pack('<IH', SEEDS + 14 * conf + 12, 0xffff).hex())
+    a.code('83ec20 56 33f6')                # stock's first instructions, then the rest of it
+    a.jump('e9', SEEDING + 6)
+    a.label('seven')
     a.code('55 53 56 57')                   # push ebp, ebx, esi, edi
     a.code('83ec24')                        # sub esp, 0x24
     a.call(COUNT_CONFERENCES)
@@ -174,7 +229,7 @@ def seeding_cave(va):
     a.label('fail')
     a.code('8bc3')
     a.jump('e9', 'out')
-    return a.bytes()
+    return a.bytes(), a.labels
 
 
 def executable(src):
@@ -187,13 +242,17 @@ def executable(src):
         assert buf[o:o + len(old)] == old, f'{va:#x}: unexpected code {buf[o:o + len(old)].hex()}'
         buf[o:o + len(new)] = new
     base = struct.unpack_from('<I', buf, 0x104)[0]
-    cave = seeding_cave(CAVE_VA)
+    cave, labels = seeding_cave(CAVE_VA)
     o = CAVE_VA - base
-    assert CAVE_VA + len(cave) <= 0x10f00 and not any(buf[o:o + len(cave)]), 'cave space in use'
+    assert CAVE_VA + len(cave) <= CAVE_END and not any(buf[o:o + len(cave)]), 'cave space in use'
     buf[o:o + len(cave)] = cave
     o = x.v2f(SEEDING)
     assert buf[o:o + 3] == b'\x83\xec\x20', 'unexpected code at the seeding routine'
-    buf[o:o + 5] = b'\xe9' + struct.pack('<i', CAVE_VA - (SEEDING + 5))
+    buf[o:o + 5] = b'\xe9' + struct.pack('<i', CAVE_VA + labels['seeding'] - (SEEDING + 5))
+    o = x.v2f(COLLECT_AT)
+    assert buf[o:o + len(COLLECT_STOCK)] == COLLECT_STOCK, 'unexpected code at the winners collection'
+    call = b'\xe8' + struct.pack('<i', CAVE_VA + labels['stub'] - (COLLECT_AT + 5))
+    buf[o:o + len(COLLECT_STOCK)] = call + b'\x90' * (len(COLLECT_STOCK) - len(call))
     print(f'cave: {len(cave)} bytes at {CAVE_VA:#x}')
     return buf
 

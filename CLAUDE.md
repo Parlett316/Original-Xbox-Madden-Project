@@ -37,6 +37,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
 | What the announcers call a team | `patches/commentary_team.py` (`build_all.py --commanders-commentary`; docs/findings.md §10) |
 | Playbooks: formations, player spots, assignment scripts | `patches/kickoff_setup.py` (unpack, edit and repack `GAMEDATA.dat`), `tools/play_scripts.py` (docs/findings.md §7) |
+| What happened during a play (event list: snap, catch, tackle) | `tools/play_events.py` over xemu's gdb stub (docs/findings.md §7) |
 | Listen to or measure commentary clips | `tools/speech_clips.py` (decodes `SPCHDATA.dat` to WAV) |
 
 ## Environment notes
@@ -59,7 +60,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
   - loading and re-saving an edited franchise save (`--save-unlock`, off by default; tested with a jersey-only edit)
   - jumping a franchise to a later week (`tools/save_jump.py`; year 2, week 1 to 18, through the postseason into the offseason)
 - **Checked 2026-11-04:** the full `build_all.py` command in docs/workflow.md reproduces the hardware-tested files byte for byte, and its output boots in xemu.
-- **Working on hardware, off by default:** 7-team playoffs (`--playoffs7`), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Needs a franchise created on that build; an older franchise sticks at the end of its last regular-season week.
+- **Working on hardware, now the default:** 7-team playoffs (`--no-playoffs7` opts out), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Since 2026-11-08 a franchise created before keeps 6 teams instead of sticking at the end of the regular season (xemu only, `playoffs_guard_test`; its next season is untested).
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
 - **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
 - **Working on hardware, off by default:** the modern kickoff (`--modern-kickoff`). The ball is on the 35, kickoff touchbacks come out to the 35, and a kickoff out of bounds goes to the receiving 40 (`patches/kickoff_spot.py`, default.xbe). The hybrid lineup holds until the ball is touched, kickers included, with stacked returners (`patches/kickoff_setup.py --hold 255 --lineup --ball 35`, `GAMEDATA.dat`). Not done: a kickoff landing short of the 20.
