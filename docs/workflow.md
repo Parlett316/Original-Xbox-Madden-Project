@@ -51,7 +51,7 @@ Everything at once:
 
 This full command, without the two screens, reproduced the hardware-tested files byte for byte (2026-11-04). `custom/` holds personal art and is never committed.
 
-Optional additions, each working on hardware: `--playoffs7` (7-team playoffs), `--save-unlock` (load edited saves), `--commanders-commentary` (Al Michaels says "Washington"; adds 447 MB of files to the overlay), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). `--modern-kickoff` (ball on the 35, hybrid lineup and hold, touchbacks to the 35, out of bounds to the 40) works on hardware too. `--any-number` (any jersey number at any position in the edit screen) isn't tested on hardware yet. `--optional-fullback` (a team can carry no fullback) is partly tested on hardware; see [outstanding](outstanding.md). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
+7-team playoffs are on by default with the 17-game season (`--no-playoffs7` opts out). Optional additions, each working on hardware: `--save-unlock` (load edited saves), `--commanders-commentary` (Al Michaels says "Washington"; adds 447 MB of files to the overlay), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). `--modern-kickoff` (ball on the 35, hybrid lineup and hold, touchbacks to the 35, out of bounds to the 40) works on hardware too. `--any-number` (any jersey number at any position in the edit screen) works on hardware as well. `--optional-fullback` (a team can carry no fullback) is partly tested on hardware; see [outstanding](outstanding.md). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
 
 Or step by step. The commands are in each component README ([patches](../patches/README.md), [roster](../roster/README.md), [loadscreen](../patches/loadscreen/README.md)). After changing any data file by hand, always re-run `patches/qkl_sync.py` for `fe.qkl` and `game.qkl`; see the rules below.
 
@@ -142,7 +142,7 @@ Within a franchise, player IDs (`PGID`) are stable. The franchise renumbers ever
 
 ## Reverse-engineering tips
 
-- `tools/xdis.py <xbe> <start> <end>` disassembles with string annotations. Use `--find "<text>"` for strings and their code references, and `--callers <VA>` for direct call sites.
+- `tools/xdis.py <xbe> <start> <end>` disassembles with string annotations. Use `--find "<text>"` for strings and their code references, and `--callers <VA>` for direct call sites. `tools/xcallers.py` finds call sites of unaligned library functions, `tools/xrefs.py` every mention of an address, and `tools/spch_trace.py` logs speech events from a game running in xemu.
 - EA's DB queries are byte-reversed tags in SQL-like strings: `'YALP'` = `PLAY`, `'OSUM'` = `MUSO`. Search for the reversed tag to find the code that reads a table.
 - Full-image Ghidra analysis of a 7 MB XBE timed out. capstone over targeted ranges was enough for everything here.
 - Verify every writer against stock data first: rebuilding with no changes must reproduce the original bytes (`tdb.DB.resized({})`, `qkl_sync.py` with stock inputs, the awareness patcher's 09 output SHA-1 `3814c23e…`).

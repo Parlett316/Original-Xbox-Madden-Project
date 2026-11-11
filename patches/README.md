@@ -80,7 +80,7 @@ Gives `COMMANDERS` its own slot in the commentary name tables, taken from the un
     python playoffs7.py <in default.xbe> <out default.xbe>
     python playoffs7.py <in template.dat> <out template.dat>
 
-Gives each conference one bye and three wild-card games. Apply it to both files, after `season17.py`. It needs a franchise created on this build: an older one sticks at the end of its last regular-season week. `build_all.py --playoffs7` runs it. Details are in the script.
+Gives each conference one bye and three wild-card games. Apply it to both files, after `season17.py`. Seven teams need a franchise created on this build. An older one keeps 6 for the season it's in (xemu only), and its next season isn't tested. `build_all.py` runs it unless given `--no-playoffs7`. Details are in the script.
 
 ## `optional_fullback.py`: a team with no fullback
 
@@ -102,5 +102,31 @@ The minicamp, one game scenario and a city table find Washington by the nickname
 
 `kickoff_spot.py` moves the kickoff to the kicking team's 35, sends kickoff touchbacks to the 35 (punts keep the 20), and spots a kickoff out of bounds at the receiving 40. `kickoff_setup.py` edits the playbooks: the NFL's hybrid lineup, and copied kickoff and return scripts that hold everyone, CPU kickers included, until the receiving team touches the ball. Use both, then re-sync `fe.qkl`. `build_all.py --modern-kickoff` runs them. Details: [findings §7](../docs/findings.md).
 
+## `season17.py`: the 17-game, 18-week season
+
+    python season17.py <in template.dat> <out template.dat> [<games.csv> [season]]
+    python season17.py <in strmdata.db> <out strmdata.db>
+    python season17.py <in default.xbe> <out default.xbe>
+
+Adds a 17th game and an 18th week with a 3-week preseason, and with `games.csv` makes year 1 a real NFL season. Apply it to all three files. It must be the last change to `template.dat` apart from `playoffs7.py` and `optional_fullback.py`, and `fe.qkl` needs re-syncing afterwards. A franchise needs the matching build from its creation. `build_all.py` runs it unless given `--no-season17`.
+
+## `save_unlock.py`: load edited saves
+
+    python save_unlock.py <in default.xbe> <out default.xbe>
+
+Skips the signature check on a save's contents, so a franchise edited on a PC loads. The save has to keep its name and file size and have correct database checksums (`tdb.DB.fix`). `build_all.py --save-unlock` runs it.
+
+## `any_number.py`: any jersey number at any position
+
+    python any_number.py <in default.xbe> <out default.xbe>
+
+Sets the edit screen's number ranges to 0-99 for every position. Rookies and signings still get traditional numbers. `build_all.py --any-number` runs it.
+
 ## `loadscreen/`: custom loading and start screens
 See [loadscreen/README.md](loadscreen/README.md).
+
+## `radio_show.py` and `radio_transplant.py`: 07's radio show in 09 (a test, not in `build_all.py`)
+
+    python radio_show.py <in default.xbe> <out default.xbe> [--show <Madden 07 default.xbe>] [--test-draft]
+
+Makes 09 load Madden 07's `SPCHFEDT.dat`, copied to the data folder as `spchfe07.dat`, with the Tony Bruno Show's sub-banks and event file, and lets menu speech other than the draft's be heard. With `--show`, `radio_transplant.py` copies 07's show code into the XBE, which grows by 16 KB, and the franchise menu starts the week's show by itself. `--test-draft` replaces the rookie draft's announcement with two of the show's events, for testing. Run it after `madden_awareness_fix.py`. Details are in [docs/findings.md §12](../docs/findings.md#12-the-radio-show-2005-to-07).
