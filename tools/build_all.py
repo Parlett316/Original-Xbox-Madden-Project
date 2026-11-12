@@ -22,6 +22,8 @@ Usage:
                      (default 86400000 = 24 h, i.e. off; stock 75000; 0 = leave stock)
   --player-stats DIR real stats for the roster's players: the last 5 seasons and career
                      totals, from nflverse files in DIR (roster/player_stats.py)
+  --year YYYY        the year a franchise's first season is shown as (stock 2008), e.g.
+                     2026 with --player-stats (patches/year_base.py, default.xbe)
   --classic-names CSV real names for the classic teams' players, from
                      roster/classic_names.py (high and medium matches)
   --save-unlock      let the game load edited saves (skips their signature check)
@@ -106,6 +108,7 @@ def main():
     ap.add_argument('--commanders-commentary', action='store_true')
     ap.add_argument('--modern-kickoff', action='store_true')
     ap.add_argument('--any-number', action='store_true')
+    ap.add_argument('--year', type=int)
     ap.add_argument('--radio-show', action='store_true')
     a = ap.parse_args()
     a.playoffs7 = a.playoffs7 and a.season17   # 7 teams need the 17-game season
@@ -137,6 +140,8 @@ def main():
         run(os.path.join(P, 'kickoff_spot.py'), xbe, xbe)
     if a.any_number:
         run(os.path.join(P, 'any_number.py'), xbe, xbe)
+    if a.year:                            # years count from this one instead of 2008
+        run(os.path.join(P, 'year_base.py'), xbe, xbe, str(a.year))
     if a.radio_show:                      # last: it grows the XBE's final section
         g07 = os.path.join(a.games, 'Madden NFL 07 (USA)')
         run(os.path.join(P, 'radio_show.py'), xbe, xbe, '--show', os.path.join(g07, 'default.xbe'))
