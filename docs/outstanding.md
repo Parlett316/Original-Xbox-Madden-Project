@@ -10,7 +10,9 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 |---|---|---|
 | `data/DB_TEAMS.dat` | 2,616,832 bytes (25,152 larger than before) | `c00c416eb34e0374471a1bd81de61e8bfb47feea` |
 | `data/template.dat` | 2,165,760 bytes (4,288 larger than before; unchanged since the first test) | `a7b6bd6cbe99feae45eddde76f6d6fe1a684e2a5` |
-| `data/fe.qkl` | 10,424,200 bytes (unchanged since the first test) | `f5cca0f74d1afc5c37539c1b08566fb25a1ef2a6` |
+| `data/fe.qkl` | 10,424,200 bytes (same size as the one it replaces) | `663c020f1b404d1150cf56cc666276ca167786c4` |
+
+The first `fe.qkl` (`f5cca0f7…`) put the stock Favre start screen back on the Xbox (the user, 2026-11-12): it was synced against `radio_build`, which has no custom screens or commentary files, and `fe.qkl` carries part of `uis_fe.dat`. This one is synced against `modern_kickoff_build/data`, the full set on the Xbox (its own `fe.qkl` and `game.qkl` are reproduced from it), with the two stats files swapped in. `game.qkl` doesn't change.
 
 - [x] **Player cards on the Xbox (the user, 2026-11-12):** stats show in a new franchise. Offensive linemen show none: their tables (`PSOL`, `PCOL`: pancakes and sacks allowed) are empty, because nflverse has no such totals.
 - [x] **A simmed season (the user, 2026-11-12):** the new season's stats added to the real career totals.

@@ -83,5 +83,6 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **The demo-exit freeze** happens on the stock game too. It isn't a mod bug. The build now delays the demo by 24 h (`patches/press_start_timer.py`, which needs `fe.qkl` re-synced).
 - **Never change a TERF entry's directory size in place.** The game adds up rounded sizes from the last multiple of 20 to find an entry (docs/formats.md), so a shorter entry breaks later, untouched ones. Keep the size and pad with zeros.
 - **Base test overlays on the current build.** Helmet tests used a pre-17-game `template.dat`, which replaced the 17-game one on the Xbox. Compare sizes against a full `build_all.py` output.
+- **Sync a test `fe.qkl` against everything on the Xbox.** `patched/radio_build` has no custom screens or commentary files, so an `fe.qkl` synced against it brought back the stock start screen. The full set on the Xbox is `patched/Madden NFL 09 (USA)/modern_kickoff_build/data` plus later test files; check that syncing it unchanged reproduces its own `fe.qkl` first.
 - **Reading thresholds by stack offset is error-prone.** The PLLO slot order was settled by the logic of the grading comparisons (`0x413666`), not by the fetch call's stack layout.
 - **Analysis scripts:** write them as `tools/` files rather than long one-off heredocs once they're reused.
