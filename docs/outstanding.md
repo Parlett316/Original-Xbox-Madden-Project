@@ -1,6 +1,6 @@
 # Outstanding work
 
-A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-10. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
+A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-12. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
 
 ## Waiting on an Xbox test
 
@@ -10,9 +10,9 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 |---|---|---|
 | `default.xbe` | 7,766,016 bytes (same size as the one it replaces) | `b251ae75dffe8c10ae4cc0a14cf022f6c8197227` |
 
-- [ ] **New franchise on hardware:** sim to the playoffs. There should be 6 Wild Card games and one bye per conference, as before. On 2026-11-09 the user started a playoff game by hand and had to turn the console off before it ended, for reasons unrelated to the game. What the bracket showed isn't recorded yet.
+- [x] **New franchise on hardware (the user, 2026-11-12):** the playoff bracket works. Whether a playoff game was played to the end by hand isn't recorded.
 - **Older franchises:** checked in xemu only, and not worth a hardware test (the user, 2026-11-08). The fallback just keeps any old franchise from sticking.
-- [ ] **An older franchise's next season (found in review, 2026-11-09, untested):** each season's schedule is copied from `template.dat`, which now has 286 rows, into the older franchise's `SCHD`, which holds 285. The copy may fail, or leave 5 wild-card rows with one game unfilled. To test in xemu, load an older franchise's offseason save (`Save Files/Season4Works`: capacity 285, `SEWT` 175) on the current build, advance to week 1, and check `SCHD` and `SNWP` with `tools/table_growth.py`. Until then the docs promise 6 teams only for the season in progress.
+- [x] **An older franchise's next season (xemu, 2026-11-12):** it becomes a 7-team franchise. `Save Files/Season4Works` (year 4 offseason, `SCHD` 284 of 285) on the current build went through the offseason and preseason to year 5, week 1 with no hang: `SCHD` 286 of 287, 17 games per team, 6 Wild Card rows, `SNWP` 6. The season's tables are remade from `template.dat`, so the 285-row table was never the limit ([findings §8](findings.md#8-season-structure-and-playoffs-09)). Not done: simming that season's playoffs (`Save Files/OldFranchiseYear5Week1` is the week 1 save).
 - **Review (2026-11-09):** `playoffs_guard_test/default.xbe` differs from `any_number_test` only in the cave (`0x10b40`-`0x10d1c`) and the three patched sites, and the patch chain with `--save-unlock` and `--optional-fullback` rebuilds it byte for byte. The cave's stack use, the `SNWP` slot at `0x41b566` and the stub's buffer were checked against the disassembly. `playoffs7.py` now stops its cave at `0x10e80`, where `kickoff_spot.py`'s begins.
 
 **Modern kickoff: works on the Xbox (2026-11-08), now `build_all.py --modern-kickoff`.** The ball is on the 35 (a safety kick stays on the 20). Kickoff touchbacks come out to the 35 and punts' stay on the 20. A kick out of bounds draws the penalty and goes to the receiving 40. Everyone, CPU kickers included, holds in the NFL's hybrid lineup until the receiving team touches the ball, with the returners stacked as in stock. A human-controlled kicker can't move before then either. Details are in [findings §7](findings.md#7-tuning-table-survey-09). The full build with the usual options plus `--modern-kickoff` reproduced every hardware-tested file byte for byte (2026-11-08): `default.xbe` and `GAMEDATA.dat` match `kickoff35_test3`, and the other 16 files match the earlier tested builds.
@@ -95,7 +95,7 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## To research
 
-- [ ] **Radio show port (started 2026-11-10, [findings §12](findings.md#12-the-radio-show-2005-to-07)):** 07's show code is copied into 09 and starts by itself in the franchise menu in xemu, playing the intro, trivia and a long piece (seen in the speech log; the user heard the trivia earlier, fired by hand). Build: `python patches/radio_show.py <in default.xbe> <out> --show "Madden NFL 07 (USA)/default.xbe"`, plus 07's `SPCHFEDT.dat` copied as `data/spchfe07.dat`. Test files, in `patched/Madden NFL 09 (USA)/radio_test/`, built on `playoffs_guard_test`:
+- [x] **Radio show port (started 2026-11-10, [findings §12](findings.md#12-the-radio-show-2005-to-07)):** works on the Xbox, and since 2026-11-12 it's `build_all.py --radio-show` (off by default; needs `Madden NFL 07 (USA)` in the games folder). The full build with the usual options plus `--radio-show` (`patched/radio_build`) gave the Xbox-tested `default.xbe` below byte for byte, `spchfe07.dat` identical to 07's file, and `template.dat` and `DB_TEAMS.dat` identical to `any_number_test`'s; it boots in xemu and ran a franchise from an offseason to the next week 1. An in-game off switch or segment skip isn't wanted (the user, 2026-11-12). By hand: `python patches/radio_show.py <in default.xbe> <out> --show "Madden NFL 07 (USA)/default.xbe"`, plus 07's `SPCHFEDT.dat` copied as `data/spchfe07.dat`. Test files, in `patched/Madden NFL 09 (USA)/radio_test/`, built on `playoffs_guard_test`:
 
   | File | Size | SHA-1 |
   |---|---|---|
@@ -127,7 +127,8 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
   - [x] **Xbox, sim build (the user, 2026-11-11):** "works much better". Committed on branch `radio-show`.
   - [x] **Xbox, the committed build (the user, 2026-11-11):** the show works. Coming back from a played game gave music, which is right because the week hadn't advanced.
   - [x] **Fantasy draft (xemu, 2026-11-11):** silent, as the user wants. The draft is stage 3 with 5 resource sets, so the show can't start there.
-  - Not done: a way to turn the show off or skip a segment (07 had a screen and an option), a `build_all.py` option, and a check that 09's story event numbers (`stET`) still mean what 07's builder expects.
+  - [x] **Story event numbers (2026-11-12):** 09's `stET` numbers are 07's. The story tables keyed by them in `strmdata.db` are identical row for row in the two games (findings §12).
+  - Not done: a way to turn the show off or skip a segment in the game (07 had a screen and the `OPTS.OSPR` option; 09's XBE has no query for that field). Leaving `--radio-show` out of the build is the off switch; the user doesn't want an in-game one (2026-11-12).
 - [ ] **Online play (the user's idea):** a private server for just this game. The 09 XBE links `XONLINE` and `XNET` and names `xblmadden09.ea.com`, so it needs an answer for both Xbox Live sign-in (Insignia's layer) and EA's own server, whose protocol isn't documented. Start by checking Insignia's list and what the game sends to that address in xemu.
 - [ ] **Keep career stats in long franchises:** `PCDE` fills by year 5, and players after that lose career rows (findings §11). Check it on the screen, then see if raising its capacity is safe.
 - [ ] **Long franchise with the free agents, on hardware:** years 5 to 10 passed in xemu on the build without them (findings §11). Test the current build, and a user-run team, when convenient.

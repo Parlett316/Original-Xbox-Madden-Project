@@ -8,7 +8,7 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 | **17-game, 18-week season** with a 3-week preseason, on by default; `--schedule` makes year 1 a real NFL season (2026 tested) | 09 | Working on hardware through year 4 |
 | **Modern rosters** from EA's ratings site (Madden 27 tested), with current headshots and matched skin tones | 09 | Working on hardware |
 | **97 extra free agents** so positions don't run out; opt-in with `--free-agents` | 09 | Franchise reaches year 2 on hardware |
-| **7-team playoffs** per conference with one bye; on by default with the 17-game season (`--no-playoffs7` opts out). A franchise created before keeps 6 teams for the season it's in | 09 | Simmed through two seasons on hardware; a playoff game hasn't been played by hand. The fallback for older franchises is tested in xemu only, and not into their next season |
+| **7-team playoffs** per conference with one bye; on by default with the 17-game season (`--no-playoffs7` opts out). A franchise created before keeps 6 teams for the season it's in | 09 | Simmed through two seasons on hardware; a playoff game hasn't been played by hand. The bracket works on hardware. Older franchises are tested in xemu only: 6 teams for the season in progress, 7 from the next |
 | **Optional fullback**: a team can carry none, and a tight end fills in; opt-in with `--optional-fullback` | 09 | Played a game and simmed a season and offseason on hardware |
 | **2026 coaching staffs**: all four coaches per team with current team photos, real ages and NFL head-coaching records; modern team names (Commanders, Las Vegas Raiders, LA Chargers and Rams) while the classic teams keep theirs | 09 | Working on hardware |
 | **Soundtracks from 2005–08** (107 songs) added as four extra EA Trax soundtracks | 09 | Working on hardware |
@@ -17,7 +17,7 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 | **Al Michaels says "Washington"** for the Commanders instead of "the home team"; classic Redskins teams keep "Redskins". Opt-in with `--commanders-commentary` | 09 | Working on hardware |
 | **Modern kickoff**: ball on the 35, the NFL's hybrid lineup with everyone held until the receiving team touches the ball, touchbacks to the 35, and a kick out of bounds to the receiving 40. Opt-in with `--modern-kickoff` | 09 | Working on hardware; a kick landing short of the 20 still follows the stock rule |
 | **Any jersey number** (0-99) at any position in the edit screen; rookies and signings keep traditional numbers. Opt-in with `--any-number` | 09 | Working on hardware |
-| **The Tony Bruno radio show** from Madden 07 in the franchise menus: a show each week built from the franchise's own storylines, then the music returns. A test build (`patches/radio_show.py --show`); needs Madden 07's `SPCHFEDT.dat` | 09 | Working on hardware; not yet in `build_all.py` |
+| **The Tony Bruno radio show** from Madden 07 in the franchise menus: a show each week built from the franchise's own storylines, then the music returns. Off by default (`build_all.py --radio-show`); needs a Madden 07 disc's files | 09 | Working on hardware |
 | **The Commanders' W** in menus and on the white, burgundy and training camp helmets; classic Redskins teams keep their logo. Opt-in with `--commanders-logo` and your own image | 09 | Working on hardware; the alternate uniforms keep the old helmet |
 | **Custom loading and start screens** (the start screen shows only the middle of its image, and overlays sit in the top corners) | 09 | Working on hardware (bring your own image) |
 | **Dashboard rename** so the modded copy sits next to the stock game | 07–09 | Working on hardware |
@@ -45,15 +45,9 @@ The full notes, with addresses, are in [docs/findings.md §12](docs/findings.md#
 
 ### Trying it
 
-It's a test build for now, applied on top of a finished `build_all.py` build, and it needs your own copy of Madden 07 as well as 09:
+Add `--radio-show` to the `build_all.py` command. It needs your own copy of Madden 07 as well as 09, in the games folder as `Madden NFL 07 (USA)`. The build's `default.xbe` is 16,384 bytes larger than without it, and Madden 07's `SPCHFEDT.dat` is added to the `data` folder as `spchfe07.dat` (228,714,976 bytes). The stock speech file stays where it is. Leave the option out for a build without the show.
 
-```
-python patches/radio_show.py "<built>/default.xbe" "<out>/default.xbe" --show "Madden NFL 07 (USA)/default.xbe"
-```
-
-Then copy Madden 07's `DATA/SPCHFEDT.dat` into the build's `data` folder as `spchfe07.dat` (228,714,976 bytes). The new `default.xbe` is 16,384 bytes larger than the one it replaces. The stock speech file stays where it is.
-
-What it doesn't have yet: an option in `build_all.py`, a way to turn the show off, and 07's radio screen for skipping or replaying a segment. A player whose surname EA never recorded gets no story.
+What it doesn't have yet: a way to turn the show off in the game, and 07's radio screen for skipping or replaying a segment. A player whose surname EA never recorded gets no story.
 
 ## Screenshots
 

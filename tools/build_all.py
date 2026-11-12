@@ -26,7 +26,8 @@ Usage:
   --no-season17      keep the stock 16-game season (the default is 17 games over
                      18 weeks; existing franchises need the matching build)
   --no-playoffs7     keep 6 playoff teams per conference (the default is 7, with one
-                     bye, on the 17-game season; a franchise created before keeps 6)
+                     bye, on the 17-game season; a franchise created before keeps 6
+                     until its next season)
   --optional-fullback  a team can carry no fullback (lowers the position minimums)
   --schedule CSV     year 1 is a real NFL season from nflverse's
                      games.csv (github.com/nflverse/nfldata, data/games.csv)
@@ -40,8 +41,11 @@ Usage:
                      the receiving 40 (default.xbe and GAMEDATA.dat)
   --any-number       the edit screen offers any jersey number, 0-99, at any position
                      (rookies and signings still get traditional numbers)
+  --radio-show       Madden 07's Tony Bruno radio show in the franchise menus, once per week
+                     (default.xbe grows by 16 KB; adds data/spchfe07.dat, 229 MB; needs
+                     "Madden NFL 07 (USA)" in the games folder)
 
-Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, then
+Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, radio show, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
 copy of the game folder on the Xbox (keep the stock folder as is).
 """
@@ -99,6 +103,7 @@ def main():
     ap.add_argument('--commanders-commentary', action='store_true')
     ap.add_argument('--modern-kickoff', action='store_true')
     ap.add_argument('--any-number', action='store_true')
+    ap.add_argument('--radio-show', action='store_true')
     a = ap.parse_args()
     a.playoffs7 = a.playoffs7 and a.season17   # 7 teams need the 17-game season
     for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo', 'free_agents'):
@@ -129,6 +134,10 @@ def main():
         run(os.path.join(P, 'kickoff_spot.py'), xbe, xbe)
     if a.any_number:
         run(os.path.join(P, 'any_number.py'), xbe, xbe)
+    if a.radio_show:                      # last: it grows the XBE's final section
+        g07 = os.path.join(a.games, 'Madden NFL 07 (USA)')
+        run(os.path.join(P, 'radio_show.py'), xbe, xbe, '--show', os.path.join(g07, 'default.xbe'))
+        shutil.copyfile(os.path.join(g07, 'data', 'SPCHFEDT.dat'), os.path.join(out_data, 'spchfe07.dat'))
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:

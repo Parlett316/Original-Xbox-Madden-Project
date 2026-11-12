@@ -39,7 +39,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Playbooks: formations, player spots, assignment scripts | `patches/kickoff_setup.py` (unpack, edit and repack `GAMEDATA.dat`), `tools/play_scripts.py` (docs/findings.md §7) |
 | What happened during a play (event list: snap, catch, tackle) | `tools/play_events.py` over xemu's gdb stub (docs/findings.md §7) |
 | Listen to or measure commentary clips | `tools/speech_clips.py` (decodes `SPCHDATA.dat` to WAV) |
-| The Tony Bruno radio show from 07 | `patches/radio_show.py --show` and `patches/radio_transplant.py` (07's show code copied into 09's XBE; needs 07's `SPCHFEDT.dat` as `data/spchfe07.dat`; docs/findings.md §12) |
+| The Tony Bruno radio show from 07 | `build_all.py --radio-show`: `patches/radio_show.py --show` and `patches/radio_transplant.py` (07's show code copied into 09's XBE; 07's `SPCHFEDT.dat` becomes `data/spchfe07.dat`; docs/findings.md §12) |
 | Find the same function or global in another year's XBE | `tools/xmatch.py`, `tools/xglobal.py`, `tools/xcallers.py`, `tools/xrefs.py`, `tools/xqueries.py` |
 | Watch or drive a running game in xemu | `tools/xemu_call.py` (make it call a function), `tools/xemu_watch.py` (log when addresses are reached), `tools/spch_trace.py` (speech events) |
 
@@ -63,12 +63,12 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
   - loading and re-saving an edited franchise save (`--save-unlock`, off by default; tested with a jersey-only edit)
   - jumping a franchise to a later week (`tools/save_jump.py`; year 2, week 1 to 18, through the postseason into the offseason)
 - **Checked 2026-11-04:** the full `build_all.py` command in docs/workflow.md reproduces the hardware-tested files byte for byte, and its output boots in xemu.
-- **Working on hardware, now the default:** 7-team playoffs (`--no-playoffs7` opts out), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Since 2026-11-08 a franchise created before keeps 6 teams instead of sticking at the end of the regular season (xemu only, `playoffs_guard_test`; its next season is untested).
+- **Working on hardware, now the default:** 7-team playoffs (`--no-playoffs7` opts out), simmed through years 1 and 2 to the year 2 offseason prompt. Not tried: playing a playoff game by hand. Since 2026-11-08 a franchise created before keeps 6 teams instead of sticking at the end of the regular season (xemu only, `playoffs_guard_test`), and from its next season it has 7 (xemu, 2026-11-12). The bracket works on hardware (the user, 2026-11-12).
 - **Working on hardware, off by default:** a team with no fullback (`--optional-fullback`). Releasing one and playing a game work (a tight end fills in), and the XBE's divide-by-zero fix got a franchise through a simmed season and offseason, after which some CPU teams still carry fullbacks.
 - **Working on hardware, off by default:** Al Michaels says "Washington" for the Commanders while classic Redskins teams keep "Redskins" (`--commanders-commentary`).
 - **Working on hardware, off by default:** the modern kickoff (`--modern-kickoff`). The ball is on the 35, kickoff touchbacks come out to the 35, and a kickoff out of bounds goes to the receiving 40 (`patches/kickoff_spot.py`, default.xbe). The hybrid lineup holds until the ball is touched, kickers included, with stacked returners (`patches/kickoff_setup.py --hold 255 --lineup --ball 35`, `GAMEDATA.dat`). Not done: a kickoff landing short of the 20.
 - **Working on hardware, off by default:** any jersey number at any position in the edit screen (`--any-number`); rookies and signings keep traditional numbers. The free agents are no longer capped at 80 overall, and CPU teams sign them.
-- **Working on hardware, a test build outside `build_all.py`:** the Tony Bruno radio show from Madden 07 in the franchise menus (`patches/radio_show.py --show`). A week's show plays once, with the right week and surnames, then the music returns; nothing plays on the load screens, in a fantasy draft or during a sim. Not done: a `build_all.py` option and an off switch.
+- **Working on hardware, off by default:** the Tony Bruno radio show from Madden 07 in the franchise menus (`--radio-show`, which needs the Madden 07 game folder). A week's show plays once, with the right week and surnames, then the music returns; nothing plays on the load screens, in a fantasy draft or during a sim.
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 

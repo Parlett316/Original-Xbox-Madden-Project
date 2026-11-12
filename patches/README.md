@@ -80,7 +80,7 @@ Gives `COMMANDERS` its own slot in the commentary name tables, taken from the un
     python playoffs7.py <in default.xbe> <out default.xbe>
     python playoffs7.py <in template.dat> <out template.dat>
 
-Gives each conference one bye and three wild-card games. Apply it to both files, after `season17.py`. Seven teams need a franchise created on this build. An older one keeps 6 for the season it's in (xemu only), and its next season isn't tested. `build_all.py` runs it unless given `--no-playoffs7`. Details are in the script.
+Gives each conference one bye and three wild-card games. Apply it to both files, after `season17.py`. Seven teams need a franchise created on this build. An older one keeps 6 for the season it's in and has 7 from its next season (both xemu only). `build_all.py` runs it unless given `--no-playoffs7`. Details are in the script.
 
 ## `optional_fullback.py`: a team with no fullback
 
@@ -125,7 +125,7 @@ Sets the edit screen's number ranges to 0-99 for every position. Rookies and sig
 ## `loadscreen/`: custom loading and start screens
 See [loadscreen/README.md](loadscreen/README.md).
 
-## `radio_show.py` and `radio_transplant.py`: 07's radio show in 09 (a test, not in `build_all.py`)
+## `radio_show.py` and `radio_transplant.py`: 07's radio show in 09 (`build_all.py --radio-show`)
 
     python radio_show.py <in default.xbe> <out default.xbe> [--show <Madden 07 default.xbe>] [--test-draft]
 

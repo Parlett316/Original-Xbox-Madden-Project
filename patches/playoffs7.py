@@ -23,8 +23,8 @@ Executable:
   every playoff team marked (see PATCHES).
 - Each of these follows the franchise: SEAI.SNWP (wild-card games) is 6 in one created
   on this build and 4 in an older one, which gets stock's 6-team code and counts, so it
-  no longer sticks at the end of the regular season. Not tested: the older franchise's
-  next season, whose 286 schedule rows are copied into a table with room for 285.
+  no longer sticks at the end of the regular season. The older franchise's next season
+  has 7 teams: its SCHD is remade from template.dat with room for 287 rows (xemu).
 
 template.dat: two more wild-card rows in both schedules, and room for them in the
 franchise database (a season now has 286 rows), so 7 teams need a franchise created on
