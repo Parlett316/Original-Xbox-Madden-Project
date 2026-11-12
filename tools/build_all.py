@@ -20,6 +20,8 @@ Usage:
   --startscreen PNG  image for the "Press START" background (uis_fe.dat)
   --demo-delay MS    idle time on Press START before the attract-mode demo, in ms
                      (default 86400000 = 24 h, i.e. off; stock 75000; 0 = leave stock)
+  --player-stats DIR real stats for the roster's players: the last 5 seasons and career
+                     totals, from nflverse files in DIR (roster/player_stats.py)
   --classic-names CSV real names for the classic teams' players, from
                      roster/classic_names.py (high and medium matches)
   --save-unlock      let the game load edited saves (skips their signature check)
@@ -97,6 +99,7 @@ def main():
     ap.add_argument('--optional-fullback', action='store_true')
     ap.add_argument('--free-agents')
     ap.add_argument('--classic-names')
+    ap.add_argument('--player-stats')
     ap.add_argument('--schedule')
     ap.add_argument('--schedule-season')
     ap.add_argument('--commanders-logo')
@@ -106,7 +109,7 @@ def main():
     ap.add_argument('--radio-show', action='store_true')
     a = ap.parse_args()
     a.playoffs7 = a.playoffs7 and a.season17   # 7 teams need the 17-game season
-    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'schedule', 'commanders_logo', 'free_agents'):
+    for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'player_stats', 'schedule', 'commanders_logo', 'free_agents'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
 
@@ -172,6 +175,14 @@ def main():
     if a.optional_fullback:
         tpl = os.path.join(out_data, 'template.dat')
         run(os.path.join(P, 'optional_fullback.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
+
+    # 2d. real stats for the roster's players (template.dat and the team DBs in DB_TEAMS.dat)
+    if a.player_stats:
+        tpl = os.path.join(out_data, 'template.dat')
+        assert os.path.exists(tpl), '--player-stats needs a built roster (--roster)'
+        teams = os.path.join(out_data, 'DB_TEAMS.dat')
+        run(os.path.join(R, 'player_stats.py'), tpl, a.player_stats, tpl, '--teams', teams, teams,
+            '--report', os.path.join(a.out, 'stats_report.csv'))
 
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')

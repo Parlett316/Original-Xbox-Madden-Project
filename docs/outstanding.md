@@ -4,6 +4,21 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Waiting on an Xbox test
 
+**Real player stats: work on the Xbox (2026-11-12), off by default.** `build_all.py --player-stats nflverse_stats` (`roster/player_stats.py`) gives the roster's players their real stats: a row for each of the last 5 seasons (2021 to 2025) and career totals since 1999, from nflverse's `players.csv` and `stats_player_reg_YYYY.csv` (downloaded by hand to `nflverse_stats/`, not committed). Of 1,747 players with a year or more in the league, 1,660 have stats, 81 matched but never played, and 6 weren't matched; rookies stay blank. Players are matched by name, then age, position, team and number, and `stats_report.csv` lists each one. Row counts stay under the franchise's table limits (`PCDE` 821 of 1,550, `PCNG` 1,660 of 2,100, `PCKP` cut to 250 of 325). A new franchise takes its stats from each team's own DB in `DB_TEAMS.dat`, and `template.dat`'s copy only feeds the main menu's Rosters screen, so the script writes both (`--teams`). The first test build changed `template.dat` alone, and on the Xbox every stat in a new franchise read N/A (the user, 2026-11-12). In xemu, with both files, Caleb Williams's card shows 3,541 yards and 20 touchdowns, then 3,942 and 27, at the main menu and inside a new franchise. Copy these from `patched/Madden NFL 09 (USA)/player_stats_test/data/`, built on the current build (`radio_build`, whose roster files are `any_number_test`'s). Delete any `Rost-` saves first and start a new franchise.
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `data/DB_TEAMS.dat` | 2,616,832 bytes (25,152 larger than before) | `c00c416eb34e0374471a1bd81de61e8bfb47feea` |
+| `data/template.dat` | 2,165,760 bytes (4,288 larger than before; unchanged since the first test) | `a7b6bd6cbe99feae45eddde76f6d6fe1a684e2a5` |
+| `data/fe.qkl` | 10,424,200 bytes (unchanged since the first test) | `f5cca0f74d1afc5c37539c1b08566fb25a1ef2a6` |
+
+- [x] **Player cards on the Xbox (the user, 2026-11-12):** stats show in a new franchise. Offensive linemen show none: their tables (`PSOL`, `PCOL`: pancakes and sacks allowed) are empty, because nflverse has no such totals.
+- [x] **A simmed season (the user, 2026-11-12):** the new season's stats added to the real career totals.
+- [ ] **Not run:** `build_all.py --player-stats` end to end (the script was run by hand on the build's files), and a franchise past its first offseason.
+- [ ] **Years are labelled wrong:** the game counts from 2008, so 2024 and 2025 show as 2006 and 2007. The XBE adds 2008 at about 30 places (`81 c6 d8 07 00 00` and similar); a patch would change them to 2026 after checking each one. Some compare against 2008 and need a look first.
+- [ ] **Career tables fill sooner:** `PCDE` starts at 821 rows instead of 0, so it reaches 1,550 earlier than the year 5 seen before (see "Keep career stats in long franchises" below).
+- Not filled: longest plays, field goals by distance, the linemen's pancakes and sacks allowed (nflverse has no season totals), and `PICO`.
+
 **7-team playoffs by default, with older franchises kept at 6 (2026-11-08, xemu).** `build_all.py` now builds 7-team playoffs unless given `--no-playoffs7`. The XBE reads the franchise's wild-card game count (`SEAI.SNWP`), so a franchise created before the 7-team build gets stock's 6-team postseason instead of sticking after week 18 ([findings §8](findings.md#8-season-structure-and-playoffs-09)). In xemu, a franchise created on a 6-team `template.dat` and jumped to week 18 got 4 Wild Card games and reached the Pro Bowl, and a 7-team one got 6 and reached the Super Bowl. Copy this one file from `patched/Madden NFL 09 (USA)/playoffs_guard_test/`. It's the current build's XBE (`any_number_test`) with the new `playoffs7.py`.
 
 | File | Size | SHA-1 |

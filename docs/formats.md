@@ -29,7 +29,7 @@ trailer:               u32 CRC of the last table's field defs + records
 | Data | Location |
 |---|---|
 | Default league roster | `template.dat`, DB @ `0x180`: `PLAY` (1,986/2,048), `DCHT` depth chart, `INJY`, `TEAM` (33) |
-| Career/season stats of the default roster | `template.dat`, DB @ `0x16ad00` (PCNG, PSOF, PSDE…, keyed by PGID) |
+| Career/season stats of the default roster | `template.dat`, DB @ `0x16ad00` (PCNG, PSOF, PSDE…, keyed by PGID); shown in the main menu's Rosters. A new franchise takes its stats from the same tables in each team's DB in `DB_TEAMS.dat` |
 | Per-team rosters for current teams, then the FA pool, then classic teams | `DB_TEAMS.dat`: 32 team DBs (packed, capacity = count), FA DB (276 slots), 200+ classic-team DBs |
 | Colleges | `strmdata.db` `COLL` (277; `PCOL` indexes it) |
 | In-season progression | `strmdata.db` `PWRA` (deltas) and `PLLO` (grade thresholds); checkpoints in `template.dat` `SCWE` |

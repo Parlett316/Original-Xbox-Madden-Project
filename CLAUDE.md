@@ -32,6 +32,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Fix quick-load bundles | `patches/qkl_sync.py` |
 | Coaching staffs and coach photos | `roster/coaches.py`, `roster/fetch_coach_photos.py` (photo = `uis_coac.dat` entry `CSXP`+1) |
 | Classic teams' real names | `roster/classic_names.py` (nflverse rosters in `nflverse_rosters/`; review CSV, then `--apply`) |
+| Real stats for the roster's players (last 5 seasons, career totals) | `roster/player_stats.py` (`build_all.py --player-stats nflverse_stats`; nflverse files in `nflverse_stats/`) |
 | One-off custom players (name, size, photo) | `roster/custom_players.py` with a personal spec in `custom/` (never committed) |
 | Test a build in xemu | `tools/make_xiso.py`, `tools/xemu.py` (boot, keys, screenshots, QMP, gdb) and docs/workflow.md ("Testing in xemu") |
 | A team's menu logo and helmet | `patches/team_logo.py`, `patches/team_helmet.py` (`build_all.py --commanders-logo`, art in `custom/`) |
@@ -69,6 +70,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** the modern kickoff (`--modern-kickoff`). The ball is on the 35, kickoff touchbacks come out to the 35, and a kickoff out of bounds goes to the receiving 40 (`patches/kickoff_spot.py`, default.xbe). The hybrid lineup holds until the ball is touched, kickers included, with stacked returners (`patches/kickoff_setup.py --hold 255 --lineup --ball 35`, `GAMEDATA.dat`). Not done: a kickoff landing short of the 20.
 - **Working on hardware, off by default:** any jersey number at any position in the edit screen (`--any-number`); rookies and signings keep traditional numbers. The free agents are no longer capped at 80 overall, and CPU teams sign them.
 - **Working on hardware, off by default:** the Tony Bruno radio show from Madden 07 in the franchise menus (`--radio-show`, which needs the Madden 07 game folder). A week's show plays once, with the right week and surnames, then the music returns; nothing plays on the load screens, in a fantasy draft or during a sim.
+- **Working on hardware, off by default:** real player stats for the last 5 seasons and career totals (`--player-stats`), which add up with a simmed season. Offensive linemen have none. Years show as 2006 and 2007 for 2024 and 2025, because the game counts from 2008.
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 
