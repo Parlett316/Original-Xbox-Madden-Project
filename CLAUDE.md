@@ -72,7 +72,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** any jersey number at any position in the edit screen (`--any-number`); rookies and signings keep traditional numbers. The free agents are no longer capped at 80 overall, and CPU teams sign them.
 - **Working on hardware, off by default:** the Tony Bruno radio show from Madden 07 in the franchise menus (`--radio-show`, which needs the Madden 07 game folder). A week's show plays once, with the right week and surnames, then the music returns; nothing plays on the load screens, in a fantasy draft or during a sim.
 - **Working on hardware, off by default:** real player stats for the last 5 seasons and career totals (`--player-stats`), which add up with a simmed season. Offensive linemen have none.
-- **Tested in xemu only, off by default:** years counted from 2026 instead of 2008 (`--year 2026`, `patches/year_base.py`), so stats rows read 2024 and 2025 and the schedule uses 2026's dates.
+- **Working on hardware, off by default:** years counted from 2026 instead of 2008 (`--year 2026`, `patches/year_base.py`), so stats rows read 2024 and 2025 and the schedule uses 2026's dates.
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 
