@@ -43,13 +43,14 @@ def aged(p):
 RETIRED = {
     'Adam Thielen', 'Ahkello Witherspoon', 'Andrus Peat', 'Anthony Walker Jr', 'Bradley Bozeman',
     'Brandon Graham', 'Bryce Huff', 'C.J. Ham', 'D.J. Davidson', 'Dan Skipper',
-    'Dane Jackson', 'Darious Williams', 'Drew Dalman', 'Hakeem Adeniji', "Ja'Lynn Polk",
-    'Jaire Alexander', 'Joe Tryon-Shoyinka', 'Joel Bitonio', 'Kaleb McGary', 'Kendall Lamm',
+    'Dane Jackson', 'Darious Williams', 'Denico Autry', 'Drew Dalman', 'Hakeem Adeniji', "Ja'Lynn Polk",
+    'Jaire Alexander', 'Joe Mixon', 'Joe Tryon-Shoyinka', 'Joel Bitonio', 'Jordan Poyer', 'Kaleb McGary', 'Kendall Lamm',
     'LaBryan Ray', 'Lane Johnson', 'Lavonte David', 'Logan Wilson', 'Markees Watts',
     'Nick Bellore', 'Nick Chubb', 'Philip Rivers', 'Reuben Lowery III', 'Rob Havenstein',
     'Russell Wilson', 'Ryan Kelly', 'Sam Webb', 'Teddy Bridgewater', 'Travis Vokolek',
     'Trent Taylor', 'Trystan Colon', 'Will Clapp', 'Yosh Nijman',
-}  # checked 2026-11-05: nflverse 2026 rosters, Wikipedia's 2026 season page, news; incomplete
+}  # checked 2026-11-05: nflverse 2026 rosters, Wikipedia's 2026 season page, news; incomplete.
+# 2026-11-20: Autry (reported retiring), Poyer (said he would after 2025), Mixon (told teammates he's done)
 
 
 def load(path):

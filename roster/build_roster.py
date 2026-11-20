@@ -14,6 +14,11 @@ How values are produced:
     the league keeps the balance 09 was tuned for. A QB's awareness is then
     raised to within QB_AWARENESS_GAP of his overall, because EA rates some
     mobile starters far below their overall.
+  - Overall: depth charts and contracts rank players by EA's overall (mapped
+    the same way), but POVR is written with the game's own formula
+    (game_overall.py), which the game would apply anyway once a franchise or
+    game builds its teams. So the Rosters screen and the free agents show the
+    overall a franchise does.
   - Appearance and equipment: copied from a 2008 player at the same position
     and skin tone with a generic face, close in weight.
   - Contracts: the 2008 contract at the same position and the same rank.
@@ -21,7 +26,7 @@ How values are produced:
     DB_TEAMS.dat are packed to that size); cuts become free agents.
   - Team names: relocated/renamed current teams get their modern names
     (TEAM_RENAMES); the classic teams keep theirs. Coaches: the 2026 staffs
-    from coaches.py. --keep-team-names / --keep-coaches leave them stock.
+    from coaches.py, rated by rank with coach_ratings.py. --keep-team-names / --keep-coaches leave them stock.
     With --coach-photos (from fetch_coach_photos.py) it also writes
     OUT_DIR/data/uis_coac.dat with their photos.
   - --free-agents (from pick_free_agents.py) adds players after everyone else, with
@@ -32,7 +37,9 @@ import bisect, collections, csv, json, os, random, struct, sys, unicodedata
 
 from PIL import Image
 
+import coach_ratings
 import coaches
+import game_overall
 import headshots
 import tdb
 
@@ -185,6 +192,7 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
 
     league = tdb.DB(tpl, ROSTER_DB)
     PLAY = league['PLAY']
+    ovr_weights = game_overall.weights(tdb.DB(tpl, STATS_DB)['PORC'])
     old = PLAY.rows()
     old_raw = [PLAY.raw(i) for i in range(PLAY.count)]
     colleges = {r['CONA']: r['COID'] for r in tdb.DB(strm, 0)['COLL'].rows()}
@@ -421,6 +429,8 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         PLAY.set(i, 'PLNA', last)
         for f, v in r.items():
             PLAY.set(i, f, v)
+        p['game_ovr'] = game_overall.overall(ovr_weights, p['pos'], r)
+        PLAY.set(i, 'POVR', p['game_ovr'])
         college = COLLEGE_ALIASES.get(it['college'], it['college'])
         if college not in colleges:
             unmatched_colleges[it['college']] += 1
@@ -507,6 +517,7 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
     if not keep_coaches:
         # the per-team tables hold only their own 4 coaches, so they take the moved coaches from the league table
         base = coaches.stock_rows(coach_dbs[0]['COCH'])
+        rating_plan = coach_ratings.plan(coach_dbs[0]['COCH'])   # from the stock table, before renaming
         coac, photos = None, None
         if coach_photos_dir:
             # menu photo CSXP n is uis_coac.dat entry n+1
@@ -528,6 +539,8 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
         renamed = [coaches.apply(db['COCH'], coaches.stock_rows(db['COCH']) if db['COCH'].count > 4 else base, photos)
                    for db in coach_dbs]
         print(f'coaches renamed: {renamed[:3]} in template.dat, {sum(renamed[3:])} in DB_TEAMS.dat')
+        rated = [coach_ratings.apply(db['COCH'], rating_plan) for db in coach_dbs]
+        print(f'coach ratings by rank: {rated[:3]} in template.dat, {sum(rated[3:])} in DB_TEAMS.dat')
         for db in coach_dbs[:3]:
             db.fix()
     stats = tdb.DB(tpl, STATS_DB)
@@ -580,11 +593,11 @@ def main(ratings_path, game_dir, out_dir, photos_dir=None, keep_team_names=False
               f'{sum("skin" not in p for p in order)} without a photo')
     with open(os.path.join(out_dir, 'roster_report.csv'), 'w', newline='', encoding='utf8') as f:
         w = csv.writer(f)
-        w.writerow(['team', 'pos09', 'ea_pos', 'first', 'last', 'ea_ovr', 'ovr09', 'pgid',
+        w.writerow(['team', 'pos09', 'ea_pos', 'first', 'last', 'ea_ovr', 'ovr09', 'game_ovr', 'pgid',
                     'commentary', 'salary_k', 'years'] + [k for k in RATING_SOURCES if k not in ('POVR', 'PIMP')])
         for p in order:
             w.writerow([p['team'], p['pos'], p['ea_pos'], p['first'], p['last'], p['ovr'],
-                        p['r']['POVR'], p['pgid'], p['cmt'], p['contract']['PTSA'],
+                        p['r']['POVR'], p['game_ovr'], p['pgid'], p['cmt'], p['contract']['PTSA'],
                         p['contract']['PCON']] +
                        [p['r'][k] for k in RATING_SOURCES if k not in ('POVR', 'PIMP')])
     fa = sum(p['team'] == FA_TEAM for p in order)

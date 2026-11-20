@@ -4,6 +4,45 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Waiting on an Xbox test
 
+**Real coaching histories and team records: work on the Xbox (2026-11-20).** The user saw wacky coach histories: each 2026 coach had taken over his slot's coach ID and with it the 2008 coach's seasons (Reid, in the Chiefs slot, had Herm Edwards' Jets and Chiefs years; Sirianni had Reid's Eagles years), and every team's records were 1977-2006 shown under shifted years. `roster/coach_history.py` (run by `build_all.py` after the roster) now writes `OCIS`, who held each role for a team each season, from `CAREERS`: every 2026 coach's NFL seasons since 1999 as head coach or coordinator, checked on the web for the special teams coordinators and 2025 jobs. It also writes `OTRS`, each team's real 1999-2025 record (playoff games included, as in the rows the game writes) and postseason result, from nflverse's schedule. The old 2008 coaches' rows are gone. This needs `--year 2026` and `--schedule`; without them the build just clears both tables. The Texans' team DB grew (its history table held 9 rows; it needs 24), so `DB_TEAMS.dat` is 64 bytes larger. Against `coach_test` only `OCIS` (template.dat and every team DB) and `OTRS` differ; `fe.qkl` stays `663c020f…`. Copy these two from `patched/Madden NFL 09 (USA)/history_test/data/`:
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `data/template.dat` | 2,165,760 bytes | `7fc1c6333ed50837d5cf23e25c3a4a04d0eff844` |
+| `data/DB_TEAMS.dat` | 2,616,832 bytes | `05cc368662a9907cd63d6cd70e7fc5592bba1be8` |
+
+Start a new franchise. To undo, copy back `coach_test`'s two files.
+
+- [x] **Coach history screens (the user, 2026-11-20, first version):** Reid (Chiefs, 3 trophies), John Harbaugh (Ravens, 1) and Dan Quinn (Commanders, Cowboys DC, 1 for Seattle 2013 as DC) look right after a simmed 2026. The game's own 2026 rows counted playoff games (Reid 11-8, Harbaugh 9-9) while the first version's history didn't, so the records now include them; only `DB_TEAMS.dat`'s `OTRS` changed.
+- [x] **Records with playoffs (the user, 2026-11-20):** they look right. Reid's 2023 should read 15-6 and 2024 17-3; Harbaugh's 2012 14-6.
+- [x] **A team's history:** the years and records should be real (Eagles 2024: 18-3 with the playoffs, won the Super Bowl).
+- [ ] **After a season:** the game adds its own row for 2026, and nothing old disappears early.
+
+**Coach ratings by rank (2026-11-20).** Coach ratings become game-day bonuses ([findings §13](findings.md#13-overalls-coaches-and-qb-awareness-09)), and the 2026 coaches had kept their 2008 slots' ratings. `roster/coach_ratings.py` (run by `build_roster.py`) keeps 09's spread per role and hands it out by rank: each coach gets the whole rating row of the stock coach at the same rank. Head coaches rank by career win % (shrunk toward .500, plus playoff and Super Bowl wins), with the row's best numbers on their side of the ball (offense or defense, and the top 4 position ratings on their side's positions, kickers and punters last); coordinators by their 2025 unit's points rank (scored or allowed), new coordinators in the middle. Special teams coordinators and Bowles's DC slot keep their ratings. `python roster/coach_ratings.py "Madden NFL 09 (USA)/data/template.dat"` prints the plan. Against `ovr_test` only the 16 `COCH` rating fields differ; `fe.qkl` stays `663c020f…`. The full command (the "Everything" preset plus `--optional-fullback --save-unlock`) now gives the Xbox's XBE byte for byte. Copy these two from `patched/Madden NFL 09 (USA)/coach_test/data/`:
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `data/template.dat` | 2,165,760 bytes | `f34a4124f8e29ad8c15be72a9fee883b307aa893` |
+| `data/DB_TEAMS.dat` | 2,616,768 bytes | `394036964c47b60dc853ac6d45c55c3ac07a4ba1` |
+
+Start a new franchise. To undo, copy back `ovr_test`'s two files. (First version, 2026-11-20: head coaches' position ratings came straight from the stock row, so Ben Johnson showed QB 50 and LB 85; the user caught it on the staff screen.)
+
+- [ ] **Coaching staff screens:** Reid, Payton and McVay should be near the top in knowledge and offense; Josh McDaniels and Grant Udinski top offensive coordinators; Aden Durde, Matt Burke and Vance Joseph top defensive coordinators; Tommy Rees and Al Golden near the bottom.
+- [ ] **Play or sim a game:** nothing should look different apart from small rating bonuses in the game.
+
+**Game overalls in the roster, three free agents swapped: work on the Xbox (2026-11-20).** `build_roster.py` now writes the game's own overall (findings §13) instead of EA's, so the Rosters screen and the free agents show what a franchise shows, with no jump at week 1. Depth charts and contracts are unchanged. Autry, Poyer and Mixon are out of the free agents; Benson, Ogbah and Wilson are in. Against the files on the Xbox (`career_room_test`, `player_stats_test`) only `POVR`, those six players, the stats rows that move with them, and the added free agents' looks and IDs differ. `fe.qkl` synced against the full set on the Xbox stays `663c020f…`, so it doesn't change. Built with the full `build_all.py` ("Everything" plus `--optional-fullback`; the XBE also needs `--save-unlock` to match the Xbox's). Copy these two from `patched/Madden NFL 09 (USA)/ovr_test/data/`:
+
+| File | Size | SHA-1 |
+|---|---|---|
+| `data/template.dat` | 2,165,760 bytes | `e71dcebf02568cacbce3e5678a284dc9357e24aa` |
+| `data/DB_TEAMS.dat` | 2,616,768 bytes | `d70691ca013930187b4ed7496151cf8d2c6a58b7` |
+
+Delete any `Rost-` saves first. To undo, copy back `career_room_test/data/template.dat` and `player_stats_test/data/DB_TEAMS.dat`.
+
+- [x] **Rosters screen (the user, 2026-11-20):** Daniels shows 87 (was 81).
+- [x] **Free agents (the user, 2026-11-20):** Benson, Ogbah and Wilson are listed in a new franchise; Autry, Poyer and Mixon aren't.
+- Noted: the XBE on the Xbox (`year_test`) also has `--save-unlock` (one byte at `0x5cf05`); add it to the full command to reproduce that XBE. This build's XBE isn't part of the install.
+
 **Build window (2026-11-13).** `python tools/build_gui.py` opens a window of tick boxes and file lines that runs `build_all.py`: presets "Screens only", "Modern rules", "Fixes, no roster" and "Everything", a log, and the file list with sizes at the end. It asks before emptying an output folder that holds an earlier build, because `build_all.py` builds on files it finds there. For small builds `build_all.py` gained `--no-awareness` and `--title ""`, and it leaves `default.xbe` out when nothing patched it. The 17-game season, playoffs, kickoff, numbers, fullback, save, year, radio and roster patches use the header page the awareness fix maps, so the fix stays in with any of them. From the command line, a screens-only build gave three files (`LOADDATA.dat` and `uis_fe.dat` identical to `skins_screens_test`, plus `fe.qkl`), and a rules-only build gave `default.xbe`, `GAMEDATA.dat`, `template.dat`, `strmdata.db` and `fe.qkl`.
 
 - [ ] **Press Build in the window:** the window opens and its presets give the right commands, but the Build and Stop buttons haven't been clicked.
@@ -76,7 +115,7 @@ The first `fe.qkl` (`f5cca0f7…`) put the stock Favre start screen back on the 
 | `data/DB_TEAMS.dat` | 2,591,680 bytes | `e922ed1904e4a80c744a646c2f77369ad163e9c2` |
 
 - [x] **Edit screen (2026-11-08):** numbers work as intended on the Xbox.
-- [ ] **PIMP:** a hidden `PLAY` field the game rewrites itself (`update PLAY set PIMP` at `0x387e8d`, `0x387f6b` and `0x39f544`), read with `POVR` in team and depth queries. Its purpose isn't traced: maybe value for signings and trades.
+- [ ] **PIMP:** a hidden `PLAY` field the game rewrites itself (`update PLAY set PIMP` at `0x387e8d`, `0x387f6b` and `0x39f544`), read with `POVR` in team and depth queries. `0x39f310` computes it per team from the player's overall against his position's and the team's averages (findings §13); what reads it isn't traced.
 - [x] **Free agents listed (2026-11-08):** they show up in a new franchise on the Xbox.
 - [x] **Uncapped overalls (2026-11-08):** Wagner (96) and Milano (94) top the free agents on the Xbox.
 - [x] **CPU signings (2026-11-08):** CPU teams signed the top free agents, leaving Leonard Floyd and N. Harris as the best still unsigned.
@@ -169,10 +208,12 @@ The first `fe.qkl` (`f5cca0f7…`) put the stock Favre start screen back on the 
 - [ ] **Online play (the user's idea):** a private server for just this game. The 09 XBE links `XONLINE` and `XNET` and names `xblmadden09.ea.com`, so it needs an answer for both Xbox Live sign-in (Insignia's layer) and EA's own server, whose protocol isn't documented. Start by checking Insignia's list and what the game sends to that address in xemu.
 - [x] **Keep career stats in long franchises:** raising the capacity works in xemu (2026-11-18). See "More room for career stats" above.
 - [ ] **Long franchise with the free agents, on hardware:** years 5 to 10 passed in xemu on the build without them (findings §11). Test the current build, and a user-run team, when convenient.
-- [ ] **Coaches and progression:** do better coaches improve ratings over a season or more? Compare multi-season saves or trace the code.
-- [ ] **Overall recalculation:** by week 1, players on teams have new overalls with no rating changes, and unsigned free agents don't. Confirm the formula in the code.
-- [ ] **QB awareness floor:** compare sim stats for Daniels, Murray, Ward and Willis with and without it.
-- [ ] **Free-agent retirements:** 50 of the 97 aren't on any 2026 roster, and some may have quietly retired. `RETIRED` in `pick_free_agents.py` holds the confirmed ones.
+- [x] **Coaches and progression (2026-11-20, [findings §13](findings.md#13-overalls-coaches-and-qb-awareness-09)):** no direct effect. Coaches add game-day bonuses (`OPRA`: +1 to +3 for a coach rating of 85+, −2 at 73 or lower) to a temporary copy of the players, and the progression code reads no coach table. Our 2026 coaches carry 2008 slot ratings, so most give little. Open: whether a simmed game gets the bonuses too.
+- [x] **Overall recalculation (2026-11-20, findings §13):** a weighted average of 17 ratings per position from `PORC`, rescaled to 12–99 (`tools/overall.py`, which matches 2,038 of 2,043 stock overalls). It runs when a mode builds its teams and in the weekly progression, so free agents keep the file's value. Our roster's overalls come from EA's and only 348 of 2,100 match it.
+  - [x] **Done (2026-11-20):** `build_roster.py` writes the formula's overall (`roster/game_overall.py`); depth charts and contracts still rank by EA's. Test below.
+- [x] **QB awareness floor (2026-11-20, findings §13):** across 111 simmed QB seasons in the saves, each awareness point is worth about +0.5 passer rating (fewer interceptions, more completions), so the floor gives Daniels about +4, Murray +3, Ward +1.6 and Willis +0.5. It has been in every build since `free_agents_test` (2026-11-05). A no-floor copy of `career_full` for an A/B sim in xemu was made in the session scratchpad, not run: one season per side can't separate effects this size from chance.
+- [x] **Free-agent retirements (2026-11-20):** against nflverse's 2026 rosters (through week 11), 48 of the 97 have been on a team this season (none marked retired) and 49 haven't. News searches found three of those 49 finished: Denico Autry (reported expected to retire), Jordan Poyer (said he'd retire after 2025) and Joe Mixon (told teammates his career is over; no papers filed). The rest (Prater, Gano, Wagner, Decker, Beachum, Hughlett, Glasgow and others) are unsigned, not retired. Jimmie Ward was on the commissioner's exempt list.
+  - [x] **Done (2026-11-20):** they're in `RETIRED`; the re-pick added Trey Benson (HB), Emmanuel Ogbah (RE) and Donovan Wilson (SS). Test below.
 - [ ] **Fullbacks in free agency:** only 1 was left at week 1 in xemu. This matters less if the minimum goes to 0.
 - [ ] **Year jump for `save_jump.py`:** setting the year half-advanced the franchise, and the cause is unknown.
 - [ ] **Jumped-save slowdown:** the offseason and next preseason ran slowly after a jump. `TPMN` is one lead. It only affects testing.

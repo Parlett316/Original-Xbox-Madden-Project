@@ -210,6 +210,15 @@ def main():
     if a.career_room or (a.career_room is None and os.path.exists(tpl)):   # default: whenever template.dat is built
         run(os.path.join(P, 'career_room.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
 
+    # 2f. the 2026 coaches' real histories and the teams' real records (template.dat, DB_TEAMS.dat);
+    # they only line up with a 2026 year base, so without --year and --schedule the old rows are cleared
+    if a.roster:
+        teams = os.path.join(out_data, 'DB_TEAMS.dat')
+        if a.year and a.schedule:
+            run(os.path.join(R, 'coach_history.py'), tpl, teams, a.schedule, '--year', str(a.year))
+        else:
+            run(os.path.join(R, 'coach_history.py'), tpl, teams, '--clear')
+
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')
     if not a.no_music:
