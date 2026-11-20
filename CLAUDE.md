@@ -34,7 +34,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Coaching staffs and coach photos | `roster/coaches.py`, `roster/fetch_coach_photos.py` (photo = `uis_coac.dat` entry `CSXP`+1) |
 | Classic teams' real names | `roster/classic_names.py` (nflverse rosters in `nflverse_rosters/`; review CSV, then `--apply`) |
 | Real stats for the roster's players (last 5 seasons, career totals) | `roster/player_stats.py` (`build_all.py --player-stats nflverse_stats`; nflverse files in `nflverse_stats/`) |
-| More room in a franchise's career stat tables | `patches/career_room.py` (`build_all.py --career-room`; also grows a save, for tests) |
+| More room in a franchise's career stat tables | `patches/career_room.py` (on by default in `build_all.py`; also grows a save, for tests) |
 | The year the game counts from (stock 2008) | `patches/year_base.py` (`build_all.py --year 2026`) |
 | One-off custom players (name, size, photo) | `roster/custom_players.py` with a personal spec in `custom/` (never committed) |
 | Test a build in xemu | `tools/make_xiso.py`, `tools/xemu.py` (boot, keys, screenshots, QMP, gdb) and docs/workflow.md ("Testing in xemu") |
@@ -75,7 +75,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, off by default:** the Tony Bruno radio show from Madden 07 in the franchise menus (`--radio-show`, which needs the Madden 07 game folder). A week's show plays once, with the right week and surnames, then the music returns; nothing plays on the load screens, in a fantasy draft or during a sim.
 - **Working on hardware, off by default:** real player stats for the last 5 seasons and career totals (`--player-stats`), which add up with a simmed season. Offensive linemen have none.
 - **Working on hardware, off by default:** years counted from 2026 instead of 2008 (`--year 2026`, `patches/year_base.py`), so stats rows read 2024 and 2025 and the schedule uses 2026's dates.
-- **Tested in xemu only, off by default:** more room for career stats (`--career-room`: `PCDE` and `PCNG` to 2,400), past the old `PCDE` limit through a season, the playoffs and the draft; a new franchise on a full build through two seasons, and career totals past row 1,550 shown right on screen (docs/findings.md §11).
+- **Working on hardware, now the default:** more room for career stats (`PCDE` and `PCNG` to 2,400; `--no-career-room` opts out). On the Xbox a new franchise saved and reloaded through week 1, the Pro Bowl and the next season with career totals adding up (2026-11-20); in xemu it went past the old `PCDE` limit to year 6 (docs/findings.md §11).
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 

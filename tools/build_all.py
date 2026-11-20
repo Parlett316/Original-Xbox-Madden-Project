@@ -26,9 +26,9 @@ Usage:
                      totals, from nflverse files in DIR (roster/player_stats.py)
   --year YYYY        the year a franchise's first season is shown as (stock 2008), e.g.
                      2026 with --player-stats (patches/year_base.py, default.xbe)
-  --career-room      more room in a franchise's career stat tables (PCDE 1,550 -> 2,400,
-                     PCNG 2,100 -> 2,400), so long franchises keep career totals
-                     (patches/career_room.py, template.dat)
+  --no-career-room   keep the stock career stat tables (by default PCDE 1,550 -> 2,400 and
+                     PCNG 2,100 -> 2,400, so long franchises keep career totals; done whenever
+                     template.dat is built, or always with --career-room; patches/career_room.py)
   --classic-names CSV real names for the classic teams' players, from
                      roster/classic_names.py (high and medium matches)
   --save-unlock      let the game load edited saves (skips their signature check)
@@ -116,7 +116,8 @@ def main():
     ap.add_argument('--any-number', action='store_true')
     ap.add_argument('--year', type=int)
     ap.add_argument('--radio-show', action='store_true')
-    ap.add_argument('--career-room', action='store_true')
+    ap.add_argument('--career-room', action='store_true', default=None)
+    ap.add_argument('--no-career-room', dest='career_room', action='store_false')
     a = ap.parse_args()
     a.playoffs7 = a.playoffs7 and a.season17   # 7 teams need the 17-game season
     if not a.awareness and (a.season17 or a.save_unlock or a.optional_fullback or a.roster or a.modern_kickoff
@@ -205,8 +206,8 @@ def main():
             '--report', os.path.join(a.out, 'stats_report.csv'))
 
     # 2e. room for career rows in long franchises (template.dat's franchise DB; same size)
-    if a.career_room:
-        tpl = os.path.join(out_data, 'template.dat')
+    tpl = os.path.join(out_data, 'template.dat')
+    if a.career_room or (a.career_room is None and os.path.exists(tpl)):   # default: whenever template.dat is built
         run(os.path.join(P, 'career_room.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
 
     # 3. music (BGM.dat + strmdata.db)

@@ -31,7 +31,7 @@ CHECKS = [
     ('any_number', 'Any jersey number at any position, and uncapped free agents', 'game'),
     ('optional_fullback', 'A team can carry no fullback', 'game'),
     ('save_unlock', 'Load edited franchise saves', 'game'),
-    ('career_room', 'More room for career stats in long franchises (not yet tested on the Xbox)', 'game'),
+    ('career_room', 'More room for career stats in long franchises', 'game'),
     ('demo_off', 'Turn off the attract demo (leaving it freezes the console)', 'game'),
     ('music', 'Soundtracks from Madden 2005-08 (BGM.dat becomes 756 MB)', 'look'),
     ('radio_show', "Madden 07's Tony Bruno radio show in franchise (229 MB)", 'look'),
@@ -72,12 +72,12 @@ def my_files():
 PRESETS = {
     'Screens only': lambda: dict(OFF),
     'Modern rules': lambda: dict(OFF, awareness=True, season17=True, playoffs7=True, modern_kickoff=True,
-                                 any_number=True),
+                                 any_number=True, career_room=True),
     'Fixes, no roster': lambda: dict(OFF, awareness=True, demo_off=True, progression='performance',
                                      title='Madden NFL 09 Modded'),
     'Everything': lambda: dict(OFF, **my_files(), awareness=True, season17=True, playoffs7=True,
                                modern_kickoff=True, any_number=True, demo_off=True, music=True,
-                               radio_show=True, year_on=True, progression='performance',
+                               radio_show=True, year_on=True, career_room=True, progression='performance',
                                title='Madden NFL 09 Modded'),
 }
 HINTS = {'Screens only': 'Now choose the loading and start screen pictures.'}
@@ -95,7 +95,8 @@ def command(v):
         c.append('--no-season17')
     elif not v['playoffs7']:
         c.append('--no-playoffs7')
-    for k in ('modern_kickoff', 'any_number', 'optional_fullback', 'save_unlock', 'radio_show', 'career_room'):
+    c.append('--career-room' if v['career_room'] else '--no-career-room')
+    for k in ('modern_kickoff', 'any_number', 'optional_fullback', 'save_unlock', 'radio_show'):
         if v[k]:
             c.append('--' + k.replace('_', '-'))
     if v['commanders_commentary'] and v['roster']:
