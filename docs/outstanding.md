@@ -4,6 +4,8 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Waiting on an Xbox test
 
+**Release v1.0 (2026-11-20).** [release.md](release.md) has the command, which reproduces every file on the Xbox byte for byte, and the install list. Tagged `v1.0`. Next: play it as a long franchise on the Xbox (years 5 to 10, a user-run team).
+
 **Real coaching histories and team records: work on the Xbox (2026-11-20).** The user saw wacky coach histories: each 2026 coach had taken over his slot's coach ID and with it the 2008 coach's seasons (Reid, in the Chiefs slot, had Herm Edwards' Jets and Chiefs years; Sirianni had Reid's Eagles years), and every team's records were 1977-2006 shown under shifted years. `roster/coach_history.py` (run by `build_all.py` after the roster) now writes `OCIS`, who held each role for a team each season, from `CAREERS`: every 2026 coach's NFL seasons since 1999 as head coach or coordinator, checked on the web for the special teams coordinators and 2025 jobs. It also writes `OTRS`, each team's real 1999-2025 record (playoff games included, as in the rows the game writes) and postseason result, from nflverse's schedule. The old 2008 coaches' rows are gone. This needs `--year 2026` and `--schedule`; without them the build just clears both tables. The Texans' team DB grew (its history table held 9 rows; it needs 24), so `DB_TEAMS.dat` is 64 bytes larger. Against `coach_test` only `OCIS` (template.dat and every team DB) and `OTRS` differ; `fe.qkl` stays `663c020f…`. Copy these two from `patched/Madden NFL 09 (USA)/history_test/data/`:
 
 | File | Size | SHA-1 |

@@ -2,15 +2,17 @@
 
 Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineering the games' own code and databases. The main target is **Madden NFL 09**. The aim is a franchise mode you can play for many seasons, with a 17-game season, modern rosters, more music, and your own screens.
 
+**Release v1.0** (2026-11-20): one `build_all.py` command builds everything below that's on the author's Xbox, byte for byte. The command and the install list are in [docs/release.md](docs/release.md).
+
 | Feature | Games | Status |
 |---|---|---|
 | **Awareness-inflation fix**: role bonuses leaked into ratings every season | 07, 08, 09 | 09 tested on hardware over several franchise seasons; 07/08 checked by disassembly only |
 | **17-game, 18-week season** with a 3-week preseason, on by default; `--schedule` makes year 1 a real NFL season (2026 tested) | 09 | Working on hardware through year 4 |
-| **Modern rosters** from EA's ratings site (Madden 27 tested), with current headshots and matched skin tones | 09 | Working on hardware |
+| **Modern rosters** from EA's ratings site (Madden 27 tested), with current headshots, matched skin tones, and overalls from the game's own formula | 09 | Working on hardware |
 | **97 extra free agents** so positions don't run out; opt-in with `--free-agents` | 09 | Franchise reaches year 2 on hardware |
 | **7-team playoffs** per conference with one bye; on by default with the 17-game season (`--no-playoffs7` opts out). A franchise created before keeps 6 teams for the season it's in | 09 | Simmed through two seasons on hardware; a playoff game hasn't been played by hand. The bracket works on hardware. Older franchises are tested in xemu only: 6 teams for the season in progress, 7 from the next |
 | **Optional fullback**: a team can carry none, and a tight end fills in; opt-in with `--optional-fullback` | 09 | Played a game and simmed a season and offseason on hardware |
-| **2026 coaching staffs**: all four coaches per team with current team photos, real ages and NFL head-coaching records; modern team names (Commanders, Las Vegas Raiders, LA Chargers and Rams) while the classic teams keep theirs | 09 | Working on hardware |
+| **2026 coaching staffs**: all four coaches per team with current team photos, real ages, NFL head-coaching records, ratings by rank and real coaching histories since 1999 (with every team's real 1999–2025 records); modern team names (Commanders, Las Vegas Raiders, LA Chargers and Rams) while the classic teams keep theirs | 09 | Working on hardware |
 | **Soundtracks from 2005–08** (107 songs) added as four extra EA Trax soundtracks | 09 | Working on hardware |
 | **Progression tuning**: 2005's in-season progression, or a "performance" mode where good seasons develop players, bad ones cost them, and 99s stay rare | 09 | Working on hardware; `performance` is the default (results in [docs/findings.md](docs/findings.md)) |
 | **Edited franchise saves**: load a save changed on a PC; opt-in with `--save-unlock` | 09 | Load, save and reload tested on hardware with a jersey edit only |
