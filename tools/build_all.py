@@ -8,7 +8,9 @@ Usage:
                      "Madden NFL 06 (USA)", "Madden NFL 07 (USA)", "Madden NFL 08 (USA)"
                      for music and 2005 progression
   --out DIR          output overlay: default.xbe + data/ with only the changed files
-  --title TEXT       dashboard name (default "Madden NFL 09 Modded")
+  --title TEXT       dashboard name (default "Madden NFL 09 Modded"; "" keeps the stock name)
+  --no-awareness     leave out the awareness fix (for a build with only screens, music or
+                     progression; any other default.xbe patch needs it and keeps it)
   --roster JSON      EA ratings file from roster/fetch_ea_ratings.py; builds the modern roster
   --photos DIR       EA headshots from roster/fetch_headshots.py (with --roster)
   --free-agents JSON extra free agents from roster/pick_free_agents.py (with --roster)
@@ -24,6 +26,9 @@ Usage:
                      totals, from nflverse files in DIR (roster/player_stats.py)
   --year YYYY        the year a franchise's first season is shown as (stock 2008), e.g.
                      2026 with --player-stats (patches/year_base.py, default.xbe)
+  --career-room      more room in a franchise's career stat tables (PCDE 1,550 -> 2,400,
+                     PCNG 2,100 -> 2,400), so long franchises keep career totals
+                     (patches/career_room.py, template.dat)
   --classic-names CSV real names for the classic teams' players, from
                      roster/classic_names.py (high and medium matches)
   --save-unlock      let the game load edited saves (skips their signature check)
@@ -86,6 +91,7 @@ def main():
     ap.add_argument('--games', required=True)
     ap.add_argument('--out', required=True)
     ap.add_argument('--title', default='Madden NFL 09 Modded')
+    ap.add_argument('--no-awareness', dest='awareness', action='store_false')
     ap.add_argument('--roster')
     ap.add_argument('--photos')
     ap.add_argument('--coach-photos')
@@ -110,8 +116,13 @@ def main():
     ap.add_argument('--any-number', action='store_true')
     ap.add_argument('--year', type=int)
     ap.add_argument('--radio-show', action='store_true')
+    ap.add_argument('--career-room', action='store_true')
     a = ap.parse_args()
     a.playoffs7 = a.playoffs7 and a.season17   # 7 teams need the 17-game season
+    if not a.awareness and (a.season17 or a.save_unlock or a.optional_fullback or a.roster or a.modern_kickoff
+                            or a.any_number or a.year or a.radio_show):
+        print('the other default.xbe patches use the header page the awareness fix maps: keeping the fix')
+        a.awareness = True
     for k in ('games', 'out', 'roster', 'photos', 'coach_photos', 'loadscreen', 'startscreen', 'classic_names', 'player_stats', 'schedule', 'commanders_logo', 'free_agents'):
         if getattr(a, k):
             setattr(a, k, os.path.abspath(getattr(a, k)))
@@ -124,8 +135,12 @@ def main():
 
     # 1. awareness fix, renamed for the dashboard
     xbe = os.path.join(a.out, 'default.xbe')
-    run(os.path.join(P, 'madden_awareness_fix.py'), os.path.join(g09, 'default.xbe'), xbe)
-    run(os.path.join(P, 'set_xbe_title.py'), xbe, xbe, a.title)
+    if a.awareness:
+        run(os.path.join(P, 'madden_awareness_fix.py'), os.path.join(g09, 'default.xbe'), xbe)
+    else:
+        shutil.copyfile(os.path.join(g09, 'default.xbe'), xbe)
+    if a.title:
+        run(os.path.join(P, 'set_xbe_title.py'), xbe, xbe, a.title)
     if a.season17:                        # offseason start follows the Pro Bowl, now a week later
         run(os.path.join(P, 'season17.py'), xbe, xbe)
     if a.save_unlock:
@@ -188,6 +203,11 @@ def main():
         teams = os.path.join(out_data, 'DB_TEAMS.dat')
         run(os.path.join(R, 'player_stats.py'), tpl, a.player_stats, tpl, '--teams', teams, teams,
             '--report', os.path.join(a.out, 'stats_report.csv'))
+
+    # 2e. room for career rows in long franchises (template.dat's franchise DB; same size)
+    if a.career_room:
+        tpl = os.path.join(out_data, 'template.dat')
+        run(os.path.join(P, 'career_room.py'), tpl if os.path.exists(tpl) else os.path.join(stock, 'template.dat'), tpl)
 
     # 3. music (BGM.dat + strmdata.db)
     strm = os.path.join(stock, 'strmdata.db')
@@ -253,7 +273,12 @@ def main():
         if filecmp.cmp(dst, os.path.join(stock, qkl), shallow=False):
             os.remove(dst)                # unchanged: no need to ship it
 
+    if filecmp.cmp(xbe, os.path.join(g09, 'default.xbe'), shallow=False):
+        os.remove(xbe)                    # nothing patched it: the stock one stays on the Xbox
+
     print('\noverlay ready in', a.out)
+    if os.path.exists(xbe):
+        print(f'  {"default.xbe":21} {os.path.getsize(xbe):>12,} bytes')
     for f in sorted(os.listdir(out_data)):
         print(f'  data/{f:16} {os.path.getsize(os.path.join(out_data, f)):>12,} bytes')
 
