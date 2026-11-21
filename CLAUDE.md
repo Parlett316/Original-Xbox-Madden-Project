@@ -46,7 +46,8 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | Listen to or measure commentary clips | `tools/speech_clips.py` (decodes `SPCHDATA.dat` to WAV) |
 | The Tony Bruno radio show from 07 | `build_all.py --radio-show`: `patches/radio_show.py --show` and `patches/radio_transplant.py` (07's show code copied into 09's XBE; 07's `SPCHFEDT.dat` becomes `data/spchfe07.dat`; docs/findings.md §12) |
 | Find the same function or global in another year's XBE | `tools/xmatch.py`, `tools/xglobal.py`, `tools/xcallers.py`, `tools/xrefs.py`, `tools/xqueries.py` |
-| Watch or drive a running game in xemu | `tools/xemu_call.py` (make it call a function), `tools/xemu_watch.py` (log when addresses are reached), `tools/spch_trace.py` (speech events) |
+| Online play without Xbox Live (work in progress) | `patches/online.py` (XBE: syslink, server address, XNet filters, roster check), `tools/aries_server.py` (EA lobby and messenger server), `tools/online_test.py` (server + two xemu boxes in one command; skill `online-test`), `tools/xkeys.py` (protocol tags, keys a parser reads; skill `xbe-protocol-recon`), docs/findings.md §14 |
+| Watch or drive a running game in xemu | `tools/xemu_call.py` (make it call a function), `tools/xemu_watch.py` (log when addresses are reached; `--stack` for a rough backtrace), `tools/spch_trace.py` (speech events) |
 
 ## Environment notes
 - Windows. Bash (Git Bash) and PowerShell are both available, and paths contain spaces: quote them.

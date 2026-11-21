@@ -12,6 +12,10 @@
 !/patches/
 !/roster/
 !/tools/
+# project skills only (settings.local.json and the rest of .claude/ stay out)
+!/.claude/
+/.claude/*
+!/.claude/skills/
 
 # Python
 __pycache__/

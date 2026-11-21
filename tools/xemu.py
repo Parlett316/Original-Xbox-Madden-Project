@@ -1,7 +1,7 @@
 """Drive xemu from scripts: an isolated setup, key presses, screenshots, QMP and gdb.
 
     python tools/xemu.py setup <work> <iso> [--pad] [--fresh-hdd]
-    python tools/xemu.py boot  <work> [--gdb]          # start xemu in the background
+    python tools/xemu.py boot  <work> [--gdb] [--net]  # start xemu in the background (--net: NAT network)
     python tools/xemu.py keys  <work> <name> TOKENS...  # a b x y enter back up down left right,
                                                         # w<sec> waits, s screenshots
     python tools/xemu.py shot  <work> [name]            # one screenshot
@@ -52,7 +52,10 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 XEMU = r'C:\Xemu\xemu.exe'
 USER_CFG = os.path.join(os.environ.get('APPDATA', ''), 'xemu', 'xemu', 'xemu.toml')
-QMP_PORT, GDB_PORT = 44444, 1234
+# A second instance (e.g. two boxes in an online lobby): set XEMU_INSTANCE=1 for every command
+# aimed at it; its QMP and gdb ports are one higher.
+INSTANCE = int(os.environ.get('XEMU_INSTANCE', '0'))
+QMP_PORT, GDB_PORT = 44444 + INSTANCE, 1234 + INSTANCE
 
 # ---- config -------------------------------------------------------------------
 
@@ -97,23 +100,29 @@ def setup(work, iso, pad=False, fresh_hdd=False):
     print('work folder ready:', os.path.abspath(work))
 
 
-def write_cfg(work):
+def write_cfg(work, net=False):
     s = json.load(open(os.path.join(work, 'settings.json')))
     t = open(USER_CFG, encoding='utf8').read()
     t = toml_set(t, 'general', 'show_welcome', 'false')
+    # keys are posted to the window; without this xemu drops them once another window (e.g. a
+    # second instance) has the focus
+    t = toml_set(t, 'input', 'background_input_capture', 'true')
     t = toml_set(t, 'sys.files', 'eeprom_path', q(os.path.join(work, 'eeprom.bin')))
     t = toml_set(t, 'sys.files', 'hdd_path', q(os.path.join(work, 'xbox_hdd.qcow2')))
     t = toml_set(t, 'sys.files', 'dvd_path', q(s['iso']))
     if not s['pad']:
         t = toml_set(t, 'input.bindings', 'port1_driver', "'usb-xbox-gamepad'")
         t = toml_set(t, 'input.bindings', 'port1', "'keyboard'")
+    if net:  # user-mode NAT; the guest gets DHCP (10.0.2.x) and DNS at 10.0.2.3
+        t = toml_set(t, 'net', 'enable', 'true')
+        t = toml_set(t, 'net', 'backend', "'nat'")
     open(os.path.join(work, 'xemu.toml'), 'w', encoding='utf8').write(t)
 
 
-def boot(work, gdb=False):
+def boot(work, gdb=False, net=False):
     if listening_pid(QMP_PORT):
         raise SystemExit('an xemu with QMP on port %d is already running' % QMP_PORT)
-    write_cfg(work)
+    write_cfg(work, net)
     args = [XEMU, '-config_path', os.path.abspath(os.path.join(work, 'xemu.toml')),
             '-qmp', f'tcp:127.0.0.1:{QMP_PORT},server,nowait']
     if gdb:
@@ -204,9 +213,14 @@ VK = {'a': (0x41, 0x1e), 'b': (0x42, 0x30), 'x': (0x58, 0x2d), 'y': (0x59, 0x15)
 EXTENDED = {'up', 'down', 'left', 'right'}
 
 
+TWO = False      # set by keys() when a second instance runs: check the focus before each key
+
+
 def press(key, hold=0.08, after=0.5):
     u = ctypes.windll.user32
     h = window()[0]
+    if TWO and u.GetForegroundWindow() != h:   # another window took the focus mid-sequence
+        focus()
     vk, sc = VK[key]
     ex = (1 << 24) if key in EXTENDED else 0
     u.PostMessageW(h, 0x100, vk, 1 | (sc << 16) | ex)
@@ -215,8 +229,33 @@ def press(key, hold=0.08, after=0.5):
     time.sleep(after)
 
 
+def focus():
+    """Bring this instance's window to the front. xemu only reads the keyboard of the focused
+    window, so with two instances running each one needs the focus while it gets keys."""
+    u = ctypes.windll.user32
+    h = window()[0]
+    fg = u.GetForegroundWindow()
+    if fg != h:   # Windows lets a background process take the focus only through the input
+        k = ctypes.windll.kernel32           # queue of the window that has it now
+        a, b = u.GetWindowThreadProcessId(fg, None), k.GetCurrentThreadId()
+        u.AttachThreadInput(b, a, True)
+        u.BringWindowToTop(h)
+        u.SetForegroundWindow(h)
+        u.SetFocus(h)
+        u.AttachThreadInput(b, a, False)
+        time.sleep(1.0)
+        for m in (0x100, 0x101):             # the first key after the switch gets lost: send F13,
+            u.PostMessageW(h, m, 0x7c, 1)    # which nothing is bound to
+            time.sleep(0.3)
+    return u.GetForegroundWindow() == h
+
+
 def keys(work, name, tokens):
     wake()
+    global TWO
+    if INSTANCE or listening_pid(QMP_PORT + 1):
+        TWO = True
+        focus()
     for p in glob.glob(os.path.join(work, 'shots', f'{name}_*.png')):
         os.remove(p)
     n = 0
@@ -388,7 +427,7 @@ def main(argv):
     if c == 'setup':
         setup(a[0], a[1], '--pad' in a, '--fresh-hdd' in a)
     elif c == 'boot':
-        boot(a[0], '--gdb' in a)
+        boot(a[0], '--gdb' in a, '--net' in a)
     elif c == 'keys':
         keys(a[0], a[1], a[2:])
     elif c == 'shot':
