@@ -1,14 +1,17 @@
 """One-command online tests in xemu: lobby server, one or two instances, driven to the Lobby.
 
-    python tools/online_test.py <work> setup               # work folders w/, w2/ and online.iso
-    python tools/online_test.py <work> up [--two] [--join] # restart everything, drive to the Lobby
+    python tools/online_test.py <work> setup [--lan <PC's IP> <adapter GUID>]  # w/, w2/, online.iso
+    python tools/online_test.py <work> up [--two] [--join] [--bot]  # restart everything, drive to the Lobby
     python tools/online_test.py <work> lobby [--inst N] [--join]  # the same from the main menu
     python tools/online_test.py <work> report [lines] [--all]  # both screens in one picture + server log
     python tools/online_test.py <work> down                # stop the server and both instances
 
 `setup` patches the stock XBE with patches/online.py (server 10.0.2.2, the PC as seen from
 xemu's NAT), packs <work>/online.iso with tools/make_xiso.py, and makes two xemu work folders
-(tools/xemu.py setup; w2 is a copy of w). Run it again after changing online.py.
+(tools/xemu.py setup; w2 gets its own MAC). Run it again after changing online.py. With --lan
+both boxes are bridged onto that network card through Npcap (they get addresses from the
+router and can reach each other) and the game is pointed at the PC's LAN address instead; the
+choice is kept in <work>/mode.txt, so run setup again to switch.
 
 `up` stops any running server and instances, starts tools/aries_server.py (log
 <work>/server.log), boots instance 0 (and 1 with --two), and drives each through Game Modes >
@@ -34,7 +37,7 @@ PY = sys.executable
 STOCK = os.path.join(ROOT, 'Madden NFL 09 (USA)')
 NOISE = re.compile(r'~png|PSET|RGET|EPGT| raw |(->|<-) AUTH')
 # the login sequence, the same every time once it works (report --all shows it)
-LOGIN = re.compile(r'(->|<-) (@tic|@dir|addr|skey|news|auth|pers|sele|priv|clgf|usld|qdef|rcat|cate|slst|uatr|\+who)')
+LOGIN = re.compile(r'(->|<-) (@tic|@dir|addr|skey|news|auth|pers|sele|clgf|usld|qdef|rcat|cate|slst|uatr|\+who)')
 # From the main menu: Game Modes, Xbox Live (the last item, so up from the first)
 # (waits are generous: with two instances running every menu loads slower, and a key sent
 # during a transition is dropped)
@@ -56,17 +59,29 @@ def work_dir(work, inst):
     return os.path.join(work, 'w' if inst == 0 else 'w2')
 
 
-def setup(work):
+def mode(work):
+    """(server address the game uses, xemu.py --net value)"""
+    try:
+        server, net = open(os.path.join(work, 'mode.txt')).read().split()
+        return server, net
+    except (OSError, ValueError):
+        return '10.0.2.2', 'nat'
+
+
+def setup(work, lan=None):
     down(work)                      # a running xemu holds the ISO open
+    server, net = (lan[0], 'pcap:' + lan[1]) if lan else ('10.0.2.2', 'nat')
+    open(os.path.join(work, 'mode.txt'), 'w').write(f'{server} {net}\n')
     os.makedirs(os.path.join(work, 'ov'), exist_ok=True)
     xbe = os.path.join(work, 'ov', 'default.xbe')
     subprocess.run([PY, os.path.join(ROOT, 'patches', 'online.py'),
-                    os.path.join(STOCK, 'default.xbe'), xbe, '10.0.2.2'], check=True)
+                    os.path.join(STOCK, 'default.xbe'), xbe, server], check=True)
     iso = os.path.join(work, 'online.iso')
     subprocess.run([PY, os.path.join(HERE, 'make_xiso.py'), 'pack', STOCK,
                     os.path.join(work, 'ov'), iso], check=True)
     for inst in (0, 1):
         xemu(inst, 'setup', work_dir(work, inst), iso)    # copies the user's drive only once
+    xemu(1, 'mac', work_dir(work, 1), '0f')                  # one LAN, two MACs
     print('ready:', work)
 
 
@@ -116,7 +131,7 @@ def drive(work, inst, join, from_title=True):
             if not attempt:
                 xemu(inst, 'quit', check=False)
                 time.sleep(3)
-                xemu(inst, 'boot', w, '--net', '--gdb')
+                xemu(inst, 'boot', w, '--net', mode(work)[1], '--gdb')
                 time.sleep(45)
                 start = ['enter', 'w30']
             continue
@@ -135,17 +150,20 @@ def drive(work, inst, join, from_title=True):
             print(f'instance {inst}: no move in the server log after two tries')
 
 
-def up(work, two, join):
+def up(work, two, join, bot=False):
     down(work)
     open(log_path(work), 'w').close()
     out = open(os.path.join(work, 'server.out'), 'w')
-    subprocess.Popen([PY, os.path.join(HERE, 'aries_server.py'), log_path(work)], stdout=out,
+    server, net = mode(work)
+    subprocess.Popen([PY, os.path.join(HERE, 'aries_server.py'), log_path(work), '--host', server,
+                      *(['--bot'] if bot else [])],
+                     stdout=out,
                      stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                      creationflags=0x00000008 | 0x00000200)
     # one box at a time: booting both together slows them, and a box left on the title screen
     # starts the attract demo, which eats the keys
     for inst in ((0, 1) if two else (0,)):
-        xemu(inst, 'boot', work_dir(work, inst), '--net', '--gdb')
+        xemu(inst, 'boot', work_dir(work, inst), '--net', net, '--gdb')
         time.sleep(45)              # to the title screen
         drive(work, inst, join)
     report(work)
@@ -181,9 +199,9 @@ def main(argv):
     work, cmd, rest = os.path.abspath(argv[0]), argv[1], argv[2:]
     os.makedirs(work, exist_ok=True)
     if cmd == 'setup':
-        setup(work)
+        setup(work, rest[rest.index('--lan') + 1:rest.index('--lan') + 3] if '--lan' in rest else None)
     elif cmd == 'up':
-        up(work, '--two' in rest, '--join' in rest)
+        up(work, '--two' in rest, '--join' in rest, '--bot' in rest)
     elif cmd == 'lobby':            # from the main menu (e.g. after a failed `up`)
         insts = [int(rest[rest.index('--inst') + 1])] if '--inst' in rest else [0, 1]
         for inst in insts:

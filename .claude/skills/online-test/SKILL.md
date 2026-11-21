@@ -15,6 +15,7 @@ Work folder: `patched/online_test` (durable, git-ignored; holds online.iso, w/, 
 ```
 python tools/online_test.py patched/online_test setup              # after any online.py change
 python tools/online_test.py patched/online_test up --two --join    # ~5 min: server + 2 boxes in USR.Madden
+python tools/online_test.py patched/online_test up --join --bot     # one box + a fake player 'Bot' (accepts invites)
 python tools/online_test.py patched/online_test lobby [--inst N] [--join]   # from the main menu
 python tools/online_test.py patched/online_test report [N] [--all] # both.png + filtered server log
 python tools/online_test.py patched/online_test down
@@ -41,13 +42,26 @@ python tools/online_test.py patched/online_test down
   Lobby list needs ~3 s before A.
 - A running xemu holds the ISO open: `setup` stops everything first.
 - Player names come from the server's counter (Player1, Player2...), in login order.
-- Both boxes sit behind separate xemu NATs (both 10.0.2.15): lobby works, box-to-box game
-  traffic can't flow between them. That step needs another network setup or real Xboxes.
+- Two boxes that must reach each other need LAN mode: `setup --lan 192.168.1.199
+  {0B97E908-ECB8-4512-B09C-96FB1C442321}` (this PC's IP and card, Npcap installed, checksum and
+  large-send offload off on that card, or the PC's replies arrive with bad checksums and XNet drops
+  them). `setup` without `--lan` goes back to NAT (both boxes 10.0.2.15, can't reach each other).
+- A frozen box with EIP 0x800151ef is a bugcheck: read code/params at [esp+0x14..] over gdb
+  (`XEMU_INSTANCE=1` for box 2) and the code addresses on the stack.
 - The on-screen keyboard (Create Room name): A types the highlighted key, arrows move, Start = Done.
+
+- Invite Bot from the room: `xemu.py keys patched/online_test/w inv a w3 a w4 a w12` (Bot is the
+  highlighted first row). Change the bot's game record live by writing `5=89` (USERPARAMS byte)
+  or `PRES=5` (record field) to `patched/online_test/server.log.bot`.
+- gdb breakpoints (`xemu_watch.py`) slow the game so much that menu keys get dropped: open the
+  dialog first, then arm the watcher, then send one key. Only one gdb client at a time.
 
 ## Where things stand (update this list)
 
 Works: login, online menu, Lobby room list, join/leave, Create Room (online.py patch 9),
-two players in one room seeing each other, Invite to Game sends `gcre`.
-Open: game replies (`gcre`/`gjoi`/`+mgm`/`gsta`/`+ses`, written in aries_server.py, untested);
-a user-created room is hidden in the *other* player's Lobby list (client has it, screen drops it).
+two players in one room seeing each other, invites (`mesg` in, `priv` out) up to Game Setup and
+"Connecting ..." against the bot.
+Two LAN boxes: invite, accept (box 2: `x w5 a w12` opens the invite and picks Play), Game Setup on
+both, Ready on both (`a` on each), then +ses and "Failed to Connect!" (findings §14).
+Open: the session listener behind "Failed to Connect!"; a user-created room is hidden in the
+*other* player's Lobby list (client has it, screen drops it).

@@ -2,7 +2,7 @@
 
     python online.py <in default.xbe> <out default.xbe> <server IPv4 address>
 
-Work in progress (docs/findings.md §14). Nine kinds of change, each checked against the stock bytes:
+Work in progress (docs/findings.md §14). Ten kinds of change, each checked against the stock bytes:
 
 1. EA's network startup (0x4693a5, DirtySDK NetConn) reads "-syslink" and "-coop"/"-nosecure"
    from its argument, but all three callers pass "" (0x7063dc). They now pass 0x72b98c, whose
@@ -35,6 +35,12 @@ Work in progress (docs/findings.md §14). Nine kinds of change, each checked aga
    typed, so Create Room never finished. The jne at 0x552658 becomes nops: the name is always
    sent as typed, as with IGNPROFANE=1.
 
+10. Receiving a game invite crashed the guest (bugcheck 0x1E at 0x5f5710 reading address 4):
+   EA's message code asks XOnline whether a player handle is a given one (0x5ee867, which loads
+   the XOnline object 0x7cc408, NULL without XOnlineStartup, and compares). Callers 0x55af8e (via
+   0x54f242, the message/voice checks) and 0x55a850. 0x5ee867 now returns 0 ("no") at once:
+   xor eax, eax; ret 4 (stdcall, one argument).
+
 Encrypted traffic between two Xboxes (the game itself) is untouched.
 """
 import struct
@@ -56,6 +62,7 @@ LOGON_CALL = 0x53efe3                            # call XOnlineGetLogonUsers (0x
 NO_USERS = 0x636ee0                              # 16 zero bytes in .rdata that nothing references
 ROSTER_CURRENT = 0x23ce79                        # sete al -> mov al, 1; nop (roster version check)
 PROFANITY_CHECK = 0x552658                       # jne -> nops: room names skip Live's string check
+XONLINE_COMPARE = 0x5ee867                       # mov ecx, [0x7cc408] -> xor eax, eax; ret 4
 
 
 def file_offset(buf, va):
@@ -93,6 +100,7 @@ def patch(buf, server):
         bytes([0xb8]) + struct.pack('<I', NO_USERS))     # call -> mov eax, NO_USERS
     put(buf, ROSTER_CURRENT, bytes.fromhex('0f94c0'), bytes.fromhex('b00190'))
     put(buf, PROFANITY_CHECK, bytes.fromhex('7507'), bytes.fromhex('9090'))
+    put(buf, XONLINE_COMPARE, bytes.fromhex('8b0d08c47c00'), bytes.fromhex('31c0c2040090'))
     print(f'online: syslink without Xbox Live, plain TCP allowed, lobby server {server}')
 
 

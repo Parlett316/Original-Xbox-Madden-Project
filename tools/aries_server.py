@@ -1,6 +1,7 @@
 """A private lobby server for Madden 09's online mode (EA's "Aries" protocol), work in progress.
 
     python tools/aries_server.py <log> [--host <IP the Xbox reaches this PC at>] [--name <persona prefix>]
+                                       [--bot]   # a fake player in USR.Madden, to test invites alone
 
 The game opens a TCP connection to its directory server (port 30010), sends `@tic` and `@dir`,
 and expects to be sent on to a lobby server (`ADDR`/`PORT`), where the login commands follow.
@@ -19,6 +20,7 @@ else gets an empty reply of the same command. Each lobby connection gets its own
 Player2...). tools/online_test.py runs it with one or two xemu instances.
 With these, two xemu instances reach the Lobby and meet in one room (2026-11-21).
 """
+import os
 import socket
 import struct
 import sys
@@ -56,7 +58,7 @@ def unpack(buf):
 
 class Server:
     def __init__(self, log, host, name='Player'):
-        self.log, self.host, self.name = open(log, 'a', buffering=1), host, name
+        self.log, self.host, self.name = open(log, 'a', buffering=1, encoding='latin1'), host, name
         self.users = {}                 # lobby connection -> user
         self.next_id = 1                # user ids (and Player<n> names) are never reused
         self.games = {}                 # game id -> game (gcre); a private game is an invite between two
@@ -126,7 +128,10 @@ class Server:
             u['addr'] = body.get('ADDR', u['addr'])
             self.reply(c, who, cmd, {})
             return
-        if cmd in ('gcre', 'gjoi', 'glea', 'gdel', 'gset', 'gsta'):
+        if cmd == 'mesg':               # chat and invites: forwarded as +msg (parser 0x4df53b)
+            self.message(c, who, u, body)
+            return
+        if cmd in ('gcre', 'gjoi', 'glea', 'gdel', 'gset', 'gsta', 'gget'):
             self.game(c, who, u, cmd, body)
             return
         if cmd == 'auth':               # 0x545ec7: NAME, PERSONAS (one persona -> it sends pers)
@@ -205,9 +210,73 @@ class Server:
             return
         self.reply(c, who, cmd, {})
 
+    def bot_control(self, path):
+        """Test aid: write 'index=value ...' (hex values) to <log>.bot to change bytes of the bot's
+        USERPARAMS (its copy of its opponent's), or 'KEY=value' to set its PRES%d/OPFLAG%d/...
+        fields; the game record is pushed again on each change."""
+        last = None
+        while True:
+            time.sleep(1)
+            try:
+                st = os.stat(path).st_mtime
+            except OSError:
+                continue
+            if st == last:
+                continue
+            last = st
+            for bot in [v for v in self.users.values() if v['conn'] is None]:
+                g = self.games.get(bot.get('game') or 0)
+                if not g:
+                    continue
+                host = g['players'][0]
+                b = bytearray(host.get('userparams', '').encode('latin1'))
+                bot['over'] = {}
+                for kv in open(path).read().split():
+                    i, v = kv.split('=')
+                    if i.isdigit():
+                        b[int(i)] = int(v, 16)
+                    else:                   # a record field for the bot, e.g. PRES=5 or OPFLAG=1
+                        bot['over'][i] = v
+                bot['userparams'] = b.decode('latin1')
+                bot['fixed'] = True
+                self.say('bot params', b.hex(' '))
+                for p in g['players']:
+                    self.push(p, '+mgm', self.game_info(g))
+
+    def message(self, c, who, u, body):
+        """mesg ATTR=ENX PRIV=<name> TEXT=... -> a private message: tag 'priv', F=<ATTR> N=<sender>
+        T=<TEXT>, to that user (the game's invite listener is subscribed to 'priv', 0x4df53b; without
+        PRIV it goes to the sender's room as +msg). An invite's TEXT is TYPE=<'game'> MESG=[SEND]
+        PARM=<settings>, URL-encoded; the receiver needs flag X (bit 24) in F and acts on MESG:
+        [SEND], [REVK], [DECL], [BLCK], [ACPT], [BUSY] (table 0x72e71c)."""
+        self.reply(c, who, 'mesg', {})
+        msg = {'F': body.get('ATTR', 'ENX'), 'N': u['name'], 'T': body.get('TEXT', '')}
+        to = body.get('PRIV')
+        targets = [v for v in self.users.values() if v['name'] == to] if to else             [v for v in self.users.values() if v['room'] == u['room'] and v is not u]
+        tag = 'priv' if to else '+msg'
+        for v in targets:
+            self.push(v, tag, msg)
+            if v['conn'] is None and '[SEND]' in msg['T']:      # the bot accepts and joins, a bit
+                threading.Timer(3, self.bot_accept, (u, v, msg)).start()   # later, as a person would
+
+    def bot_accept(self, u, bot, msg):
+        self.push(u, 'priv', dict(msg, N=bot['name'], T=msg['T'].replace('[SEND]', '[ACPT]')))
+        g = self.games.get(u.get('game') or 0)
+        if g and bot not in g['players']:
+            g['players'].append(bot)
+            bot['game'] = g['id']
+            bot['userparams'] = u.get('userparams', '')
+            for p in g['players']:
+                self.push(p, '+mgm', self.game_info(g))
+
     def game(self, c, who, u, cmd, body):
         """Games (Invite to Game creates one: gcre with MINSIZE=MAXSIZE=2, PASS = the host's name).
         The reply and the +mgm/+ses pushes carry the game record the client parses at 0x5405f4."""
+        if 'USERPARAMS' in body:        # each player's own state (team, ready...), echoed as OPPARAM%d
+            u['userparams'] = body['USERPARAMS']
+            for v in self.users.values():   # the bot mirrors its opponent: ready when they are
+                if v['conn'] is None and v.get('game') and v['game'] == u.get('game') and not v.get('fixed'):
+                    v['userparams'] = body['USERPARAMS']
         if cmd == 'gcre':
             g = {'id': self.next_game, 'name': body.get('NAME', u['name']), 'host': u,
                  'params': body.get('PARAMS', ''), 'sysflags': body.get('SYSFLAGS', '0'),
@@ -220,9 +289,19 @@ class Server:
             self.reply(c, who, cmd, self.game_info(g))
             self.push(u, '+mgm', self.game_info(g))
             return
-        g = self.games.get(int(body.get('IDENT') or 0) or u.get('game') or 0)
+        ident = int(body.get('IDENT') or 0)
+        if cmd == 'gjoi' and ident < 0:     # accepting an invite: gget IDENT=<n>, then gjoi IDENT=-1
+            ident = u.get('fetched') or 0
+        g = self.games.get(ident or u.get('game') or 0)
         if g is None and cmd == 'gjoi':     # joined by name
             g = next((g for g in self.games.values() if g['name'] == body.get('NAME')), None)
+        if cmd == 'gget':                   # the game's record (the guest looks up the invite's game)
+            if g:
+                u['fetched'] = g['id']
+                self.reply(c, who, cmd, self.game_info(g))
+            else:
+                self.reply(c, who, cmd, {}, code=0x6e6f6761)    # 'noga'
+            return
         if g is None:
             self.reply(c, who, cmd, {}, code=0x6e6f6761)        # 'noga'
             return
@@ -245,6 +324,15 @@ class Server:
         self.reply(c, who, cmd, self.game_info(g))
         for v in g['players'] + ([u] if u not in g['players'] else []):
             self.push(v, '+ses' if cmd == 'gsta' else '+mgm', self.game_info(g))
+        # Nobody sends gsta: the session starts (+ses, handled apart from +mgm at 0x4e86ad) once
+        # the game is full and every player's USERPARAMS byte 5 has its ready bit (bit 0) set.
+        ready = lambda v: len(v.get('userparams', '')) > 5 and ord(v['userparams'][5]) & 1
+        if (cmd == 'gset' and not g['started'] and len(g['players']) >= int(g['max'])
+                and all(ready(v) for v in g['players'])):
+            g['started'] = True
+            self.say('session start', g['id'])
+            for v in g['players']:
+                self.push(v, '+ses', self.game_info(g))
         if not g['players']:
             del self.games[g['id']]
 
@@ -258,7 +346,8 @@ class Server:
         for i, v in enumerate(g['players']):
             info.update({'OPID%d' % i: v['id'], 'OPPO%d' % i: v['name'], 'ADDR%d' % i: v['addr'],
                          'LADDR%d' % i: v['addr'], 'MADDR%d' % i: v.get('mac', ''), 'OPPART%d' % i: '0',
-                         'OPPARAM%d' % i: '', 'OPFLAG%d' % i: '0', 'PRES%d' % i: '0'})
+                         'OPPARAM%d' % i: v.get('userparams', ''), 'OPFLAG%d' % i: '0', 'PRES%d' % i: '0'})
+            info.update({k + str(i): x for k, x in v.get('over', {}).items()})
         info.update({'PARTSIZE0': g['max'], 'PARTPARAMS0': ''})
         return info
 
@@ -315,6 +404,9 @@ class Server:
                 'S': '', 'X': '', 'G': '0', 'T': '2'}
 
     def push(self, u, cmd, body):
+        if u['conn'] is None:           # the --bot player: log what it would get
+            self.say('bot <-', cmd, body)
+            return
         try:
             self.reply(u['conn'], 'user%d' % u['id'], cmd, body)
         except OSError:
@@ -335,6 +427,11 @@ def main(argv):
     host = argv[argv.index('--host') + 1] if '--host' in argv else '10.0.2.2'
     name = argv[argv.index('--name') + 1] if '--name' in argv else 'Player'
     srv = Server(argv[0], host, name)
+    if '--bot' in argv:                 # a fake player sitting in USR.Madden, to test invites with one box
+        srv.users['bot'] = {'id': srv.next_id, 'conn': None, 'room': 1, 'addr': '10.0.2.16',
+                            'name': 'Bot', 'mac': '$0050f2000001', 'game': None}
+        srv.next_id += 1
+        threading.Thread(target=srv.bot_control, args=(argv[0] + '.bot',), daemon=True).start()
     for p in (DIR_PORT, LOBBY_PORT, BUDDY_PORT):
         threading.Thread(target=srv.listen, args=(p,), daemon=True).start()
     while True:

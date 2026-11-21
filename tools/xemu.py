@@ -1,7 +1,9 @@
 """Drive xemu from scripts: an isolated setup, key presses, screenshots, QMP and gdb.
 
     python tools/xemu.py setup <work> <iso> [--pad] [--fresh-hdd]
-    python tools/xemu.py boot  <work> [--gdb] [--net]  # start xemu in the background (--net: NAT network)
+    python tools/xemu.py boot  <work> [--gdb] [--net [pcap:{GUID}]]  # start xemu in the background
+                                    # (--net: NAT network; pcap:{adapter GUID}: bridged onto that card)
+    python tools/xemu.py mac   <work> <last byte hex>   # give the box its own MAC (EEPROM, checksum)
     python tools/xemu.py keys  <work> <name> TOKENS...  # a b x y enter back up down left right,
                                                         # w<sec> waits, s screenshots
     python tools/xemu.py shot  <work> [name]            # one screenshot
@@ -100,6 +102,21 @@ def setup(work, iso, pad=False, fresh_hdd=False):
     print('work folder ready:', os.path.abspath(work))
 
 
+def set_mac(work, last):
+    """Two boxes on one LAN need different MACs. The MAC is at 0x40 in the EEPROM's factory section
+    (0x30: checksum of 0x34-0x5f, the complement of a 64-bit sum of dwords folded to 32 bits)."""
+    p = os.path.join(work, 'eeprom.bin')
+    e = bytearray(open(p, 'rb').read())
+    e[0x45] = last
+    hi = lo = 0
+    for (v,) in struct.iter_unpack('<I', bytes(e[0x34:0x60])):
+        t = ((hi << 32) | lo) + v
+        hi, lo = (t >> 32) & 0xffffffff, t & 0xffffffff
+    e[0x30:0x34] = struct.pack('<I', ~(hi + lo) & 0xffffffff)
+    open(p, 'wb').write(e)
+    print('MAC', e[0x40:0x46].hex(':'))
+
+
 def write_cfg(work, net=False):
     s = json.load(open(os.path.join(work, 'settings.json')))
     t = open(USER_CFG, encoding='utf8').read()
@@ -113,9 +130,13 @@ def write_cfg(work, net=False):
     if not s['pad']:
         t = toml_set(t, 'input.bindings', 'port1_driver', "'usb-xbox-gamepad'")
         t = toml_set(t, 'input.bindings', 'port1', "'keyboard'")
-    if net:  # user-mode NAT; the guest gets DHCP (10.0.2.x) and DNS at 10.0.2.3
+    if net in ('nat', True):  # user-mode NAT; the guest gets DHCP (10.0.2.x), DNS at 10.0.2.3
         t = toml_set(t, 'net', 'enable', 'true')
         t = toml_set(t, 'net', 'backend', "'nat'")
+    elif net:   # 'pcap:<adapter GUID>': bridged onto a real network card through Npcap; the guest
+        t = toml_set(t, 'net', 'enable', 'true')         # gets its address from the LAN's router
+        t = toml_set(t, 'net', 'backend', "'pcap'")
+        t = toml_set(t, 'net.pcap', 'netif', r"'\Device\NPF_" + net.split(':', 1)[1] + "'")   # TOML literal string
     open(os.path.join(work, 'xemu.toml'), 'w', encoding='utf8').write(t)
 
 
@@ -427,7 +448,13 @@ def main(argv):
     if c == 'setup':
         setup(a[0], a[1], '--pad' in a, '--fresh-hdd' in a)
     elif c == 'boot':
-        boot(a[0], '--gdb' in a, '--net' in a)
+        net = False
+        if '--net' in a:                    # --net, --net nat or --net pcap:{GUID}
+            nxt = a[a.index('--net') + 1:a.index('--net') + 2]
+            net = nxt[0] if nxt and not nxt[0].startswith('-') else 'nat'
+        boot(a[0], '--gdb' in a, net)
+    elif c == 'mac':
+        set_mac(a[0], int(a[1], 16))
     elif c == 'keys':
         keys(a[0], a[1], a[2:])
     elif c == 'shot':
