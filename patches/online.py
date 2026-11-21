@@ -2,7 +2,7 @@
 
     python online.py <in default.xbe> <out default.xbe> <server IPv4 address>
 
-Work in progress (docs/findings.md §14). Ten kinds of change, each checked against the stock bytes:
+Work in progress (docs/findings.md §14). Twelve kinds of change, each checked against the stock bytes:
 
 1. EA's network startup (0x4693a5, DirtySDK NetConn) reads "-syslink" and "-coop"/"-nosecure"
    from its argument, but all three callers pass "" (0x7063dc). They now pass 0x72b98c, whose
@@ -40,8 +40,18 @@ Work in progress (docs/findings.md §14). Ten kinds of change, each checked agai
    the XOnline object 0x7cc408, NULL without XOnlineStartup, and compares). Callers 0x55af8e (via
    0x54f242, the message/voice checks) and 0x55a850. 0x5ee867 now returns 0 ("no") at once:
    xor eax, eax; ret 4 (stdcall, one argument).
+11. The game link between the boxes (DirtySDK ConnApi) never started: copying the game's players
+   into its client list (0x542cec) clears each client's address (`and dword ptr [edx], 0` at
+   0x542d4b), and an empty address is then looked up through Xbox Live matchmaking (0x5562cc /
+   0x556396: MADDR read as a Live session ID, XOnlineMatchSessionFindFromID, XNetRegisterKey,
+   XNetXnAddrToInAddr). Without Live that fails, both status words go to 5 and the game says
+   "Failed to Connect!". The `and` becomes nops, so each client keeps the lobby's ADDR and the
+   lookup (skipped when the address is set, 0x543678) never runs.
+12. XNet's UDP input (0x5edcca) drops a plain datagram addressed to one socket unless the socket
+   is flagged 0x2000000, as TCP does (4); with change 11 the guest's connect then timed out after
+   10 s. The je at 0x5eddc6 becomes nops. (The broadcast branch, 0x5edd56, keeps its check.)
 
-Encrypted traffic between two Xboxes (the game itself) is untouched.
+The game traffic between the boxes is now plain UDP to the lobby's ADDR, not XNet's encrypted kind.
 """
 import struct
 import sys
@@ -54,6 +64,8 @@ STOCK_NAME = b'xblmadden09.ea.com\0'
 NOPS = (
     (0x5e1287, '7405'),            # IP routing: plain packet to an unknown host -> dropped
     (0x5ed3f5, '0f8485020000'),    # TCP input: plain segment for a secure socket -> dropped
+    (0x542d4b, '832200'),          # ConnApi: client address cleared -> looked up through Live
+    (0x5eddc6, '7434'),            # UDP input: plain datagram for a secure socket -> dropped
 )
 PLUS_ONL, PLUS_ISP = b'lno+', b'psi+'           # '+onl' and '+isp' as little-endian dwords
 ONL_SITES = (0x4fa152, 0x4fa303, 0x4fa35d, 0x4fa393)

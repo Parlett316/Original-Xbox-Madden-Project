@@ -61,7 +61,11 @@ python tools/online_test.py patched/online_test down
 Works: login, online menu, Lobby room list, join/leave, Create Room (online.py patch 9),
 two players in one room seeing each other, invites (`mesg` in, `priv` out) up to Game Setup and
 "Connecting ..." against the bot.
-Two LAN boxes: invite, accept (box 2: `x w5 a w12` opens the invite and picks Play), Game Setup on
-both, Ready on both (`a` on each), then +ses and "Failed to Connect!" (findings §14).
-Open: the session listener behind "Failed to Connect!"; a user-created room is hidden in the
+Two LAN boxes: invite, accept (box 2: `x w5 a w4`), Game Setup on both with the direct link up
+(online.py 11/12), Ready on both (`a` each), host Start Game (`a`) -> gsta/+ses -> loading screen on
+both -> both bugcheck at 0x34265f (STATE heap full, findings §14).
+Link state: `python tools/online_state.py conn` (XEMU_INSTANCE=1 for box 2) prints ConnApi
+clients and status (3 active, 5 failed); `heaps` and `cpu` (bugcheck code) too. Packets: `python tools/npcap_capture.py <GUID> 90
+out.pcap "udp and host 192.168.1.100"` (game link 3658, voice 6000).
+Open: the STATE heap crash on game load; a user-created room is hidden in the
 *other* player's Lobby list (client has it, screen drops it).
