@@ -28,6 +28,10 @@ def ip(b):
 
 
 def summary(pkt):
+    if len(pkt) >= 42 and pkt[12:14] == b'\x08\x06':
+        op, sha, spa, tpa = struct.unpack('>H', pkt[20:22])[0], pkt[22:28].hex(':'), ip(pkt[28:32]), ip(pkt[38:42])
+        return ('ARP who-has %s tell %s (%s)' if op == 1 else 'ARP reply %s: %s is-at %s to %s') % (
+            (tpa, spa, sha) if op == 1 else (op, spa, sha, tpa))
     if len(pkt) < 34 or pkt[12:14] != b'\x08\x00':
         return 'non-IP %d bytes' % len(pkt)
     ihl = (pkt[14] & 15) * 4

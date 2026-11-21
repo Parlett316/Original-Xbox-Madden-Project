@@ -2,7 +2,8 @@
 
     python online_state.py conn     # ConnApi: the game link's clients and their status
     python online_state.py heaps    # the game's heaps (find which one ran out)
-    python online_state.py cpu      # EIP and the top of the stack (EIP 0x800151ef = bugcheck)
+    python online_state.py heap 4   # one heap's header and free tree (4 = STATE)
+    python online_state.py cpu     # EIP and the top of the stack (EIP 0x800151ef = bugcheck)
 
 Set XEMU_INSTANCE=1 for the second box. Each call pauses the box for well under a second.
 Addresses: docs/findings.md §14. Session manager = [[[main+0x18]+0x30]+0xb4], main = [0x7c5f18];
@@ -66,6 +67,33 @@ def heaps(g):
         h, n = w[2], n + 1
 
 
+def heap(g, hid):
+    """One heap in detail: header dwords and its free-block tree.
+
+    The allocator (0x371976) uses the allocator object at +0xec when there is one; otherwise it
+    walks the tree from the sentinel node at +0x30 (0x3712c0): node +0 size, +8 left, +0xc right.
+    """
+    h, n = dword(g, 0x7b6124), 0
+    while h and dword(g, h) != hid and n < 40:
+        h, n = dword(g, h + 8), n + 1
+    if not h or dword(g, h) != hid:
+        raise SystemExit('no heap with id %x' % hid)
+    w = struct.unpack('<64I', g.mem(h, 0x100) or bytes(0x100))
+    print('heap %x at %08x' % (hid, h))
+    for i in range(0, 64, 8):
+        print('  +%02x %s' % (i * 4, ' '.join('%08x' % x for x in w[i:i + 8])))
+    nodes, total, big, todo, seen = 0, 0, 0, [w[0x38 // 4], w[0x3c // 4]], set()
+    while todo and nodes < 5000:
+        a = todo.pop()
+        if not a or a in seen:
+            continue
+        seen.add(a)
+        size, _, left, right = struct.unpack('<4I', g.mem(a, 16) or bytes(16))
+        nodes, total, big = nodes + 1, total + size, max(big, size)
+        todo += [left, right]
+    print('free tree: %d nodes, %x bytes, largest %x' % (nodes, total, big))
+
+
 def cpu(g):
     r = struct.unpack_from('<10I', bytes.fromhex(ask(g, 'g', lambda r: len(r) >= 80 and not r.startswith('T'))))
     eip, esp = r[8], r[4]
@@ -76,12 +104,12 @@ def cpu(g):
 
 
 if __name__ == '__main__':
-    what = {'conn': conn, 'heaps': heaps, 'cpu': cpu}
-    if len(sys.argv) != 2 or sys.argv[1] not in what:
+    what = {'conn': conn, 'heaps': heaps, 'cpu': cpu, 'heap': heap}
+    if len(sys.argv) not in (2, 3) or sys.argv[1] not in what:
         raise SystemExit(__doc__)
     g = attach()
     try:
-        what[sys.argv[1]](g)
+        what[sys.argv[1]](g, *[int(a, 0) for a in sys.argv[2:]])
     finally:
         g.send('c')
         g.s.close()

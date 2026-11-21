@@ -3,6 +3,7 @@
     python tools/online_test.py <work> setup [--lan <PC's IP> <adapter GUID>]  # w/, w2/, online.iso
     python tools/online_test.py <work> up [--two] [--join] [--bot]  # restart everything, drive to the Lobby
     python tools/online_test.py <work> lobby [--inst N] [--join]  # the same from the main menu
+    python tools/online_test.py <work> reboot [--inst N] [--join]  # restart one stuck box (default 1)
     python tools/online_test.py <work> report [lines] [--all]  # both screens in one picture + server log
     python tools/online_test.py <work> down                # stop the server and both instances
 
@@ -206,6 +207,14 @@ def main(argv):
         insts = [int(rest[rest.index('--inst') + 1])] if '--inst' in rest else [0, 1]
         for inst in insts:
             drive(work, inst, '--join' in rest, from_title=False)
+        report(work)
+    elif cmd == 'reboot':           # one stuck box: restart it and drive it back to the lobby
+        inst = int(rest[rest.index('--inst') + 1]) if '--inst' in rest else 1
+        xemu(inst, 'quit', check=False)
+        time.sleep(3)
+        xemu(inst, 'boot', work_dir(work, inst), '--net', mode(work)[1], '--gdb')
+        time.sleep(45)
+        drive(work, inst, '--join' in rest)
         report(work)
     elif cmd == 'report':
         n = [int(a) for a in rest if a.isdigit()]

@@ -18,6 +18,7 @@ python tools/online_test.py patched/online_test up --two --join    # ~5 min: ser
 python tools/online_test.py patched/online_test up --join --bot     # one box + a fake player 'Bot' (accepts invites)
 python tools/online_test.py patched/online_test lobby [--inst N] [--join]   # from the main menu
 python tools/online_test.py patched/online_test report [N] [--all] # both.png + filtered server log
+python tools/online_test.py patched/online_test reboot --inst 1 --join   # one stuck box
 python tools/online_test.py patched/online_test down
 ```
 
@@ -53,6 +54,13 @@ python tools/online_test.py patched/online_test down
 - Invite Bot from the room: `xemu.py keys patched/online_test/w inv a w3 a w4 a w12` (Bot is the
   highlighted first row). Change the bot's game record live by writing `5=89` (USERPARAMS byte)
   or `PRES=5` (record field) to `patched/online_test/server.log.bot`.
+- **Don't attach gdb while the boxes set up their link** (invite to Start Game): a data watch or
+  `online_state.py` reads made the link fail ("Failed to Connect!"). Execution breakpoints armed in
+  the room were fine. Arm data watches (`xemu_watch.py ... w0x<addr>`) after Start Game. While a
+  watcher runs, `online_state.py` can't attach (one gdb client); use `report` screenshots.
+- The server starts the session only on the host's `gsta` (Start Game, once the link is up).
+  Order: box 2 invites (`a w3 a w4 a w10` on the other player's row), box 1 accepts
+  (`x w5 a w8`), guest Ready (`a`), host Ready + Start (`a w6 a`).
 - gdb breakpoints (`xemu_watch.py`) slow the game so much that menu keys get dropped: open the
   dialog first, then arm the watcher, then send one key. Only one gdb client at a time.
 
@@ -63,9 +71,14 @@ two players in one room seeing each other, invites (`mesg` in, `priv` out) up to
 "Connecting ..." against the bot.
 Two LAN boxes: invite, accept (box 2: `x w5 a w4`), Game Setup on both with the direct link up
 (online.py 11/12), Ready on both (`a` each), host Start Game (`a`) -> gsta/+ses -> loading screen on
-both -> both bugcheck at 0x34265f (STATE heap full, findings §14).
+both -> kickoff screen (the 0x34265f bugcheck, an out-of-range slot store, is fixed by change 13).
 Link state: `python tools/online_state.py conn` (XEMU_INSTANCE=1 for box 2) prints ConnApi
-clients and status (3 active, 5 failed); `heaps` and `cpu` (bugcheck code) too. Packets: `python tools/npcap_capture.py <GUID> 90
+clients and status (3 active, 5 failed); `heaps`, `heap 4` (one heap's header and free tree) and `cpu` (bugcheck code) too. Packets: `python tools/npcap_capture.py <GUID> 90
 out.pcap "udp and host 192.168.1.100"` (game link 3658, voice 6000).
-Open: the STATE heap crash on game load; a user-created room is hidden in the
-*other* player's Lobby list (client has it, screen drops it).
+Load (2026-11-21, online.py change 13): both boxes reach the kickoff screen. Then box 0 says
+"removed from the game due to excessive controller pulls" and box 1 "controller in controller port 4
+has been disconnected": the game's slots (OCMT/MTTS `UNLS`) were 15 (home) and 3 (away) on both
+boxes, and xemu's pad is port 1. Next: where the online game picks the local controller port
+(likely Live's signed-in user list, which change 7 zeroes).
+Open: a user-created room is hidden in the *other* player's Lobby list (client has it, screen
+drops it); a box sometimes sticks on an empty Lobby list after `up` (use `reboot --inst 1 --join`).

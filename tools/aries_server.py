@@ -324,15 +324,9 @@ class Server:
         self.reply(c, who, cmd, self.game_info(g))
         for v in g['players'] + ([u] if u not in g['players'] else []):
             self.push(v, '+ses' if cmd == 'gsta' else '+mgm', self.game_info(g))
-        # Nobody sends gsta: the session starts (+ses, handled apart from +mgm at 0x4e86ad) once
-        # the game is full and every player's USERPARAMS byte 5 has its ready bit (bit 0) set.
-        ready = lambda v: len(v.get('userparams', '')) > 5 and ord(v['userparams'][5]) & 1
-        if (cmd == 'gset' and not g['started'] and len(g['players']) >= int(g['max'])
-                and all(ready(v) for v in g['players'])):
-            g['started'] = True
-            self.say('session start', g['id'])
-            for v in g['players']:
-                self.push(v, '+ses', self.game_info(g))
+        # The session starts (+ses, handled apart from +mgm at 0x4e86ad) only on the host's gsta,
+        # which it sends from Start Game once the boxes' direct link is up. Pushing +ses as soon as
+        # both were ready (the old way) beat the link and gave "Failed to Connect!".
         if not g['players']:
             del self.games[g['id']]
 

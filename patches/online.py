@@ -51,6 +51,14 @@ Work in progress (docs/findings.md §14). Twelve kinds of change, each checked a
    is flagged 0x2000000, as TCP does (4); with change 11 the guest's connect then timed out after
    10 s. The je at 0x5eddc6 becomes nops. (The broadcast branch, 0x5edd56, keeps its check.)
 
+13. Loading the online game crashed both boxes (bugcheck 0x1E at 0x34265f, a NULL pool from the
+   STATE heap). The setter 0x24aea0 stores a byte in a per-slot table ([[0x803434]], count byte at
+   +4, 11 entries in the online game) at the slot number from OCMT/MTTS ('UNLS'); it checks the
+   slot against the count, but its jae goes to the store (0x24aeeb) instead of past it. Online
+   the slot was 15, so the store landed 0x3c bytes in, on the low byte of the next free block's
+   end pointer in STATE, and every later STATE allocation failed. The jae at 0x24aeac now skips
+   to 0x24af00, the code after the store.
+
 The game traffic between the boxes is now plain UDP to the lobby's ADDR, not XNet's encrypted kind.
 """
 import struct
@@ -75,6 +83,7 @@ NO_USERS = 0x636ee0                              # 16 zero bytes in .rdata that 
 ROSTER_CURRENT = 0x23ce79                        # sete al -> mov al, 1; nop (roster version check)
 PROFANITY_CHECK = 0x552658                       # jne -> nops: room names skip Live's string check
 XONLINE_COMPARE = 0x5ee867                       # mov ecx, [0x7cc408] -> xor eax, eax; ret 4
+SLOT_BOUNDS = 0x24aeac                           # jae 0x24aeeb (the store) -> jae 0x24af00 (past it)
 
 
 def file_offset(buf, va):
@@ -113,6 +122,7 @@ def patch(buf, server):
     put(buf, ROSTER_CURRENT, bytes.fromhex('0f94c0'), bytes.fromhex('b00190'))
     put(buf, PROFANITY_CHECK, bytes.fromhex('7507'), bytes.fromhex('9090'))
     put(buf, XONLINE_COMPARE, bytes.fromhex('8b0d08c47c00'), bytes.fromhex('31c0c2040090'))
+    put(buf, SLOT_BOUNDS, bytes.fromhex('733d'), bytes.fromhex('7352'))
     print(f'online: syslink without Xbox Live, plain TCP allowed, lobby server {server}')
 
 
