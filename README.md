@@ -22,6 +22,7 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 | **Modern kickoff**: ball on the 35, the NFL's hybrid lineup with everyone held until the receiving team touches the ball, touchbacks to the 35, and a kick out of bounds to the receiving 40. Opt-in with `--modern-kickoff` | 09 | Working on hardware; a kick landing short of the 20 still follows the stock rule |
 | **Any jersey number** (0-99) at any position in the edit screen; rookies and signings keep traditional numbers. Opt-in with `--any-number` | 09 | Working on hardware |
 | **The Tony Bruno radio show** from Madden 07 in the franchise menus: a show each week built from the franchise's own storylines, then the music returns. Off by default (`build_all.py --radio-show`); needs a Madden 07 disc's files | 09 | Working on hardware |
+| **Online play without Xbox Live**: Madden 09's own online menus, lobby, invites and head-to-head games, through a small lobby server you run yourself. Off by default (`build_all.py --online <server IP>`) | 09 | A full game played between a real Xbox and xemu, in sync; a work in progress |
 | **The Commanders' W** in menus and on the white, burgundy and training camp helmets; classic Redskins teams keep their logo. Opt-in with `--commanders-logo` and your own image | 09 | Working on hardware; the alternate uniforms keep the old helmet |
 | **Custom loading and start screens** (the start screen shows only the middle of its image, and overlays sit in the top corners) | 09 | Working on hardware (bring your own image) |
 | **Dashboard rename** so the modded copy sits next to the stock game | 07–09 | Working on hardware |
@@ -86,6 +87,33 @@ The full notes, with addresses, are in [docs/findings.md §12](docs/findings.md#
 Add `--radio-show` to the `build_all.py` command. It needs your own copy of Madden 07 as well as 09, in the games folder as `Madden NFL 07 (USA)`. The build's `default.xbe` is 16,384 bytes larger than without it, and Madden 07's `SPCHFEDT.dat` is added to the `data` folder as `spchfe07.dat` (228,714,976 bytes). The stock speech file stays where it is. Leave the option out for a build without the show.
 
 What it doesn't have yet: a way to turn the show off in the game, and 07's radio screen for skipping or replaying a segment. A player whose surname EA never recorded gets no story.
+
+## Online play is back, without Xbox Live
+
+Xbox Live for the original Xbox shut down in 2010, and Insignia, the community service that revived many Live games, doesn't support Madden 09. The game's online mode had been dead ever since. It works again now: two consoles log in to a lobby, meet in a room, one invites the other, both pick their teams in Game Setup, and they play a full game against each other. The first one was a real Xbox, with its owner on the sticks for the Commanders, against an emulated Xbox in xemu, and both screens stayed in step from the coin toss to the end.
+
+Nothing of EA's is needed. The lobby is a small Python program, `tools/aries_server.py`, that runs on a PC or a home server, and the game is patched to talk to it instead of Xbox Live.
+
+### How it was done
+
+This looked far-fetched: the game's online code is built on Xbox Live from the ground up, and EA's servers are long gone. It came together one wall at a time.
+
+1. **Getting past Xbox Live.** EA's network code still had a hidden "system link" mode that skips the Live sign-in. With it switched on, the game goes straight to EA's servers, then gets stopped by the Xbox's network security, which drops any connection that isn't encrypted the Live way. Three small patches open the doors it needs for a plain connection to a PC.
+2. **Rebuilding EA's lobby server.** The game speaks EA's "Aries" lobby protocol, the same family as EA's PS2 online games. The community project [breakin-in](https://github.com/riperiperi/breakin-in), a server for The Sims: Bustin' Out, documented part of it. The rest came from reading what Madden's own code expects in every reply. Some replies had to be exact or the menus hung silently, such as the rankings list the online menu waits for before it opens.
+3. **Fixing what broke without Live.** Each time, the game froze with the console halted. Voice chat, game invites and the controller setup all asked Live for something that isn't there. Each one was traced in the xemu emulator and patched to carry on without it. The roster check that would have downloaded EA's 2008 roster over the modern one is switched off too.
+4. **Connecting the two consoles.** The game looked up its opponent through Live's matchmaking, which fails straight away. It now uses the address the lobby already knows, and the two consoles talk directly to each other.
+5. **The crashes during loading and play.** Loading the online game wrote one byte into the wrong place in memory, because the controller number was never set (only the Live sign-in screen sets it). Then the game's lag detector, built for two real consoles, kept ending matches against the slower emulator. Both are fixed. Player names, which came from Live gamertags, now come from a name stored in the game itself.
+
+The full notes, with every address and packet, are in [docs/findings.md §14](docs/findings.md#14-online-play-without-xbox-live-09).
+
+### Trying it
+
+Run the lobby server on a PC or server that both consoles can reach, then build with its address and a name for each console:
+
+    python tools/aries_server.py lobby.log --host 192.168.1.4
+    python tools/build_all.py ... --online 192.168.1.4 --online-name YourName
+
+Both consoles need the same build (the games run in lockstep). Offline play is unchanged. Still open: a lockup when your opponent disconnects, only a controller in port 1 works, a room one player creates doesn't show on the other's Lobby screen, and play over the internet hasn't been tried, only on a home network.
 
 ## Screenshots
 
