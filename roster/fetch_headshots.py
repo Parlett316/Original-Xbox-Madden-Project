@@ -9,13 +9,15 @@ import json, os, sys, time, urllib.request
 def main(src, out):
     os.makedirs(out, exist_ok=True)
     items = json.load(open(src, encoding='utf8'))['items']
-    done = 0
+    done = have = none = failed = 0
     for it in items:
         url = it.get('avatarUrl')
         if not url:
+            none += 1
             continue
         path = os.path.join(out, f"{it['id']}.png")
         if os.path.exists(path):
+            have += 1
             continue
         req = urllib.request.Request(url.split('?')[0], headers={'User-Agent': 'Mozilla/5.0'})
         try:
@@ -23,12 +25,20 @@ def main(src, out):
                 data = r.read()
             open(path, 'wb').write(data)
             done += 1
+            if done % 200 == 0:
+                print(f'{done} photos downloaded', flush=True)
+        except urllib.error.HTTPError as e:
+            if e.code in (403, 404):    # EA's image host answers 403 for a portrait it doesn't have
+                none += 1
+            else:
+                failed += 1
+                print('fail', it['id'], e, flush=True)
         except Exception as e:
+            failed += 1
             print('fail', it['id'], e, flush=True)
-        if done % 200 == 0:
-            print(done, flush=True)
         time.sleep(0.2)
-    print('downloaded', done)
+    print(f'downloaded {done} photos ({have} already here); {none} players have no photo on EA\'s site '
+          'and get the game\'s generic face' + (f'; {failed} failed, run again to retry them' if failed else ''))
 
 
 if __name__ == '__main__':
