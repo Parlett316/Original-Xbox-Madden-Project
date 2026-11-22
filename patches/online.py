@@ -3,9 +3,10 @@
     python online.py <in default.xbe> <out default.xbe> <server IPv4 address> [--name NAME] [--lag-tolerant]
 
 --name gives this copy's player name (1 to 15 letters, digits, '_' or '-'). The login sends it as
-GTAG, which the lobby server (tools/aries_server.py) uses instead of Player<n>. The game reads GTAG
-from the Live gamertag (+0x104 of the lobby client, read at 0x54638f), which syslink never fills; the
-patch points that read at the name, kept in 16 unused zero bytes of .rdata (0x636f20). Without
+GTAG, which the lobby server (tools/aries_server.py) uses instead of Player<n>. The game passes the
+login its Live gamertag (a virtual getter called at 0x501931), which syslink leaves empty; the patch
+pushes the name instead, kept in 16 unused zero bytes of .rdata (0x636f20). The reconnect path reads
+the gamertag at +0x104 of the lobby client (0x54638f) and is pointed at the name too. Without
 --name it stays empty and the server hands out Player1, Player2...
 
 --lag-tolerant (for two xemu boxes on one PC) turns off the in-game lag drop: the game ends a
@@ -80,7 +81,10 @@ Work in progress (docs/findings.md §14). Fourteen kinds of change, each checked
    pulls" and the host's port 4 counted as disconnected. The attribute now comes from a stub in
    the dead XOnline compare body (0x5f570a, reached only through 0x5ee86d, which change 10 cut
    off) that reads +8 and gives 0 (controller port 1) when it is negative.
-15. (--name only) The login's GTAG comes from the name at 0x636f20 instead of the empty gamertag.
+15. (--name only) The login's GTAG comes from the name at 0x636f20 instead of the empty gamertag:
+   the game's call to the gamertag getter (0x50192f, `mov eax,[ecx]; call [eax+0x14]; push eax`)
+   becomes `push 0x636f20; nop`, and the reconnect's read (0x54638f) becomes `mov eax, 0x636f20`.
+   The first version patched only the reconnect read, and the login still sent GTAG ''.
 
 The game traffic between the boxes is now plain UDP to the lobby's ADDR, not XNet's encrypted kind.
 """
@@ -111,7 +115,8 @@ SLOT_BOUNDS = 0x24aeac                           # jae 0x24aeeb (the store) -> j
 USER_OBJECT = 0x4fa6d5                           # returns the OSDK user object (controller port at +8)
 PORT_STUB = 0x5f570a                             # 15 dead bytes after change 10
 NAME_SLOT = 0x636f20                             # 16 zero bytes after NO_USERS's run start; unused
-GTAG_SOURCE = 0x54638f                           # lea eax, [esi+0x104] (auth's GTAG, the gamertag)
+GTAG_SOURCE = 0x54638f                           # lea eax, [esi+0x104] (reconnect's GTAG, the gamertag)
+GTAG_GETTER = 0x50192f                           # mov eax,[ecx]; call [eax+0x14]; push eax (login's GTAG)
 NAME_CHARS = re.compile(r'[A-Za-z0-9_-]{1,15}')
 LAG_SPIKE_CHECK = 0x68cab                        # jbe: lag not over 1 s -> nothing recorded
 CONTROLLER_ATTR = 0x236102                       # call USER_OBJECT ... call [edx+0x24] (16 bytes)
@@ -175,6 +180,7 @@ def player_name(buf, name):
     if not NAME_CHARS.fullmatch(name):
         raise SystemExit(f'online: name {name!r}: use 1 to 15 letters, digits, _ or -')
     put(buf, NAME_SLOT, bytes(16), name.encode().ljust(16, bytes(1)))
+    put(buf, GTAG_GETTER, bytes.fromhex('8b01ff501450'), bytes.fromhex('68') + struct.pack('<I', NAME_SLOT) + bytes.fromhex('90'))  # push name
     put(buf, GTAG_SOURCE, bytes.fromhex('8d8604010000'), bytes.fromhex('b8') + struct.pack('<I', NAME_SLOT) + bytes.fromhex('90'))  # mov eax, name
     print(f'online: player name {name}')
 

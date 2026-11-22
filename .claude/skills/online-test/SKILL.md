@@ -42,7 +42,8 @@ python tools/online_test.py patched/online_test down
   login ~15 s (wait for `-> uatr` in the log), online Game Modes (down, down, a), Lobby (down, a).
   Lobby list needs ~3 s before A.
 - A running xemu holds the ISO open: `setup` stops everything first.
-- Player names come from the server's counter (Player1, Player2...), in login order.
+- Player names come from the server's counter (Player1, Player2...), in login order, unless `setup --name NAME`
+  (online.py --name; both boxes share the ISO, so the second is NAME2).
 - Two boxes that must reach each other need LAN mode: `setup --lan 192.168.1.199
   {0B97E908-ECB8-4512-B09C-96FB1C442321}` (this PC's IP and card, Npcap installed, checksum and
   large-send offload off on that card, or the PC's replies arrive with bad checksums and XNet drops

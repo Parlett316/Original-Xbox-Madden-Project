@@ -1,6 +1,6 @@
 """One-command online tests in xemu: lobby server, one or two instances, driven to the Lobby.
 
-    python tools/online_test.py <work> setup [--lan <PC's IP> <adapter GUID>] [--game <folder>]  # w/, w2/, online.iso
+    python tools/online_test.py <work> setup [--lan <PC's IP> <adapter GUID>] [--game <folder>] [--name NAME]  # w/, w2/, online.iso
     python tools/online_test.py <work> up [--two] [--join] [--bot]  # restart everything, drive to the Lobby
     python tools/online_test.py <work> lobby [--inst N] [--join]  # the same from the main menu
     python tools/online_test.py <work> reboot [--inst N] [--join]  # restart one stuck box (default 1)
@@ -11,7 +11,8 @@
 xemu's NAT), packs <work>/online.iso with tools/make_xiso.py, and makes two xemu work folders
 (tools/xemu.py setup; w2 gets its own MAC). Run it again after changing online.py. --game packs a
 built game folder (default.xbe + data, e.g. the release on the user's Xbox) instead of the stock game,
-so an xemu box can play a real Xbox that runs the same files. With --lan
+so an xemu box can play a real Xbox that runs the same files. --name passes online.py --name (both
+boxes share the ISO, so the second logs in as NAME2). With --lan
 both boxes are bridged onto that network card through Npcap (they get addresses from the
 router and can reach each other) and the game is pointed at the PC's LAN address instead; the
 choice is kept in <work>/mode.txt, so run setup again to switch.
@@ -71,15 +72,16 @@ def mode(work):
         return '10.0.2.2', 'nat'
 
 
-def setup(work, lan=None, game=STOCK):
+def setup(work, lan=None, game=STOCK, name=None):
     down(work)                      # a running xemu holds the ISO open
     server, net = (lan[0], 'pcap:' + lan[1]) if lan else ('10.0.2.2', 'nat')
     open(os.path.join(work, 'mode.txt'), 'w').write(f'{server} {net}\n')
     os.makedirs(os.path.join(work, 'ov'), exist_ok=True)
     xbe = os.path.join(work, 'ov', 'default.xbe')
     subprocess.run([PY, os.path.join(ROOT, 'patches', 'online.py'),
-                    os.path.join(game, 'default.xbe'), xbe, server, '--lag-tolerant'], check=True,
-                   stdin=subprocess.DEVNULL)   # no name prompt: the boxes are Player1 and Player2
+                    os.path.join(game, 'default.xbe'), xbe, server, '--lag-tolerant']
+                   + (['--name', name] if name else []), check=True,
+                   stdin=subprocess.DEVNULL)   # no name prompt: without --name the boxes are Player1, Player2
     iso = os.path.join(work, 'online.iso')
     subprocess.run([PY, os.path.join(HERE, 'make_xiso.py'), 'pack', game,
                     os.path.join(work, 'ov'), iso], check=True)
@@ -204,7 +206,8 @@ def main(argv):
     os.makedirs(work, exist_ok=True)
     if cmd == 'setup':
         setup(work, rest[rest.index('--lan') + 1:rest.index('--lan') + 3] if '--lan' in rest else None,
-              os.path.abspath(rest[rest.index('--game') + 1]) if '--game' in rest else STOCK)
+              os.path.abspath(rest[rest.index('--game') + 1]) if '--game' in rest else STOCK,
+              rest[rest.index('--name') + 1] if '--name' in rest else None)
     elif cmd == 'up':
         up(work, '--two' in rest, '--join' in rest, '--bot' in rest)
     elif cmd == 'lobby':            # from the main menu (e.g. after a failed `up`)
