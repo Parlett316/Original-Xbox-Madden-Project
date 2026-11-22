@@ -43,6 +43,26 @@ Your original game folder is never changed. Running it again later only copies w
 
 You need a softmodded or modchipped Xbox (or xemu) and your own copy of Madden NFL 09 as a game folder. The rest of this page is for people who want to know how it works or build from the command line.
 
+### What the installer does for you
+
+Modding this game by hand means running a dozen scripts in the right order, keeping files that belong together in step, and copying gigabytes over FTP without a single file coming over short. The installer does all of that:
+
+- **It finds your games.** It searches your PC's drives, Desktop, Downloads and Documents, or your Xbox's hard drive, and tells each Madden apart by what's inside it, not what the folder is called.
+- **It won't touch your original, or a modded copy you made yourself.** It checks your Madden 09 is the untouched original and always makes a new folder. If a folder you pick already holds a game it didn't make, it refuses.
+- **It speaks your Xbox's language.** The Xbox dashboards' file servers have quirks, such as listing the wrong folder or allowing only a couple of connections at once. The installer was tested against a real UnleashX Xbox and works around them.
+- **It gets today's NFL for you.** It downloads the current ratings and player photos from EA, the coaching staffs' photos, and real stats and the 2026 schedule from nflverse. If a website drops the connection, it waits and tries again.
+- **It builds only what you ticked.** If you pick the radio show, it copies just Madden 07 from the Xbox, not every older Madden.
+- **It checks every file it copies,** sends again any file that came over short, and keeps a list of what it put there. Next time it copies only what changed, and removes leftovers from an older build.
+- **It finds old roster saves** that would make the game load an old roster instead of the new one. It backs them up to your PC before removing them, and only if you say yes.
+- **You can stop it at any time.** Press Mod my game! again later and it picks up where it left off.
+
+### If something goes wrong
+
+- **"Too many FTP connections"**: the Xbox only allows a couple at once. Close FileZilla or any other FTP program, wait a minute, and press the button again.
+- **It's slow the first time**: downloading the rosters and copying about 2 GB takes 15 to 45 minutes. After that, only what changed is copied.
+- **About 150 players have no photo**: EA has none for them (mostly rookies), so they get the game's generic face.
+- **Anything else**: the box under the progress bar shows what happened. Copy its last lines into a GitHub issue.
+
 ## The Tony Bruno Show is back
 
 Madden 2005, 06 and 07 had EA SPORTS Radio in franchise mode: Tony Bruno talking about last week's games, taking calls, interviewing coaches and running trivia. Madden 08 and 09 dropped it. It now plays in Madden 09's franchise menus again, on a real Xbox, with today's rosters. In one test franchise he reported that Rhamondre Stevenson of the Patriots was unhappy about his playing time.
