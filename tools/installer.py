@@ -198,7 +198,7 @@ class Xbox:
 
     def connect(self):
         self.close()
-        f = ftplib.FTP()
+        f = ftplib.FTP(encoding="latin-1")   # Xbox folder names are Latin-1, not UTF-8
         f.connect(self.host, self.port, timeout=20)
         f.login(self.user, self.password)
         f.set_pasv(self.passive)
@@ -233,10 +233,19 @@ class Xbox:
                 self.ftp = None
                 time.sleep(1)
 
+    @staticmethod
+    def _in(f, path):
+        """Change to path's folder and return its last part. UnleashX's LIST ignores a path argument
+        and lists the current folder, so every folder-relative command goes through here."""
+        folder, name = path.rsplit('/', 1)
+        f.cwd(folder or '/')
+        return name
+
     def listdir(self, path):
         def go(f):
             lines = []
-            f.retrlines('LIST ' + path if path != '/' else 'LIST', lines.append)
+            f.cwd(path)                 # a missing folder raises error_perm: None below
+            f.retrlines('LIST', lines.append)
             return parse_list(lines)
         try:
             return self._again(go)
@@ -255,7 +264,7 @@ class Xbox:
 
     def head(self, path, n=8192):
         """The first n bytes of a file, on a connection of its own (abort is unreliable on Xbox servers)."""
-        f = ftplib.FTP()
+        f = ftplib.FTP(encoding="latin-1")   # Xbox folder names are Latin-1, not UTF-8
         f.connect(self.host, self.port, timeout=20)
         f.login(self.user, self.password)
         f.set_pasv(self.passive)
@@ -318,24 +327,24 @@ class Xbox:
                     if cancel and cancel.is_set():
                         raise Cancelled()
                     progress and progress(len(b))
-                f.storbinary('STOR ' + path, src, blocksize=1 << 16, callback=chunk)
+                f.storbinary('STOR ' + self._in(f, path), src, blocksize=1 << 16, callback=chunk)
         self._again(go)
 
     def write(self, path, data):
         import io
-        self._again(lambda f: f.storbinary('STOR ' + path, io.BytesIO(data)))
+        self._again(lambda f: f.storbinary('STOR ' + self._in(f, path), io.BytesIO(data)))
 
     def mkdirs(self, path):
         cur = ''
         for part in path.strip('/').split('/'):
             cur += '/' + part
             try:
-                self._again(lambda f: f.mkd(cur))
+                self._again(lambda f: f.mkd(self._in(f, cur)))
             except ftplib.error_perm:
                 pass                     # already there
 
     def delete(self, path):
-        self._again(lambda f: f.delete(path))
+        self._again(lambda f: f.delete(self._in(f, path)))
 
     def delete_tree(self, path):
         for name, d, _ in self.listdir(path) or []:
@@ -343,8 +352,8 @@ class Xbox:
             if d:
                 self.delete_tree(p)
             else:
-                self._again(lambda f: f.delete(p))
-        self._again(lambda f: f.rmd(path))
+                self.delete(p)
+        self._again(lambda f: f.rmd(self._in(f, path)))
 
     # -- finding things
 
@@ -369,6 +378,7 @@ class Xbox:
                              if not sub}
                     if 'default.xbe' not in names:
                         continue
+                    report and report(f'Looking on drive {drive.rstrip(":")}: {folder.split("/")[-1]}')
                     t = xbe_title(self.head(join(folder, names['default.xbe'])))
                     if t and t[0] in GAMES:
                         found.append(dict(path=folder, tid=t[0], title=t[1], ours=MANIFEST.lower() in names))
@@ -1040,9 +1050,16 @@ def gui():
             if TITLE_09 not in src or where_v.get() == 'xbox':
                 where_v.set('xbox')
                 src[TITLE_09] = ('xbox', g['path'])
-            if not cfg['dest']:
+            # a new folder beside the original, never one holding a game the installer didn't make
+            taken = {x['path'].lower() for x in found if not x['ours']}
+            cur_t = (win_to_xbox(xtarget_v.get()) or '').lower()
+            if cur_t in taken or xtarget_v.get() == 'E:\\Games\\Madden NFL 09 Modded':
                 parent = g['path'].rsplit('/', 1)[0]
-                xtarget_v.set(xbox_to_win(join(parent, 'Madden NFL 09 Modded')))
+                for n in ['Madden NFL 09 Modded'] + [f'Madden NFL 09 Installer{"" if i == 1 else " " + str(i)}'
+                                                     for i in range(1, 20)]:
+                    if join(parent, n).lower() not in taken:
+                        xtarget_v.set(xbox_to_win(join(parent, n)))
+                        break
         if not cfg['dest']:
             dest_v.set('xbox')
         refresh_where()
@@ -1165,7 +1182,9 @@ def gui():
                                      'E:\\Games\\Madden NFL 09 Modded.')
                 return None
             if any(g['path'].lower() == t.lower() and not g['ours'] for g in xbox['found']):
-                messagebox.showerror('Folder on the Xbox', 'That is the original game\'s folder. Choose a new one.')
+                messagebox.showerror('Folder on the Xbox', 'That folder holds a Madden game this installer didn\'t '
+                                     'make (your original, or a modded copy of your own). Choose a new folder so '
+                                     'it stays as it is.')
                 return None
             return 'xbox', t
         t = ptarget_v.get().strip()
