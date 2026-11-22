@@ -76,7 +76,8 @@ def setup(work, lan=None):
     os.makedirs(os.path.join(work, 'ov'), exist_ok=True)
     xbe = os.path.join(work, 'ov', 'default.xbe')
     subprocess.run([PY, os.path.join(ROOT, 'patches', 'online.py'),
-                    os.path.join(STOCK, 'default.xbe'), xbe, server, '--lag-tolerant'], check=True)
+                    os.path.join(STOCK, 'default.xbe'), xbe, server, '--lag-tolerant'], check=True,
+                   stdin=subprocess.DEVNULL)   # no name prompt: the boxes are Player1 and Player2
     iso = os.path.join(work, 'online.iso')
     subprocess.run([PY, os.path.join(HERE, 'make_xiso.py'), 'pack', STOCK,
                     os.path.join(work, 'ov'), iso], check=True)

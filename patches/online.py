@@ -1,11 +1,20 @@
 """Let Madden 09's online mode reach a private lobby server instead of Xbox Live (default.xbe).
 
-    python online.py <in default.xbe> <out default.xbe> <server IPv4 address> [--lag-tolerant]
+    python online.py <in default.xbe> <out default.xbe> <server IPv4 address> [--name NAME] [--lag-tolerant]
+
+--name gives this copy's player name (1 to 15 letters, digits, '_' or '-'). The login sends it as
+GTAG, which the lobby server (tools/aries_server.py) uses instead of Player<n>. The game reads GTAG
+from the Live gamertag (+0x144 of the lobby client, 0x54606e), which syslink never fills; the
+patch points that read at the name, kept in 16 unused zero bytes of .rdata (0x636f20). Without
+--name it stays empty and the server hands out Player1, Player2...
 
 --lag-tolerant (for two xemu boxes on one PC) turns off the in-game lag drop: the game ends a
 match ("The connection to your opponent has been lost") after 5 waits of over 1 s for the other
 box's frames once more than 2.5 s of lag has added up (monitor set up at 0x68d20, checked at
-0x68dd0). Two emulated boxes stall like that; the switch raises the 5 to 0x7fffffff.
+0x68dd0). Two emulated boxes stall like that. The switch makes the monitor skip waits of over 1 s
+(the jbe at 0x68cab always jumps), so none is counted. Raising the 5 instead (the first try) let
+the count pass the end of the 10-entry time array at +0x2c (stored by 0x68d00), which broke a heap
+block, and the host crashed in the allocator (0x371345) at the coin toss.
 
 Work in progress (docs/findings.md §14). Fourteen kinds of change, each checked against the stock bytes:
 
@@ -71,9 +80,11 @@ Work in progress (docs/findings.md §14). Fourteen kinds of change, each checked
    pulls" and the host's port 4 counted as disconnected. The attribute now comes from a stub in
    the dead XOnline compare body (0x5f570a, reached only through 0x5ee86d, which change 10 cut
    off) that reads +8 and gives 0 (controller port 1) when it is negative.
+15. (--name only) The login's GTAG comes from the name at 0x636f20 instead of the empty gamertag.
 
 The game traffic between the boxes is now plain UDP to the lobby's ADDR, not XNet's encrypted kind.
 """
+import re
 import struct
 import sys
 
@@ -99,7 +110,10 @@ XONLINE_COMPARE = 0x5ee867                       # mov ecx, [0x7cc408] -> xor ea
 SLOT_BOUNDS = 0x24aeac                           # jae 0x24aeeb (the store) -> jae 0x24af00 (past it)
 USER_OBJECT = 0x4fa6d5                           # returns the OSDK user object (controller port at +8)
 PORT_STUB = 0x5f570a                             # 15 dead bytes after change 10
-LAG_SPIKES = 0x68d54                             # mov dword ptr [esi+0x1c], 5 (lag monitor setup)
+NAME_SLOT = 0x636f20                             # 16 zero bytes after NO_USERS's run start; unused
+GTAG_SOURCE = 0x54606e                           # lea eax, [esi+0x144] (auth's GTAG, the gamertag)
+NAME_CHARS = re.compile(r'[A-Za-z0-9_-]{1,15}')
+LAG_SPIKE_CHECK = 0x68cab                        # jbe: lag not over 1 s -> nothing recorded
 CONTROLLER_ATTR = 0x236102                       # call USER_OBJECT ... call [edx+0x24] (16 bytes)
 
 
@@ -153,15 +167,27 @@ def patch(buf, server):
 
 
 def lag_tolerant(buf):
-    put(buf, LAG_SPIKES, bytes.fromhex('c7461c05000000'), bytes.fromhex('c7461c') + struct.pack('<I', 0x7fffffff))
+    put(buf, LAG_SPIKE_CHECK, bytes.fromhex('7647'), bytes.fromhex('eb47'))
     print('online: in-game lag drop off (xemu)')
+
+
+def player_name(buf, name):
+    if not NAME_CHARS.fullmatch(name):
+        raise SystemExit(f'online: name {name!r}: use 1 to 15 letters, digits, _ or -')
+    put(buf, NAME_SLOT, bytes(16), name.encode().ljust(16, bytes(1)))
+    put(buf, GTAG_SOURCE, bytes.fromhex('8d8644010000'), bytes.fromhex('b8') + struct.pack('<I', NAME_SLOT) + bytes.fromhex('90'))  # mov eax, name
+    print(f'online: player name {name}')
 
 
 def main(src, dst, server, *flags):
     with open(src, 'rb') as f:
         buf = bytearray(f.read())
     size = len(buf)
+    if '--name' in flags and not NAME_CHARS.fullmatch(flags[flags.index('--name') + 1]):
+        raise SystemExit(f'online: name {flags[flags.index("--name") + 1]!r}: use 1 to 15 letters, digits, _ or -')
     patch(buf, server)
+    if '--name' in flags:
+        player_name(buf, flags[flags.index('--name') + 1])
     if '--lag-tolerant' in flags:
         lag_tolerant(buf)
     assert len(buf) == size
@@ -170,6 +196,18 @@ def main(src, dst, server, *flags):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4 or any(a != '--lag-tolerant' for a in sys.argv[4:]):
+    rest = sys.argv[4:]
+    if '--name' in rest and rest.index('--name') + 1 < len(rest):
+        del rest[rest.index('--name'):rest.index('--name') + 2]
+    if len(sys.argv) < 4 or any(a != '--lag-tolerant' for a in rest):
         raise SystemExit(__doc__)
-    main(*sys.argv[1:])
+    args = sys.argv[1:]
+    if '--name' not in args and sys.stdin.isatty():     # run by hand: ask (scripts pass no stdin)
+        try:                                            # (Windows' NUL counts as a terminal)
+            typed = input('Your player name online (1-15 letters, digits, _ or -; Enter for '
+                          'Player1, Player2...): ').strip()
+        except EOFError:
+            typed = ''
+        if typed:
+            args += ['--name', typed]
+    main(*args)

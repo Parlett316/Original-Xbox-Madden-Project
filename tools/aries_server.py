@@ -16,8 +16,9 @@ Bustin' Out), games (`gcre`, `gjoi`, `glea`, `gdel`, `gset`, `gsta`, with `+mgm`
 the config files (`news`: the messenger's address and a locker URL), the rankings queries `cate`
 and `slst` that lobby setup waits for, and pings every 15 s, because the client hangs up after the
 `IDLE` time without traffic. Port 10899 is EA Messenger (`AUTH`, `EPGT`, `RGET`, `PSET`). Everything
-else gets an empty reply of the same command. Each lobby connection gets its own persona (Player1,
-Player2...). tools/online_test.py runs it with one or two xemu instances.
+else gets an empty reply of the same command. Each lobby connection gets its own persona: the
+name the box sends at login (GTAG, set by patches/online.py --name; a repeat gets a number added),
+else Player1, Player2... tools/online_test.py runs it with one or two xemu instances.
 With these, two xemu instances reach the Lobby and meet in one room (2026-11-21).
 """
 import os
@@ -136,6 +137,13 @@ class Server:
             return
         if cmd == 'auth':               # 0x545ec7: NAME, PERSONAS (one persona -> it sends pers)
             u['mac'] = body.get('MAC', '')
+            gtag = body.get('GTAG', '').strip('"')
+            if gtag:                    # the name from online.py --name; two boxes with one name -> Mike, Mike2
+                taken = {v['name'] for v in self.users.values() if v is not u and 'name' in v}
+                name, n = gtag, 2
+                while name in taken:
+                    name, n = '%s%d' % (gtag[:15 - len(str(n))], n), n + 1
+                u['name'] = name
             self.reply(c, who, cmd, {'NAME': name, 'PERSONAS': name, 'TOSVER': '1', 'NUCLEUSMSG': '0',
                                      'MAIL': 'player@localhost', 'BORN': '19800101', 'GEND': 'M',
                                      'FROM': 'US', 'LANG': 'en', 'SPAM': 'NN', 'SINCE': '2008.1.1-00:00:00',
