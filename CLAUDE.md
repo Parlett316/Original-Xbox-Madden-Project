@@ -31,6 +31,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 | List every table and field in a data file | `tools/db_survey.py` (results: docs/findings.md §7) |
 | Build everything | `tools/build_all.py` |
 | Pick what goes in a build from a window | `tools/build_gui.py` (runs `build_all.py`; `--check` prints each preset's command) |
+| Step-by-step installer for newcomers (Xbox FTP in and out, plain-English mods, downloads, build, upload) | `tools/installer.py`, launched by `Install Madden 09 Mods.bat` (`--selftest` checks it without a window or Xbox; works in `installer_files/`) |
 | Fix quick-load bundles | `patches/qkl_sync.py` |
 | Coaching staffs and coach photos | `roster/coaches.py`, `roster/fetch_coach_photos.py` (photo = `uis_coac.dat` entry `CSXP`+1), `roster/coach_ratings.py` (ratings by rank), `roster/coach_history.py` (real histories and team records) |
 | Classic teams' real names | `roster/classic_names.py` (nflverse rosters in `nflverse_rosters/`; review CSV, then `--apply`) |

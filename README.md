@@ -84,6 +84,18 @@ This repository contains **only scripts and documentation** (plus the screenshot
 
 Modified XBEs can't be re-signed, so you need a softmodded or modchipped Xbox (or an emulator such as xemu).
 
+## Easy install (new to this? start here)
+
+1. Download this repository (the green **Code** button, then **Download ZIP**) and unzip it.
+2. Double-click **Install Madden 09 Mods.bat**. The first time it offers to install Python and then the packages the mods need.
+3. Then it's four steps:
+   1. **Where is your Madden?** A folder on your PC (it looks for one, or press Browse and pick something like `C:\Madden09`), or your Xbox's hard drive (type the IP address your dashboard shows; the FTP user and password are usually `xbox`). Madden 2005 to 08 are optional and unlock more music, the radio show and realistic progression.
+   2. **What mods do you want?** Tick boxes in plain words, with the recommended ones ticked.
+   3. **Mod it.** Choose where the modded game goes, a new folder on the Xbox or on your PC, and press **Mod my game!** It downloads today's rosters, builds, and copies the whole modded game there, checking every file.
+   4. **Profit!** It says what to do next, and can move old roster saves out of the way.
+
+Your original game folder is never changed. Running it again later only copies what changed.
+
 ## Quick start
 
 ```

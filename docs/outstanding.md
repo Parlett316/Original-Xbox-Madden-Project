@@ -1,8 +1,21 @@
 # Outstanding work
 
-A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-20. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
+A running checklist of what's still open, so work can pick up in a new chat. Last updated 2026-11-22. Background and addresses are in [roadmap.md](roadmap.md) and [findings.md](findings.md). Tick items off or delete them as they're done.
 
 ## Waiting on an Xbox test
+
+**Installer for newcomers (2026-11-22).** Double-clicking `Install Madden 09 Mods.bat` checks for Python 3.10+ with tkinter (offering `winget install Python.Python.3.13`), installs `requirements.txt` and opens `tools/installer.py`, in four steps:
+
+1. **Where is your Madden?** This PC or the Xbox. On the PC it looks two folders deep on every drive and in Desktop, Downloads and Documents, and Browse also looks one level down (so `C:\Games` finds `C:\Games\Madden09`). On the Xbox it connects over FTP and finds games by their XBE title IDs, two folders deep on every drive but C, D, X, Y and Z. Madden 09 must have the stock XBE SHA-1 (`eda937d7…`). Madden 2005-08 are optional, from either place.
+2. **What mods?** Plain-English ticks, greyed out with a reason when a game or the roster is missing.
+3. **Mod it.** The destination is a new folder on the Xbox or on the PC. One button copies from the Xbox only the games the chosen mods need (PC folders are linked as junctions in `installer_files/games/`), downloads the EA ratings, headshots, coach photos and nflverse stats and schedule, and runs `build_all.py` with `build_gui.command()`. Then it makes the destination hold the whole game (stock + overlay), checking each file's size and resending up to 3 times. `mod_install.txt` there lists each file's size and SHA-1, so a later run copies only what changed, resends a cut-off file and removes files an earlier build added. It's rewritten without the files about to go, so a stopped run resends them. A PC destination goes through the same code (`LocalBox`).
+4. **Profit!** Next steps. On the Xbox it lists `Rost-` saves under `E:\UDATA\4541023b` and, after asking, backs them up to `installer_files/save_backups/` and removes them.
+
+`--selftest` checks the LIST parsing, the stock XBE, the mod-to-argument mapping, the upload plan, Xbox paths, an install into a PC folder and the PC search. Against a local FTP server (pyftpdlib) game finding, copying, first install, a re-install with nothing to send, a changed same-size file, a cut-off file, a removed file, a folder it didn't make, and save backup and removal all worked. A small build through the installer's linked game folder ran `build_all.py` cleanly.
+
+- [ ] **On the Xbox:** connect from the installer to UnleashX. Its LIST format and SIZE support haven't been seen; the parser takes Unix and DOS listings and falls back to LIST when SIZE fails. Check it finds the games, then do a full install and a second install that sends nothing.
+- [ ] **A full build from a fresh download:** the recommended mods with the roster downloads, on a PC without the repo's own data.
+- [ ] **Free space:** nothing checks that the Xbox has room for the 2 GB+ folder; a full drive shows up as a file that won't upload completely.
 
 **Release v1.0 (2026-11-20).** [release.md](release.md) has the command, which reproduces every file on the Xbox byte for byte, and the install list. Tagged `v1.0`. Next: play it as a long franchise on the Xbox (years 5 to 10, a user-run team).
 
