@@ -362,8 +362,12 @@ class Xbox:
         names = [n for n, d, _ in self.listdir('/') or [] if d]
         return [n for n in names if n.rstrip(':').upper() not in skip and len(n.rstrip(':')) == 1]
 
-    def find_games(self, report=None):
-        """[{path, tid, title, modded_by_us}] for every folder with a default.xbe, two levels deep."""
+    def find_games(self, report=None, quick=False):
+        """[{path, tid, title, ours}] for every folder with a default.xbe, two levels deep.
+
+        Reading a title takes a login of its own (about 2 s), so quick looks only in folders whose
+        name has MADDEN or NFL in it; the window tries that first and searches everything after.
+        """
         found = []
         for drive in self.drives():
             report and report(f'Looking on drive {drive.rstrip(":")}...')
@@ -374,6 +378,8 @@ class Xbox:
                 entries = self.listdir(top) or []
                 dirs = [top] + [join(top, n) for n, sub, _ in entries if sub]
                 for folder in dirs:
+                    if quick and not re.search(r'madden|nfl', folder.rsplit('/', 1)[-1], re.I):
+                        continue
                     names = {n.lower(): n for n, sub, _ in (entries if folder == top else self.listdir(folder) or [])
                              if not sub}
                     if 'default.xbe' not in names:
@@ -1024,7 +1030,12 @@ def gui():
         def work(cancel):
             box = Xbox(host, cfg['user'], cfg['password'])
             box.connect()
-            return box, box.find_games(lambda s: post('conn', s))
+            found = box.find_games(lambda s: post('conn', s), quick=True)
+            if not any(g['tid'] == TITLE_09 and not g['ours'] for g in found):
+                post('conn', 'No folder named Madden or NFL holds Madden NFL 09: checking every game '
+                     '(a couple of minutes)...')
+                found = box.find_games(lambda s: post('conn', s))
+            return box, found
         if not run_task(work, connected):
             set_conn('Busy: wait for the current job to finish.')
 
