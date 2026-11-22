@@ -7,7 +7,7 @@ Every team site has a /team/coaches-roster/ (or /team/coaches/) page of cards:
 <img ... src= or data-src=".../image/{upload|private}/.../<team>/<id>.jpg">
 followed by <h3 ...title">Name</h3>.
 """
-import html, os, re, sys, time, unicodedata, urllib.request
+import html, http.client, os, re, sys, time, unicodedata, urllib.request
 
 from coaches import STAFF
 
@@ -26,10 +26,20 @@ CARD = re.compile(r'<img [^>]*?(?:data-src|src)="https://static\.clubs\.nfl\.com
                   r'<h3 class="d3-o-media-object__title">([^<]+)</h3>', re.S)
 
 
-def get(url):
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+def get(url, tries=4):
+    """The page, retried with a growing wait if the connection drops."""
+    for attempt in range(tries):
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == tries - 1:   # a missing page stays missing
+                raise
+        except (OSError, http.client.HTTPException):
+            if attempt == tries - 1:
+                raise
+        time.sleep(3 * 2 ** attempt)
 
 
 def key(name):

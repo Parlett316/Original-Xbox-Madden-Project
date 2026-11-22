@@ -24,6 +24,7 @@ from the Xbox, the downloads, the build and the save backups. The stock game fol
 """
 import ftplib
 import hashlib
+import http.client
 import json
 import os
 import queue
@@ -488,18 +489,28 @@ def install_game(box, stock, overlay, target, say, busy, progress, cancel, confi
 
 # ---------------------------------------------------------------- downloads
 
-def fetch(url, dest, cancel=None):
+def fetch(url, dest, cancel=None, tries=5):
+    """Download url to dest unless it's there already; retried with a growing wait if the connection drops."""
     if os.path.isfile(dest) and os.path.getsize(dest) > 0:
         return False
     os.makedirs(os.path.dirname(dest), exist_ok=True)
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req, timeout=120) as r, open(dest + '.part', 'wb') as out:
-        while b := r.read(1 << 16):
-            if cancel and cancel.is_set():
-                raise Cancelled()
-            out.write(b)
-    os.replace(dest + '.part', dest)
-    return True
+    for attempt in range(tries):
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=120) as r, open(dest + '.part', 'wb') as out:
+                while b := r.read(1 << 16):
+                    if cancel and cancel.is_set():
+                        raise Cancelled()
+                    out.write(b)
+            os.replace(dest + '.part', dest)
+            return True
+        except (OSError, http.client.HTTPException):
+            if attempt == tries - 1:
+                raise
+            for _ in range(3 * 2 ** attempt):
+                if cancel and cancel.is_set():
+                    raise Cancelled()
+                time.sleep(1)
 
 
 def stats_files():

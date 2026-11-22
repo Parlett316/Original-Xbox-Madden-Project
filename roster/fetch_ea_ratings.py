@@ -5,16 +5,25 @@ Usage: python fetch_ea_ratings.py OUT.json [ITERATION]
 Uses the site's Next.js page-data route (100 players per page), which carries
 team and position; the bare drop-api endpoint leaves those null.
 """
-import json, re, sys, time, urllib.request
+import http.client, json, re, sys, time, urllib.request
 
 SITE = 'https://www.ea.com'
 UA = {'User-Agent': 'Mozilla/5.0'}
 
 
-def get(url):
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read().decode('utf8')
+def get(url, tries=6):
+    """The page, retried with a growing wait: EA's server sometimes drops a connection mid-page."""
+    for attempt in range(tries):
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return r.read().decode('utf8')
+        except (OSError, http.client.HTTPException) as e:
+            if attempt == tries - 1:
+                raise
+            wait = 3 * 2 ** attempt
+            print(f'  {type(e).__name__}, trying again in {wait} s', flush=True)
+            time.sleep(wait)
 
 
 def build_id():
