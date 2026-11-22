@@ -34,6 +34,7 @@ CHECKS = [
     ('save_unlock', 'Load edited franchise saves', 'game'),
     ('career_room', 'More room for career stats in long franchises', 'game'),
     ('demo_off', 'Turn off the attract demo (leaving it freezes the console)', 'game'),
+    ('xbox360', 'Also runs on an Xbox 360 (backward compatibility)', 'game'),
     ('music', 'Soundtracks from Madden 2005-08 (BGM.dat becomes 756 MB)', 'look'),
     ('radio_show', "Madden 07's Tony Bruno radio show in franchise (229 MB)", 'look'),
     ('commanders_commentary', 'Al Michaels says "Washington" (447 MB; needs the roster)', 'look'),
@@ -98,7 +99,7 @@ def command(v):
     elif not v['playoffs7']:
         c.append('--no-playoffs7')
     c.append('--career-room' if v['career_room'] else '--no-career-room')
-    for k in ('modern_kickoff', 'any_number', 'optional_fullback', 'save_unlock', 'radio_show'):
+    for k in ('modern_kickoff', 'any_number', 'optional_fullback', 'save_unlock', 'radio_show', 'xbox360'):
         if v[k]:
             c.append('--' + k.replace('_', '-'))
     if v['commanders_commentary'] and v['roster']:

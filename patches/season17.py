@@ -289,9 +289,9 @@ def week17_cave(va):
         c.extend(b'\xe8' + struct.pack('<i', target - (va + len(c) + 5)))
     c += bytes.fromhex('ff742404')                          # push [esp+4]       state
     call(PLACE)
-    c += bytes.fromhex('83c404 85c0 75')                    # add esp,4; test eax,eax; jnz done
+    c += bytes.fromhex('83c404 85c0 0f85')                  # add esp,4; test eax,eax; jnz done (near: 132 bytes on)
     jnz_done = len(c)
-    c += b'\0'
+    c += bytes(4)
     c += bytes.fromhex('53 56 57 8b742410 31db')            # push ebx,esi,edi; esi = state; ebx = n = 0
     loop = len(c)
     c += bytes.fromhex('89d8 c1e802 8b4e10 83e103 8d0c81')  # ecx = (year & 3) + 4 * (n >> 2)
@@ -309,9 +309,10 @@ def week17_cave(va):
     c += b'\0'
     c += bytes.fromhex('43 83fb10 72')                      # inc ebx; cmp ebx,16; jb loop
     c += struct.pack('<b', loop - (len(c) + 1))
+    assert len(c) - (jnz_out + 1) < 0x80, 'short jnz out of range'
     c[jnz_out] = len(c) - (jnz_out + 1)
     c += bytes.fromhex('5f5e5b')
-    c[jnz_done] = len(c) - (jnz_done + 1)
+    struct.pack_into('<i', c, jnz_done, len(c) - (jnz_done + 4))
     c += b'\xc3'
     return bytes(c)
 

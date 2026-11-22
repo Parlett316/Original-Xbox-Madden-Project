@@ -59,8 +59,11 @@ Usage:
                      offline play is unchanged). Same build on every box that plays together.
   --online-name NAME this box's name in the lobby (1-15 letters, digits, _ or -; default Player<n>)
   --online-lag-tolerant  never end a game for lag (only for playing an xemu box, which stalls)
+  --xbox360          also run on an Xbox 360 (backward compatibility): the patches' code moves out
+                     of the XBE's header page, which the 360 won't run, to the end of the last
+                     section (patches/xbox360.py, the last default.xbe step)
 
-Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, radio show, online, then
+Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, radio show, online, Xbox 360, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
 copy of the game folder on the Xbox (keep the stock folder as is).
 """
@@ -125,6 +128,7 @@ def main():
     ap.add_argument('--online')
     ap.add_argument('--online-name')
     ap.add_argument('--online-lag-tolerant', action='store_true')
+    ap.add_argument('--xbox360', action='store_true')
     ap.add_argument('--career-room', action='store_true', default=None)
     ap.add_argument('--no-career-room', dest='career_room', action='store_false')
     a = ap.parse_args()
@@ -179,6 +183,8 @@ def main():
         subprocess.run([PY, *args], check=True, stdin=subprocess.DEVNULL)   # no name prompt
     elif a.online_name or a.online_lag_tolerant:
         raise SystemExit('--online-name and --online-lag-tolerant need --online SERVER')
+    if a.xbox360:                         # last: moves every header-page cave the steps above wrote
+        run(os.path.join(P, 'xbox360.py'), os.path.join(g09, 'default.xbe'), xbe, xbe)
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:

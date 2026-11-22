@@ -588,6 +588,8 @@ MODS = [
      'Lets the game load franchise saves changed with PC tools. Leave it off unless you edit saves.'),
     ('optional_fullback', 'Extras', 'Teams without a fullback',
      'A team can carry no fullback; a tight end fills in. Partly tested.'),
+    ('xbox360', 'Extras', 'Also runs on an Xbox 360',
+     "Tick this if you'll play it on a modded Xbox 360 (backward compatibility). Tested on a 360 and in xemu."),
 ]
 RECOMMENDED = {'awareness', 'progression', 'career_room', 'demo_off', 'season17', 'playoffs7', 'modern_kickoff',
                'any_number', 'roster', 'history', 'commanders_commentary', 'music', 'radio_show'}
@@ -614,7 +616,7 @@ def build_values(choice, extras):
     """build_gui's dict of choices for build_all.py."""
     v = dict(bg.DEFAULTS, games=GAMES_DIR, out=OUT)
     for k in ('awareness', 'season17', 'playoffs7', 'modern_kickoff', 'any_number', 'optional_fullback',
-              'save_unlock', 'career_room', 'demo_off', 'music', 'radio_show', 'commanders_commentary'):
+              'save_unlock', 'career_room', 'demo_off', 'music', 'radio_show', 'commanders_commentary', 'xbox360'):
         v[k] = bool(choice.get(k))
     v['commanders_commentary'] = v['commanders_commentary'] and bool(choice.get('roster'))
     v['progression'] = 'performance' if choice.get('progression') else 'stock'
@@ -1584,7 +1586,7 @@ def selftest():
         check(local_game(stock) == TITLE_09, 'stock 09 folder recognised')
         check(sha1_file(os.path.join(stock, 'default.xbe')) == STOCK_09_SHA1, 'stock 09 SHA-1')
     for k, *_ in MODS:
-        check(k in RECOMMENDED or k in ('save_unlock', 'optional_fullback'), f'mod {k} has a default')
+        check(k in RECOMMENDED or k in ('save_unlock', 'optional_fullback', 'xbox360'), f'mod {k} has a default')
     have = set(ORDER)
     c = {k: k in RECOMMENDED for k, *_ in MODS}
     v = build_values(c, {'title': 'Madden NFL 09 Modded'})

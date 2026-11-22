@@ -4,6 +4,11 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 
 ## Waiting on an Xbox test
 
+**Xbox 360 (2026-11-22).** The 360's backward-compatibility emulator won't run code in the XBE's header page, where six patches keep their caves ([findings §15](findings.md#15-running-on-an-xbox-360-09)). `build_all.py --xbox360` (`patches/xbox360.py`, also a tick in `build_gui.py` and the installer) moves them to the end of `.XTLID`. The v1.0 XBE moved this way boots on the user's hacked 360 and simmed a franchise into the offseason with everything working; it reaches the main menu in xemu. `patched/x360_test/` holds the 17 test XBEs.
+- [ ] **The moved XBE on the original Xbox** (a franchise week, the radio show, a kickoff touchback). If it works, make `--xbox360` the default so one build runs on both.
+- [ ] Online play on the 360 (the emulator's networking) is untried.
+- `season17.py`'s error exit was a short jump out of range (findings §15); now a near jump, so the release command's `default.xbe` no longer matches v1.0's byte for byte (the 17-game cave only).
+
 **Installer for newcomers (2026-11-22).** Double-clicking `Install Madden 09 Mods.bat` checks for Python 3.10+ with tkinter (offering `winget install Python.Python.3.13`), installs `requirements.txt` and opens `tools/installer.py`, in four steps:
 
 1. **Where is your Madden?** This PC or the Xbox. On the PC it looks two folders deep on every drive and in Desktop, Downloads and Documents, and Browse also looks one level down (so `C:\Games` finds `C:\Games\Madden09`). On the Xbox it connects over FTP and finds games by their XBE title IDs, two folders deep on every drive but C, D, X, Y and Z. Madden 09 must have the stock XBE SHA-1 (`eda937d7…`). Madden 2005-08 are optional, from either place.

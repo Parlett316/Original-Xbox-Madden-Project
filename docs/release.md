@@ -14,6 +14,8 @@ The build that's on the Xbox, reproduced from the repository in one command. Eve
 
 ## Build
 
+Since 2026-11-22 the command's `default.xbe` differs from the release's in the 17-game cave (an out-of-range short jump on an error path, fixed; findings §15). Every data file is unchanged.
+
 Needs the stock game folders (`Madden NFL 09 (USA)`, `Madden NFL 07 (USA)` for the radio show, `Madden NFL 2005 (USA)` for progression), the downloads listed in [workflow.md](workflow.md), and the personal art in `custom/` (not committed):
 
     python tools/build_all.py --games . --out patched/release_v1 --title "Madden NFL 09 Modded"         --progression performance --demo-delay 86400000 --career-room --modern-kickoff --any-number         --radio-show --year 2026 --optional-fullback --save-unlock --commanders-commentary         --commanders-logo custom/commanders_w.png --loadscreen custom/skins_screen_4x3.png         --startscreen custom/load_screen_640x480_skins.png --roster roster/madden27_week7.json         --photos roster/headshots_raw --coach-photos roster/coach_photos         --free-agents roster/free_agent_picks.json --player-stats nflverse_stats         --classic-names nflverse_rosters/classic_matches.csv --schedule nflverse_schedule/games.csv

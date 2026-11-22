@@ -406,3 +406,28 @@ Researched 2026-11-20 in xemu, with `patches/online.py` and `tools/aries_server.
   - **Player names (online.py `--name`).** At login the client sends `GTAG` from the Live gamertag, empty in syslink, so the server named players Player1, Player2. The game builds the login's parameters itself (`0x501935`: `GTAG` = the return of a virtual gamertag getter called at `0x501931`, then `INIT`) and hands the string to the lobby client, which copies it into `+0x638` (`0x546562`). `[esi+0x104]`, read at `0x54638f`, is only the reconnect path (taken when `+0xabd` is 1), and `0x54606e` reads `+0x144` for `pers` on a path syslink doesn't take; patching only those left the login's `GTAG` empty. `--name` keeps a name in 16 unused zero bytes of `.rdata` (`0x636f20`, in the run that starts at `NO_USERS`; the only reference into that run is to `0x636f6c`) and pushes it in place of the getter's result (`0x50192f`: `mov eax,[ecx]; call [eax+0x14]; push eax` becomes `push 0x636f20; nop`), with the reconnect read pointed there too (`mov eax, 0x636f20`). In xemu the login then sent `GTAG 'Mike'` and the lobby header read Mike (2026-11-21); on the user's Xbox it read Parlett316 (2026-11-22). The server takes a non-empty `GTAG` as the player's name and adds a number to a repeat. On the user's Xbox (2026-11-21) the patched copy logged in, reached the Lobby, joined USR.Madden and invited Bot (accepted, Game Setup, then "Failed to Connect!" as expected with no box behind Bot); the name came through empty because of the wrong site (twice: `0x54638f` was not the login's either). Then the Xbox hosted an xemu box packed from the same release folder and **the game played in sync**, the user's pad driving the Commanders (2026-11-21), slowed to xemu's pace by the lockstep.
   - Other coop messages seen (big-endian tags after `coop` on port 3658): `redy` (ready, both boxes at load start and end), `chte`, `audi`, `tabl` (each box sends its own team's depth chart: `ddep` with `PGID`, `TGID`, `PPOS`, about 1.5 KB in 8 parts), `ppng` (a ping every third frame in state 4; 15 s without one also ends the match, `0x6893c`, timeouts from the config object `[0x801d90]`, ids 10–12 = 2000, 10000, 15000 ms) and `reco` (sent when a local pad's status is 2). Frames are 33–69-byte packets starting `02 0c`/`02 0d`.
 - **gdb and the game link.** A data watch or `online_state.py` reads on a box while the boxes set up their link made the link fail (status 5, "Failed to Connect!"); with nothing attached it stayed up for over a minute in Game Setup. Arm watches after Start Game. The 10 s quiet-link timeout (`0x543488`) is easy to hit while a box is paused.
+
+## 15. Running on an Xbox 360 (09)
+
+Stock Madden 09 runs on a hacked Xbox 360's backward-compatibility emulator (it's on consolemods.org's list), but the v1.0 build stopped with "encountered an error X5832.0 B5832.0" (the numbers are the emulator's version, not a cause). The user ran one-change test XBEs on the 360 (2026-11-22), each in place of `default.xbe`:
+
+| Test | Change from stock (or from the build without the radio show) | 360 |
+|---|---|---|
+| 1 | title name only (EA's signature no longer matches) | boots |
+| 2 | awareness fix only (a cave in the header page, never run at boot) | boots |
+| 3 | v1.0 XBE with every section digest recomputed | error |
+| 4 | stock XBE with v1.0's `data` folder | boots |
+| 5 | v1.0 without the radio show | boots |
+| 6 | v1.0's first five XBE patches | boots |
+| 7, 8 | test 5 plus `.XTLID` grown to 0x5000 / given flags 0x07 | boot |
+| 9 | test 5 plus the radio show's loader changes (no show code) | error |
+| 10-13 | test 5 plus the file name, the volume jne, the sub-bank count, the base entry | boot |
+| 14 | test 12 plus the loader cave (header page, 0x10e40) | error |
+| 15 | test 14's cave moved to 0x81a000 in the grown `.XTLID` | boots |
+| 16 | a cave at 0x10e40 that is only `jmp load_events` | error |
+
+**The 360's emulator won't run code in the XBE's header page.** It doesn't check EA's signature (tests 1 and 2), and it accepts a grown, preloaded, executable `.XTLID`. Every test XBE had correct section digests, so whether it checks those is unknown; `xbox360.py` recomputes them. The radio show's loader cave was simply the first header-page code to run (at boot); the playoffs, kickoff, fullback, awareness and 17-game caves would have failed when first reached.
+
+`patches/xbox360.py` (`build_all.py --xbox360`, last XBE step) moves the whole cave block, 0x10b40-0x11000, by 0x809000 to 0x819b40-0x81a000, the free tail of `.XTLID` just below the radio show's code. The caves only branch within themselves (rel8/rel32) or out to the game (rel32), and hold no absolute addresses of themselves, so the block moves as a unit: outgoing rel32s are reduced by the move, the 8 hooks into it (found among the bytes that differ from stock) are increased, every instruction is checked at its new address, the old block is zeroed and the digests recomputed. Without the radio show, `.XTLID` grows to 0x2000 with flags 0x07. The two "absolute pointers" a raw dword scan finds in the radio show's code are `0f 85` jcc encodings. v1.0 moved this way (test 17) boots on the 360 and simmed a franchise through the season and playoffs into the offseason, everything working (the user, 2026-11-22); it also reaches the main menu in xemu.
+
+While checking the caves: `season17.py`'s "PLACE failed" exit was a short `jnz` 132 bytes forward, which wraps to -124 (0x10ef4, padding before the awareness cave). Only an error from the generator's placement step takes it, never seen; it's now a near `jnz`, so `default.xbe` differs from v1.0's in that cave.
