@@ -2,6 +2,8 @@
 
 Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineering the games' own code and databases. The main target is **Madden NFL 09**. The aim is a franchise mode you can play for many seasons, with a 17-game season, modern rosters, more music, and your own screens.
 
+> **Just want to play?** [Download the ZIP](https://github.com/Parlett316/Original-Xbox-Madden-Project/archive/refs/heads/main.zip), unzip it, and double-click **Install Madden 09 Mods.bat**. It asks where your Madden is (your PC or your Xbox), which mods you want, and puts a modded copy next to your original. See [Easy install](#easy-install-start-here).
+
 **Release v1.0** (2026-11-20): one `build_all.py` command builds everything below that's on the author's Xbox, byte for byte. The command and the install list are in [docs/release.md](docs/release.md).
 
 | Feature | Games | Status |
@@ -26,6 +28,20 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 | **Attract-mode demo off** (leaving it hard-locks the console, even on the stock game) | 09 | Timer confirmed on hardware |
 
 There's nothing here for Madden 06 yet: it has no role system, so the awareness bug can't happen there.
+
+## Easy install (start here)
+
+1. [Download the ZIP](https://github.com/Parlett316/Original-Xbox-Madden-Project/archive/refs/heads/main.zip) and unzip it anywhere.
+2. Double-click **Install Madden 09 Mods.bat**. The first time it offers to install Python and then the packages the mods need.
+3. Then it's four steps:
+   1. **Where is your Madden?** A folder on your PC (it looks for one, or press Browse and pick something like `C:\Madden09`), or your Xbox's hard drive (type the IP address your dashboard shows; the FTP user and password are usually `xbox`). Madden 2005 to 08 are optional and unlock more music, the radio show and realistic progression.
+   2. **What mods do you want?** Tick boxes in plain words, with the recommended ones ticked.
+   3. **Mod it.** Choose where the modded game goes, a new folder on the Xbox or on your PC, and press **Mod my game!** It downloads today's rosters, builds, and copies the whole modded game there, checking every file.
+   4. **Profit!** It says what to do next, and can move old roster saves out of the way.
+
+Your original game folder is never changed. Running it again later only copies what changed.
+
+You need a softmodded or modchipped Xbox (or xemu) and your own copy of Madden NFL 09 as a game folder. The rest of this page is for people who want to know how it works or build from the command line.
 
 ## The Tony Bruno Show is back
 
@@ -84,19 +100,7 @@ This repository contains **only scripts and documentation** (plus the screenshot
 
 Modified XBEs can't be re-signed, so you need a softmodded or modchipped Xbox (or an emulator such as xemu).
 
-## Easy install (new to this? start here)
-
-1. Download this repository (the green **Code** button, then **Download ZIP**) and unzip it.
-2. Double-click **Install Madden 09 Mods.bat**. The first time it offers to install Python and then the packages the mods need.
-3. Then it's four steps:
-   1. **Where is your Madden?** A folder on your PC (it looks for one, or press Browse and pick something like `C:\Madden09`), or your Xbox's hard drive (type the IP address your dashboard shows; the FTP user and password are usually `xbox`). Madden 2005 to 08 are optional and unlock more music, the radio show and realistic progression.
-   2. **What mods do you want?** Tick boxes in plain words, with the recommended ones ticked.
-   3. **Mod it.** Choose where the modded game goes, a new folder on the Xbox or on your PC, and press **Mod my game!** It downloads today's rosters, builds, and copies the whole modded game there, checking every file.
-   4. **Profit!** It says what to do next, and can move old roster saves out of the way.
-
-Your original game folder is never changed. Running it again later only copies what changed.
-
-## Quick start
+## Building from the command line
 
 ```
 pip install -r requirements.txt
