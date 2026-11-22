@@ -135,8 +135,12 @@ def problems(v):
         bad.append(f'The radio show needs "{OLDER[2]}" in the games folder.')
     if v['year_on'] and not (v['year'].strip().isdigit() and 1900 <= int(v['year']) <= 2100):
         bad.append('The year must be a number such as 2026.')
-    if v['online_on'] and not re.fullmatch(r'(\d{1,3}\.){3}\d{1,3}', v['online_server'].strip()):
-        bad.append("Online play needs the lobby server's address, such as 192.168.1.4.")
+    if v['online_on']:
+        sys.path.insert(0, os.path.join(ROOT, 'patches'))
+        from online import server_ok
+        if not server_ok(v['online_server'].strip()):
+            bad.append("Online play needs the lobby server's address, such as 192.168.1.4, or a name of up to "
+                       "18 characters, such as md09.duckdns.org.")
     if v['online_on'] and v['online_name'].strip() and not re.fullmatch(r'[A-Za-z0-9_-]{1,15}', v['online_name'].strip()):
         bad.append('The online name is 1 to 15 letters, digits, _ or -.')
     if len(v['title'].strip()) > 40:

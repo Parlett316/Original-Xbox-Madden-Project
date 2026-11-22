@@ -1,6 +1,10 @@
 """Let Madden 09's online mode reach a private lobby server instead of Xbox Live (default.xbe).
 
-    python online.py <in default.xbe> <out default.xbe> <server IPv4 address> [--name NAME] [--lag-tolerant]
+    python online.py <in default.xbe> <out default.xbe> <server> [--name NAME] [--lag-tolerant]
+
+<server> is the lobby server's IPv4 address, or a host name of up to 18 characters (it replaces
+"xblmadden09.ea.com"), such as a DuckDNS name that follows a home connection's changing address.
+The game then looks the name up through the Xbox's DNS, as it did for EA's server.
 
 --name gives this copy's player name (1 to 15 letters, digits, '_' or '-'). The login sends it as
 GTAG, which the lobby server (tools/aries_server.py) uses instead of Player<n>. The game passes the
@@ -139,9 +143,18 @@ def put(buf, va, old, new):
     buf[o:o + len(new)] = new
 
 
-def patch(buf, server):
+def server_ok(server):
+    """An IPv4 address, or a host name that fits EA's 18-character slot (e.g. md09.duckdns.org)."""
     parts = server.split('.')
-    assert len(parts) == 4 and all(p.isdigit() and int(p) < 256 for p in parts), 'give an IPv4 address'
+    if len(parts) == 4 and all(p.isdigit() for p in parts):
+        return all(int(p) < 256 for p in parts)
+    return len(server) < len(STOCK_NAME) and bool(re.fullmatch(r'[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+', server))
+
+
+def patch(buf, server):
+    if not server_ok(server):
+        raise SystemExit(f'online: server {server!r}: give an IPv4 address, or a host name of up to '
+                         f'{len(STOCK_NAME) - 1} characters')
     for va in ARG_SITES:
         put(buf, va, struct.pack('<I', EMPTY_ARG), struct.pack('<I', SYSLINK_ARG))
     put(buf, GAP - 8, b'-syslink\0\0\0\0-coop\0', b'-syslink    -coop\0')

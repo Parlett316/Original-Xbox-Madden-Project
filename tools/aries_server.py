@@ -1,6 +1,7 @@
 """A private lobby server for Madden 09's online mode (EA's "Aries" protocol), work in progress.
 
     python tools/aries_server.py <log> [--host <IP the Xbox reaches this PC at>] [--name <persona prefix>]
+                                       [--public <this site's name from the internet, e.g. md09.duckdns.org>]
                                        [--bot]   # a fake player in USR.Madden, to test invites alone
 
 The game opens a TCP connection to its directory server (port 30010), sends `@tic` and `@dir`,
@@ -21,6 +22,7 @@ name the box sends at login (GTAG, set by patches/online.py --name; a repeat get
 else Player1, Player2... tools/online_test.py runs it with one or two xemu instances.
 With these, two xemu instances reach the Lobby and meet in one room (2026-11-21).
 """
+import ipaddress
 import os
 import socket
 import struct
@@ -58,8 +60,10 @@ def unpack(buf):
 
 
 class Server:
-    def __init__(self, log, host, name='Player'):
+    def __init__(self, log, host, name='Player', public=None):
         self.log, self.host, self.name = open(log, 'a', buffering=1, encoding='latin1'), host, name
+        self.public = public            # --public: a name for this site from the internet (DuckDNS)
+        self._public_ip = (None, 0)
         self.users = {}                 # lobby connection -> user
         self.next_id = 1                # user ids (and Player<n> names) are never reused
         self.games = {}                 # game id -> game (gcre); a private game is an invite between two
@@ -116,11 +120,12 @@ class Server:
         if cmd == '@tic':
             return                      # no reply seen in other EA titles; the client goes on to @dir
         if cmd == '@dir':
-            self.reply(c, who, '@dir', {'ADDR': self.host, 'PORT': LOBBY_PORT,
+            self.reply(c, who, '@dir', {'ADDR': self.server_addr(c), 'PORT': LOBBY_PORT,
                                         'SESS': '1234567890', 'MASK': '0123456789abcdef0123456789abcdef'})
             return
         if c not in self.users:
-            self.users[c] = {'id': self.next_id, 'conn': c, 'room': None, 'addr': c.getpeername()[0]}
+            self.users[c] = {'id': self.next_id, 'conn': c, 'room': None, 'addr': c.getpeername()[0],
+                             'peer': c.getpeername()[0]}
             self.next_id += 1
         u = self.users[c]
         u.setdefault('name', '%s%d' % (self.name, u['id']))
@@ -191,7 +196,7 @@ class Server:
         if cmd == 'news':               # config files (client.cfg, then webconfig, which these come from)
             # BUDDY_*: the messenger (0x4dcf14). LOCKER_SERVER: an HTTP base for the file locker; empty,
             # its create (0x54b22e) returns NULL and the game crashes after lobby setup (0x54b347).
-            self.reply(c, who, cmd, {'BUDDY_SERVER': self.host, 'BUDDY_PORT': BUDDY_PORT,
+            self.reply(c, who, cmd, {'BUDDY_SERVER': self.server_addr(c), 'BUDDY_PORT': BUDDY_PORT,
                                      'LOCKER_SERVER': 'http://%s:%d/locker' % (self.host, HTTP_PORT)})
             return
         if cmd == 'rcat':               # room categories (0x541e99): CAT0, CAT1... = name,description,
@@ -249,7 +254,7 @@ class Server:
                 bot['fixed'] = True
                 self.say('bot params', b.hex(' '))
                 for p in g['players']:
-                    self.push(p, '+mgm', self.game_info(g))
+                    self.push(p, '+mgm', self.game_info(g, p))
 
     def message(self, c, who, u, body):
         """mesg ATTR=ENX PRIV=<name> TEXT=... -> a private message: tag 'priv', F=<ATTR> N=<sender>
@@ -275,7 +280,7 @@ class Server:
             bot['game'] = g['id']
             bot['userparams'] = u.get('userparams', '')
             for p in g['players']:
-                self.push(p, '+mgm', self.game_info(g))
+                self.push(p, '+mgm', self.game_info(g, p))
 
     def game(self, c, who, u, cmd, body):
         """Games (Invite to Game creates one: gcre with MINSIZE=MAXSIZE=2, PASS = the host's name).
@@ -294,8 +299,8 @@ class Server:
             self.next_game += 1
             self.games[g['id']] = g
             u['game'] = g['id']
-            self.reply(c, who, cmd, self.game_info(g))
-            self.push(u, '+mgm', self.game_info(g))
+            self.reply(c, who, cmd, self.game_info(g, u))
+            self.push(u, '+mgm', self.game_info(g, u))
             return
         ident = int(body.get('IDENT') or 0)
         if cmd == 'gjoi' and ident < 0:     # accepting an invite: gget IDENT=<n>, then gjoi IDENT=-1
@@ -306,7 +311,7 @@ class Server:
         if cmd == 'gget':                   # the game's record (the guest looks up the invite's game)
             if g:
                 u['fetched'] = g['id']
-                self.reply(c, who, cmd, self.game_info(g))
+                self.reply(c, who, cmd, self.game_info(g, u))
             else:
                 self.reply(c, who, cmd, {}, code=0x6e6f6761)    # 'noga'
             return
@@ -329,16 +334,49 @@ class Server:
             g['params'] = body.get('PARAMS', g['params'])
         elif cmd == 'gsta':
             g['started'] = True
-        self.reply(c, who, cmd, self.game_info(g))
+        self.reply(c, who, cmd, self.game_info(g, u))
         for v in g['players'] + ([u] if u not in g['players'] else []):
-            self.push(v, '+ses' if cmd == 'gsta' else '+mgm', self.game_info(g))
+            self.push(v, '+ses' if cmd == 'gsta' else '+mgm', self.game_info(g, v))
         # The session starts (+ses, handled apart from +mgm at 0x4e86ad) only on the host's gsta,
         # which it sends from Start Game once the boxes' direct link is up. Pushing +ses as soon as
         # both were ready (the old way) beat the link and gave "Failed to Connect!".
         if not g['players']:
             del self.games[g['id']]
 
-    def game_info(self, g):
+    def public_ip(self):
+        """This site's address from the internet: --public looked up again every 5 minutes, since a
+        home connection's address changes (that's what the DuckDNS name follows)."""
+        ip, when = self._public_ip
+        if self.public and time.time() - when > 300:
+            try:
+                ip = socket.gethostbyname(self.public)
+            except OSError as e:
+                self.say('public', self.public, 'lookup failed:', e)
+            self._public_ip = (ip, time.time())
+        return ip
+
+    @staticmethod
+    def site(u):
+        """Where a box connects from: 'home' (this server's own network) or its public address."""
+        p = u.get('peer')
+        return 'home' if not p or ipaddress.ip_address(p).is_private else p
+
+    def addr_for(self, viewer, u):
+        """u's address for viewer: the box's own (LAN) address when both are at the same site,
+        else u's address from the internet. Over the internet each player's router forwards UDP 3658
+        (the game link) and 6000 (voice) to the box."""
+        if viewer is None or self.site(viewer) == self.site(u):
+            return u['addr']
+        return (self.public_ip() or u['addr']) if self.site(u) == 'home' else u['peer']
+
+    def server_addr(self, c):
+        """This server's address for a connection: the LAN one at home, the public one from outside."""
+        peer = c.getpeername()[0]
+        if ipaddress.ip_address(peer).is_private or not self.public:
+            return self.host
+        return self.public_ip() or self.host
+
+    def game_info(self, g, viewer=None):
         info = {'IDENT': g['id'], 'NAME': g['name'], 'HOST': g['host']['name'], 'GPSHOST': g['host']['name'],
                 'PARAMS': g['params'], 'PLATPARAMS': '', 'ROOM': g['room'], 'CUSTFLAGS': '0',
                 'SYSFLAGS': g['sysflags'], 'COUNT': len(g['players']), 'PRIV': '1' if g['pass'] else '0',
@@ -346,7 +384,7 @@ class Server:
                 'WHEN': time.strftime('%Y.%m.%d-%H:%M:%S'), 'GAMEPORT': '9657', 'VOIPPORT': '9667',
                 'GAMEMODE': '0', 'AUTH': '', 'SESS': 'None'}
         for i, v in enumerate(g['players']):
-            info.update({'OPID%d' % i: v['id'], 'OPPO%d' % i: v['name'], 'ADDR%d' % i: v['addr'],
+            info.update({'OPID%d' % i: v['id'], 'OPPO%d' % i: v['name'], 'ADDR%d' % i: self.addr_for(viewer, v),
                          'LADDR%d' % i: v['addr'], 'MADDR%d' % i: v.get('mac', ''), 'OPPART%d' % i: '0',
                          'OPPARAM%d' % i: v.get('userparams', ''), 'OPFLAG%d' % i: '0', 'PRES%d' % i: '0'})
             info.update({k + str(i): x for k, x in v.get('over', {}).items()})
@@ -428,7 +466,8 @@ class Server:
 def main(argv):
     host = argv[argv.index('--host') + 1] if '--host' in argv else '10.0.2.2'
     name = argv[argv.index('--name') + 1] if '--name' in argv else 'Player'
-    srv = Server(argv[0], host, name)
+    public = argv[argv.index('--public') + 1] if '--public' in argv else None
+    srv = Server(argv[0], host, name, public)
     if '--bot' in argv:                 # a fake player sitting in USR.Madden, to test invites with one box
         srv.users['bot'] = {'id': srv.next_id, 'conn': None, 'room': 1, 'addr': '10.0.2.16',
                             'name': 'Bot', 'mac': '$0050f2000001', 'game': None}

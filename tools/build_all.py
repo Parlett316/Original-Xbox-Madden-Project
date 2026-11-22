@@ -53,7 +53,8 @@ Usage:
   --radio-show       Madden 07's Tony Bruno radio show in the franchise menus, once per week
                      (default.xbe grows by 16 KB; adds data/spchfe07.dat, 229 MB; needs
                      "Madden NFL 07 (USA)" in the games folder)
-  --online SERVER    Game Modes > Xbox Live goes to our own lobby server at this IPv4 address
+  --online SERVER    Game Modes > Xbox Live goes to our own lobby server at this IPv4 address or
+                     host name of up to 18 characters (e.g. md09.duckdns.org)
                      (tools/aries_server.py) instead of Xbox Live (patches/online.py, default.xbe;
                      offline play is unchanged). Same build on every box that plays together.
   --online-name NAME this box's name in the lobby (1-15 letters, digits, _ or -; default Player<n>)
