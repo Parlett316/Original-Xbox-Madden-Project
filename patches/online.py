@@ -4,7 +4,7 @@
 
 --name gives this copy's player name (1 to 15 letters, digits, '_' or '-'). The login sends it as
 GTAG, which the lobby server (tools/aries_server.py) uses instead of Player<n>. The game reads GTAG
-from the Live gamertag (+0x144 of the lobby client, 0x54606e), which syslink never fills; the
+from the Live gamertag (+0x104 of the lobby client, read at 0x54638f), which syslink never fills; the
 patch points that read at the name, kept in 16 unused zero bytes of .rdata (0x636f20). Without
 --name it stays empty and the server hands out Player1, Player2...
 
@@ -111,7 +111,7 @@ SLOT_BOUNDS = 0x24aeac                           # jae 0x24aeeb (the store) -> j
 USER_OBJECT = 0x4fa6d5                           # returns the OSDK user object (controller port at +8)
 PORT_STUB = 0x5f570a                             # 15 dead bytes after change 10
 NAME_SLOT = 0x636f20                             # 16 zero bytes after NO_USERS's run start; unused
-GTAG_SOURCE = 0x54606e                           # lea eax, [esi+0x144] (auth's GTAG, the gamertag)
+GTAG_SOURCE = 0x54638f                           # lea eax, [esi+0x104] (auth's GTAG, the gamertag)
 NAME_CHARS = re.compile(r'[A-Za-z0-9_-]{1,15}')
 LAG_SPIKE_CHECK = 0x68cab                        # jbe: lag not over 1 s -> nothing recorded
 CONTROLLER_ATTR = 0x236102                       # call USER_OBJECT ... call [edx+0x24] (16 bytes)
@@ -175,7 +175,7 @@ def player_name(buf, name):
     if not NAME_CHARS.fullmatch(name):
         raise SystemExit(f'online: name {name!r}: use 1 to 15 letters, digits, _ or -')
     put(buf, NAME_SLOT, bytes(16), name.encode().ljust(16, bytes(1)))
-    put(buf, GTAG_SOURCE, bytes.fromhex('8d8644010000'), bytes.fromhex('b8') + struct.pack('<I', NAME_SLOT) + bytes.fromhex('90'))  # mov eax, name
+    put(buf, GTAG_SOURCE, bytes.fromhex('8d8604010000'), bytes.fromhex('b8') + struct.pack('<I', NAME_SLOT) + bytes.fromhex('90'))  # mov eax, name
     print(f'online: player name {name}')
 
 
