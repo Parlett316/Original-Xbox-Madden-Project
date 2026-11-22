@@ -418,7 +418,8 @@ def plan(stock, overlay, hashes, remote_sizes, manifest):
     earlier install put there that this one doesn't have (only ever files listed in the manifest).
     """
     files = tree_files(stock)
-    files.update(tree_files(overlay))
+    # the build's reports (roster_report.csv, stats_report.csv) stay on the PC
+    files.update({rel: p for rel, p in tree_files(overlay).items() if not (rel.endswith('.csv') and '/' not in rel)})
     want = {}
     for rel, p in files.items():
         want[rel] = (os.path.getsize(p), hashes.get(p), p)
@@ -1551,7 +1552,8 @@ def selftest():
     with tempfile.TemporaryDirectory() as t:
         s, o = os.path.join(t, 's'), os.path.join(t, 'o')
         for p, data in ((os.path.join(s, 'default.xbe'), b'a'), (os.path.join(s, 'data', 'x.dat'), b'bb'),
-                        (os.path.join(o, 'default.xbe'), b'ccc'), (os.path.join(o, 'data', 'new.dat'), b'd')):
+                        (os.path.join(o, 'default.xbe'), b'ccc'), (os.path.join(o, 'data', 'new.dat'), b'd'),
+                        (os.path.join(o, 'roster_report.csv'), b'r')):
             os.makedirs(os.path.dirname(p), exist_ok=True)
             open(p, 'wb').write(data)
         h = HashCache(os.path.join(t, 'h.json'))

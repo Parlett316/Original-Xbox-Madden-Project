@@ -14,7 +14,8 @@ A running checklist of what's still open, so work can pick up in a new chat. Las
 `--selftest` checks the LIST parsing, the stock XBE, the mod-to-argument mapping, the upload plan, Xbox paths, an install into a PC folder and the PC search. Against a local FTP server (pyftpdlib) game finding, copying, first install, a re-install with nothing to send, a changed same-size file, a cut-off file, a removed file, a folder it didn't make, and save backup and removal all worked. A small build through the installer's linked game folder ran `build_all.py` cleanly.
 
 - [ ] **On the Xbox:** connect from the installer to UnleashX. Its LIST format and SIZE support haven't been seen; the parser takes Unix and DOS listings and falls back to LIST when SIZE fails. Check it finds the games, then do a full install and a second install that sends nothing.
-- [ ] **A full build from a fresh download:** the recommended mods with the roster downloads, on a PC without the repo's own data.
+- [x] **A full build from a fresh download (the user, 2026-11-22):** the GitHub ZIP, the recommended mods without music or radio, into `C:\games\Madden NFL 09 Modded`: ratings (after the retry fix), 1,811 photos (151 players have none on EA's site), 127 coach photos, nflverse stats, the build and all 113 files copied and checked. The two report CSVs were copied too; they now stay on the PC and the next run removes them.
+- [ ] **Play that copy** in xemu or on the Xbox.
 - [ ] **Free space:** nothing checks that the Xbox has room for the 2 GB+ folder; a full drive shows up as a file that won't upload completely.
 
 **Release v1.0 (2026-11-20).** [release.md](release.md) has the command, which reproduces every file on the Xbox byte for byte, and the install list. Tagged `v1.0`. Next: play it as a long franchise on the Xbox (years 5 to 10, a user-run team).
