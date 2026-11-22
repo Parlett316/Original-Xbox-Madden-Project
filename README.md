@@ -2,7 +2,7 @@
 
 Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineering the games' own code and databases. The main target is **Madden NFL 09**. The aim is a franchise mode you can play for many seasons, with a 17-game season, modern rosters, more music, and your own screens.
 
-> **Just want to play?** [Download the ZIP](https://github.com/Parlett316/Original-Xbox-Madden-Project/archive/refs/heads/main.zip), unzip it, and double-click **Install Madden 09 Mods.bat**. It asks where your Madden is (your PC or your Xbox), which mods you want, and puts a modded copy next to your original. See [Easy install](#easy-install-start-here).
+> **Just want to play?** [Download the ZIP](https://github.com/Parlett316/Original-Xbox-Madden-Project/archive/refs/heads/main.zip), unzip it, and double-click **Install Madden 09 Mods.bat**. It asks where your Madden is (your PC or your Xbox), which mods you want, and puts a modded copy next to your original. It runs on an Xbox, in xemu, and on a modded **Xbox 360** too. See [Easy install](#easy-install-start-here).
 
 **Release v1.0** (2026-11-20): one `build_all.py` command builds everything below that's on the author's Xbox, byte for byte. The command and the install list are in [docs/release.md](docs/release.md).
 
@@ -27,6 +27,7 @@ Fixes and mods for the original-Xbox Madden NFL games, built by reverse-engineer
 | **Custom loading and start screens** (the start screen shows only the middle of its image, and overlays sit in the top corners) | 09 | Working on hardware (bring your own image) |
 | **Dashboard rename** so the modded copy sits next to the stock game | 07–09 | Working on hardware |
 | **Attract-mode demo off** (leaving it hard-locks the console, even on the stock game) | 09 | Timer confirmed on hardware |
+| **Runs on an Xbox 360** (a modded 360's backward compatibility). Opt-in with `--xbox360`, or tick "Also runs on an Xbox 360" in the installer | 09 | The full v1.0 build boots on a hacked 360 and simmed a franchise into the offseason |
 
 There's nothing here for Madden 06 yet: it has no role system, so the awareness bug can't happen there.
 
@@ -42,7 +43,7 @@ There's nothing here for Madden 06 yet: it has no role system, so the awareness 
 
 Your original game folder is never changed. Running it again later only copies what changed.
 
-You need a softmodded or modchipped Xbox (or xemu) and your own copy of Madden NFL 09 as a game folder. The rest of this page is for people who want to know how it works or build from the command line.
+You need a softmodded or modchipped Xbox, a modded Xbox 360, or xemu, and your own copy of Madden NFL 09 as a game folder. The rest of this page is for people who want to know how it works or build from the command line.
 
 ### What the installer does for you
 
@@ -63,6 +64,19 @@ Modding this game by hand means running a dozen scripts in the right order, keep
 - **It's slow the first time**: downloading the rosters and copying about 2 GB takes 15 to 45 minutes. After that, only what changed is copied.
 - **About 150 players have no photo**: EA has none for them (mostly rookies), so they get the game's generic face.
 - **Anything else**: the box under the progress bar shows what happened. Copy its last lines into a GitHub issue.
+
+## Playing on an Xbox 360
+
+A modded Xbox 360 can play original-Xbox games through its backward compatibility, and stock Madden 09 is one of the games it runs. The modded game runs too, with one tick:
+
+1. In the installer's mod list, tick **Also runs on an Xbox 360** (under Extras). From the command line it's `build_all.py --xbox360`.
+2. Let it build to a folder on your PC, then copy the whole folder (`default.xbe` and `data`) to your 360 and launch `default.xbe` from your dashboard the way you launch other original-Xbox games.
+
+The same build still works in xemu.
+
+**Why it needed a fix.** The first try on a 360 stopped at "encountered an error". Sixteen test versions of the game's main file, each changing one thing, narrowed it down: the 360 doesn't mind a modified game, but it refuses to run code from the very start of the file (its header), where several mods kept their extra code. A real Xbox and xemu allow it, so it had never come up. The fix moves that code to the end of the file instead, unchanged, and redirects the jumps into it. With it, the whole build boots on a 360 and a franchise simmed through a season and the playoffs into the offseason with everything working. The details are in [docs/findings.md](docs/findings.md#15-running-on-an-xbox-360-09).
+
+Not tried yet: online play from a 360, and the moved version on an original Xbox (until then, leave the tick off for an Xbox).
 
 ## The Tony Bruno Show is back
 
