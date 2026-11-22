@@ -75,10 +75,13 @@ both -> kickoff screen (the 0x34265f bugcheck, an out-of-range slot store, is fi
 Link state: `python tools/online_state.py conn` (XEMU_INSTANCE=1 for box 2) prints ConnApi
 clients and status (3 active, 5 failed); `heaps`, `heap 4` (one heap's header and free tree) and `cpu` (bugcheck code) too. Packets: `python tools/npcap_capture.py <GUID> 90
 out.pcap "udp and host 192.168.1.100"` (game link 3658, voice 6000).
-Load (2026-11-21, online.py change 13): both boxes reach the kickoff screen. Then box 0 says
-"removed from the game due to excessive controller pulls" and box 1 "controller in controller port 4
-has been disconnected": the game's slots (OCMT/MTTS `UNLS`) were 15 (home) and 3 (away) on both
-boxes, and xemu's pad is port 1. Next: where the online game picks the local controller port
-(likely Live's signed-in user list, which change 7 zeroes).
+Load (2026-11-21, online.py change 13): both boxes reach the kickoff screen. Change 14 fixed the
+controller port (the Live sign-in screen sets it; syslink skipped it, so it was -1 -> controllers
+15/3; now port 1). `setup` builds with `online.py --lag-tolerant` (xemu stalls tripped the in-game
+lag monitor -> "connection to your opponent has been lost"). With it both boxes play the coin toss in
+sync; the guest dropped ~5 min in (untraced: trace 0x6ab90 on the guest with
+`xemu_watch.py ... --stack`, which now logs the first four stack args), and the guest's Down didn't
+move the toss menu. "End game" on both (`a`) returns both to the room: invite again without `up`.
+Coin toss: guest is away (Bills) and calls it; the menu shows on both.
 Open: a user-created room is hidden in the *other* player's Lobby list (client has it, screen
 drops it); a box sometimes sticks on an empty Lobby list after `up` (use `reboot --inst 1 --join`).

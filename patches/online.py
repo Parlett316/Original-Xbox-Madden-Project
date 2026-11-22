@@ -1,8 +1,13 @@
 """Let Madden 09's online mode reach a private lobby server instead of Xbox Live (default.xbe).
 
-    python online.py <in default.xbe> <out default.xbe> <server IPv4 address>
+    python online.py <in default.xbe> <out default.xbe> <server IPv4 address> [--lag-tolerant]
 
-Work in progress (docs/findings.md §14). Twelve kinds of change, each checked against the stock bytes:
+--lag-tolerant (for two xemu boxes on one PC) turns off the in-game lag drop: the game ends a
+match ("The connection to your opponent has been lost") after 5 waits of over 1 s for the other
+box's frames once more than 2.5 s of lag has added up (monitor set up at 0x68d20, checked at
+0x68dd0). Two emulated boxes stall like that; the switch raises the 5 to 0x7fffffff.
+
+Work in progress (docs/findings.md §14). Fourteen kinds of change, each checked against the stock bytes:
 
 1. EA's network startup (0x4693a5, DirtySDK NetConn) reads "-syslink" and "-coop"/"-nosecure"
    from its argument, but all three callers pass "" (0x7063dc). They now pass 0x72b98c, whose
@@ -58,6 +63,14 @@ Work in progress (docs/findings.md §14). Twelve kinds of change, each checked a
    the slot was 15, so the store landed 0x3c bytes in, on the low byte of the next free block's
    end pointer in STATE, and every later STATE allocation failed. The jae at 0x24aeac now skips
    to 0x24af00, the code after the store.
+14. Each box's local controller port is the OSDK user object's +8 (method +0x24, set by +0x20 from
+   the Live sign-in screen's script command 0x4d339c), which syslink skips, so it stayed -1. The
+   game sends it to the other box as the player's "Controller" attribute (0x236102), and
+   0xec3bf puts the local player on controller "Controller" and the remote one on "Controller"
+   + 4: -1 became 15 (none) and 3 (port 4), so the guest was "removed ... excessive controller
+   pulls" and the host's port 4 counted as disconnected. The attribute now comes from a stub in
+   the dead XOnline compare body (0x5f570a, reached only through 0x5ee86d, which change 10 cut
+   off) that reads +8 and gives 0 (controller port 1) when it is negative.
 
 The game traffic between the boxes is now plain UDP to the lobby's ADDR, not XNet's encrypted kind.
 """
@@ -84,6 +97,10 @@ ROSTER_CURRENT = 0x23ce79                        # sete al -> mov al, 1; nop (ro
 PROFANITY_CHECK = 0x552658                       # jne -> nops: room names skip Live's string check
 XONLINE_COMPARE = 0x5ee867                       # mov ecx, [0x7cc408] -> xor eax, eax; ret 4
 SLOT_BOUNDS = 0x24aeac                           # jae 0x24aeeb (the store) -> jae 0x24af00 (past it)
+USER_OBJECT = 0x4fa6d5                           # returns the OSDK user object (controller port at +8)
+PORT_STUB = 0x5f570a                             # 15 dead bytes after change 10
+LAG_SPIKES = 0x68d54                             # mov dword ptr [esi+0x1c], 5 (lag monitor setup)
+CONTROLLER_ATTR = 0x236102                       # call USER_OBJECT ... call [edx+0x24] (16 bytes)
 
 
 def file_offset(buf, va):
@@ -123,20 +140,36 @@ def patch(buf, server):
     put(buf, PROFANITY_CHECK, bytes.fromhex('7507'), bytes.fromhex('9090'))
     put(buf, XONLINE_COMPARE, bytes.fromhex('8b0d08c47c00'), bytes.fromhex('31c0c2040090'))
     put(buf, SLOT_BOUNDS, bytes.fromhex('733d'), bytes.fromhex('7352'))
+    stub = (b'\xe8' + struct.pack('<i', USER_OBJECT - (PORT_STUB + 5))   # call: eax = user object
+            + bytes.fromhex('8b4008'      # mov eax, [eax+8]   (the port, -1 without sign-in)
+                            '85c0 7d02'   # test eax, eax; jge done
+                            '31c0'        # xor eax, eax       (port 1)
+                            'c3'))        # done: ret
+    put(buf, PORT_STUB, bytes.fromhex('8b54240433c03b51040f94c0c20400'), stub)
+    put(buf, CONTROLLER_ATTR, bytes.fromhex('e8ce452c008b108b3e6a048bc8ff5224'),
+        b'\xe8' + struct.pack('<i', PORT_STUB - (CONTROLLER_ATTR + 5))
+        + bytes.fromhex('8b3e 6a04') + b'\x90' * 7)      # mov edi, [esi]; push 4 (the setter's type)
     print(f'online: syslink without Xbox Live, plain TCP allowed, lobby server {server}')
 
 
-def main(src, dst, server):
+def lag_tolerant(buf):
+    put(buf, LAG_SPIKES, bytes.fromhex('c7461c05000000'), bytes.fromhex('c7461c') + struct.pack('<I', 0x7fffffff))
+    print('online: in-game lag drop off (xemu)')
+
+
+def main(src, dst, server, *flags):
     with open(src, 'rb') as f:
         buf = bytearray(f.read())
     size = len(buf)
     patch(buf, server)
+    if '--lag-tolerant' in flags:
+        lag_tolerant(buf)
     assert len(buf) == size
     with open(dst, 'wb') as f:
         f.write(buf)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4 or any(a != '--lag-tolerant' for a in sys.argv[4:]):
         raise SystemExit(__doc__)
     main(*sys.argv[1:])

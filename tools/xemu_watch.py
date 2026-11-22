@@ -2,7 +2,8 @@
 
 Usage: python xemu_watch.py <log> <secs> <maxhits> <VA> [<VA> ...] [--stack]
 
-Each hit logs the time, the address, eax, ecx, edx and the return address on the stack.
+Each hit logs the time, the address, eax, ecx, edx, edi, the return address and the next four
+stack dwords (a call's first arguments at a function's entry).
 With --stack it also lists every dword in the top 1 KB of the stack that points into code
 (0x11000-0x5a12e0 and the library sections up to 0x616c60), a rough backtrace.
 Breakpoints slow the game while they're being hit, so use it only when nobody is playing.
@@ -38,9 +39,10 @@ def main(log, secs, maxhits, vas, stack=False, writes=()):
         except socket.timeout:
             break
         r = struct.unpack_from('<10I', bytes.fromhex(ask(g, 'g', regs)))
-        ret = struct.unpack('<I', g.mem(r[4], 4) or b'\0\0\0\0')[0]
+        ret, *args = struct.unpack('<5I', g.mem(r[4], 20) or bytes(20))
         new = ' '.join(f'[{w:#x}]={struct.unpack("<I", g.mem(w, 4) or bytes(4))[0]:#x}' for w in writes)
-        f.write(f'{time.strftime("%H:%M:%S")} {r[8]:#x} eax {r[0]:#x} ecx {r[1]:#x} edx {r[2]:#x} edi {r[7]:#x} ret {ret:#x} {new}\n')
+        f.write(f'{time.strftime("%H:%M:%S")} {r[8]:#x} eax {r[0]:#x} ecx {r[1]:#x} edx {r[2]:#x} edi {r[7]:#x} '
+                f'ret {ret:#x} args {" ".join(f"{v:#x}" for v in args)} {new}\n')
         if stack:
             m = b''.join(g.mem(r[4] + i, 0x100) or b'' for i in range(0, 0x400, 0x100))
             code = [v for v in struct.unpack(f'<{len(m) // 4}I', m) if 0x11000 <= v < 0x616c60]

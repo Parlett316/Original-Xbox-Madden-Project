@@ -7,7 +7,7 @@
     python tools/online_test.py <work> report [lines] [--all]  # both screens in one picture + server log
     python tools/online_test.py <work> down                # stop the server and both instances
 
-`setup` patches the stock XBE with patches/online.py (server 10.0.2.2, the PC as seen from
+`setup` patches the stock XBE with patches/online.py --lag-tolerant (server 10.0.2.2, the PC as seen from
 xemu's NAT), packs <work>/online.iso with tools/make_xiso.py, and makes two xemu work folders
 (tools/xemu.py setup; w2 gets its own MAC). Run it again after changing online.py. With --lan
 both boxes are bridged onto that network card through Npcap (they get addresses from the
@@ -76,7 +76,7 @@ def setup(work, lan=None):
     os.makedirs(os.path.join(work, 'ov'), exist_ok=True)
     xbe = os.path.join(work, 'ov', 'default.xbe')
     subprocess.run([PY, os.path.join(ROOT, 'patches', 'online.py'),
-                    os.path.join(STOCK, 'default.xbe'), xbe, server], check=True)
+                    os.path.join(STOCK, 'default.xbe'), xbe, server, '--lag-tolerant'], check=True)
     iso = os.path.join(work, 'online.iso')
     subprocess.run([PY, os.path.join(HERE, 'make_xiso.py'), 'pack', STOCK,
                     os.path.join(work, 'ov'), iso], check=True)
