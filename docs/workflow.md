@@ -51,7 +51,7 @@ Everything at once:
 
 This full command, without the two screens, reproduced the hardware-tested files byte for byte (2026-11-04). `custom/` holds personal art and is never committed.
 
-7-team playoffs are on by default with the 17-game season (`--no-playoffs7` opts out). More room for career stats (`PCDE` and `PCNG` to 2,400) is on by default too, whenever `template.dat` is built (`--no-career-room` opts out). Optional additions, each working on hardware: `--save-unlock` (load edited saves), `--commanders-commentary` (Al Michaels says "Washington"; adds 447 MB of files to the overlay), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). `--modern-kickoff` (ball on the 35, hybrid lineup and hold, touchbacks to the 35, out of bounds to the 40) works on hardware too. `--any-number` (any jersey number at any position in the edit screen) works on hardware as well. `--radio-show` (Madden 07's Tony Bruno show in the franchise menus, once per week) works on hardware; it needs `Madden NFL 07 (USA)` in the games folder, makes `default.xbe` 16 KB larger and adds `data/spchfe07.dat` (229 MB). `--player-stats nflverse_stats` (real stats for the last 5 seasons and career totals; download nflverse's `players.csv` and `stats_player_reg_1999.csv` to `_2025.csv` into that folder first) works on hardware. `--year 2026` (the game counts its years from 2026 instead of 2008) works on hardware. `--optional-fullback` (a team can carry no fullback) is partly tested on hardware; see [outstanding](outstanding.md). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
+7-team playoffs are on by default with the 17-game season (`--no-playoffs7` opts out). More room for career stats (`PCDE` and `PCNG` to 2,400) is on by default too, whenever `template.dat` is built (`--no-career-room` opts out). Optional additions, each working on hardware: `--save-unlock` (load edited saves), `--commanders-commentary` (Al Michaels says "Washington"; adds 447 MB of files to the overlay), and `--free-agents roster/free_agent_picks.json` (97 extra free agents; make the file first with `python roster/pick_free_agents.py roster/madden26_superbowl.json roster/madden27_week7.json roster/free_agent_picks.csv`). `--modern-kickoff` (ball on the 35, hybrid lineup and hold, touchbacks to the 35, out of bounds to the 40) works on hardware too. `--any-number` (any jersey number at any position in the edit screen) works on hardware as well. `--radio-show` (Madden 07's Tony Bruno show in the franchise menus, once per week) works on hardware; it needs `Madden NFL 07 (USA)` in the games folder, makes `default.xbe` 16 KB larger and adds `data/spchfe07.dat` (229 MB). `--player-stats nflverse_stats` (real stats for the last 5 seasons and career totals; download nflverse's `players.csv` and `stats_player_reg_1999.csv` to `_2025.csv` into that folder first) works on hardware. `--year 2026` (the game counts its years from 2026 instead of 2008) works on hardware. `--online 192.168.1.4` (Game Modes > Xbox Live goes to our lobby server; add `--online-name NAME` for the lobby name, and `--online-lag-tolerant` only for games against an xemu box) works on hardware, offline play unchanged (2026-11-22). `--optional-fullback` (a team can carry no fullback) is partly tested on hardware; see [outstanding](outstanding.md). Before testing a roster, delete any `Rost-` save folders on the Xbox, because they override `template.dat`.
 
 Or step by step. The commands are in each component README ([patches](../patches/README.md), [roster](../roster/README.md), [loadscreen](../patches/loadscreen/README.md)). After changing any data file by hand, always re-run `patches/qkl_sync.py` for `fe.qkl` and `game.qkl`; see the rules below.
 
@@ -63,6 +63,34 @@ The user's setup is a softmodded Xbox with the UnleashX dashboard, with files se
 2. Copy the overlay (`default.xbe` + `data/…`) over it. Replace only the listed files; never delete the `data` folder, since the overlay holds only the changed files.
 3. Check file sizes after upload. A truncated `BGM.dat` (756 MB) is easy to miss.
 4. Use binary transfer mode.
+
+## The online lobby server (Unraid)
+
+`tools/aries_server.py` (one file, standard library only) runs on the user's Unraid box at **192.168.1.4** (a fixed address: it is built into every `online.xbe`, so a change means rebuilding them). It runs in the stock `python:3.13-alpine` image, with nothing to build:
+
+| Unraid "Add Container" field | Value |
+|---|---|
+| Name | `madden-lobby` |
+| Repository | `python:3.13-alpine` |
+| Network Type | `Host` (the server hands each box the other's real address for the game link; host mode keeps it, and opens 30010, 10901 and 10899 with no port list) |
+| Path: container `/app` | the folder holding `aries_server.py` (e.g. `/mnt/user/appdata/madden-lobby/`) |
+| Variable `TZ` | the local time zone (e.g. `America/New_York`), so the log's times match the PC's |
+| Post Arguments | `python -u /app/aries_server.py /app/server.log --host 192.168.1.4` |
+
+The same from Unraid's terminal:
+
+```
+docker run -d --name madden-lobby --restart unless-stopped --network host -e TZ=America/New_York \
+  -v /mnt/user/appdata/madden-lobby:/app python:3.13-alpine \
+  python -u /app/aries_server.py /app/server.log --host 192.168.1.4
+```
+
+The folder is `/mnt/user/Smorgasboard/madden-lobby` (the share isn't writable from the PC, so the user copies files in). If the container log says `can't open file '/app/aries_server.py'`, the `/app` mapping is wrong: `docker inspect madden-lobby --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"
+"}}{{end}}'` should print that folder `-> /app`. Working since 2026-11-22.
+
+To update the server, copy the new `aries_server.py` into that folder and restart the container. `server.log` in the same folder is the first thing to read when an online test goes wrong. Build an Xbox's copy with `python patches/online.py <release default.xbe> online.xbe 192.168.1.4 --name <name>`.
+
+`tools/online_test.py` still starts its own server on the PC (it reads that log to drive the xemu boxes), so an xemu box built by it talks to the PC, not to Unraid. Two boxes meet only on the same server: to play an Xbox against such an xemu box, the Xbox needs a copy built for the PC's address.
 
 ## Rules that bite
 

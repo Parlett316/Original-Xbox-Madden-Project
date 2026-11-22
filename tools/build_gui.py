@@ -11,6 +11,7 @@ repo's README (never committed).
 """
 import json
 import os
+import re
 import queue
 import subprocess
 import sys
@@ -54,13 +55,14 @@ PROGRESSIONS = ('performance', 'half', '2005', 'stock')
 DEFAULTS = dict({k: False for k, _, _ in CHECKS}, **{k: '' for k, *_ in PATHS},
                 games=ROOT if os.path.isdir(os.path.join(ROOT, GAME09)) else '',
                 out=os.path.join(ROOT, 'patched', 'gui_build'), title='', progression='stock',
-                year_on=False, year='2026')
+                year_on=False, year='2026', online_on=False, online_server='', online_name='')
 
 MY_FILES = {'roster': 'roster/madden27_week7.json', 'photos': 'roster/headshots_raw',
             'coach_photos': 'roster/coach_photos', 'free_agents': 'roster/free_agent_picks.json',
             'player_stats': 'nflverse_stats', 'classic_names': 'nflverse_rosters/classic_matches.csv',
             'schedule': 'nflverse_schedule/games.csv', 'commanders_logo': 'custom/commanders_w.png'}
-OFF = {k: v for k, v in DEFAULTS.items() if k not in ('games', 'out', 'loadscreen', 'startscreen', 'year')}
+OFF = {k: v for k, v in DEFAULTS.items()
+       if k not in ('games', 'out', 'loadscreen', 'startscreen', 'year', 'online_server', 'online_name')}
 
 
 def my_files():
@@ -103,6 +105,10 @@ def command(v):
         c.append('--commanders-commentary')
     if v['year_on']:
         c += ['--year', v['year'].strip()]
+    if v['online_on']:
+        c += ['--online', v['online_server'].strip()]
+        if v['online_name'].strip():
+            c += ['--online-name', v['online_name'].strip()]
     for k, _, _, _, _, needs_roster in PATHS:
         if v[k] and (v['roster'] or not needs_roster) and (k != 'schedule' or v['season17']):
             c += ['--' + k.replace('_', '-'), v[k]]
@@ -129,6 +135,10 @@ def problems(v):
         bad.append(f'The radio show needs "{OLDER[2]}" in the games folder.')
     if v['year_on'] and not (v['year'].strip().isdigit() and 1900 <= int(v['year']) <= 2100):
         bad.append('The year must be a number such as 2026.')
+    if v['online_on'] and not re.fullmatch(r'(\d{1,3}\.){3}\d{1,3}', v['online_server'].strip()):
+        bad.append("Online play needs the lobby server's address, such as 192.168.1.4.")
+    if v['online_on'] and v['online_name'].strip() and not re.fullmatch(r'[A-Za-z0-9_-]{1,15}', v['online_name'].strip()):
+        bad.append('The online name is 1 to 15 letters, digits, _ or -.')
     if len(v['title'].strip()) > 40:
         bad.append('The dashboard name is limited to 40 characters.')
     for k, label, kind, *_ in PATHS:
@@ -141,7 +151,7 @@ def notes(v):
     """Things the build will do that the ticks don't say."""
     n = []
     xbe = any(v[k] for k in ('season17', 'modern_kickoff', 'any_number', 'optional_fullback', 'save_unlock',
-                             'radio_show', 'year_on', 'roster'))
+                             'radio_show', 'year_on', 'roster', 'online_on'))
     if not v['awareness'] and xbe:
         n.append('The awareness fix stays in: the other default.xbe patches are built on it.')
     if v['playoffs7'] and not v['season17']:
@@ -215,6 +225,12 @@ def gui():
     ttk.Checkbutton(f, text='Years count from', variable=var['year_on']).pack(side='left')
     ttk.Entry(f, textvariable=var['year'], width=6).pack(side='left')
     ttk.Label(f, text='instead of 2008').pack(side='left', padx=4)
+    f = ttk.Frame(boxes['game'])
+    f.pack(anchor='w', padx=4)
+    ttk.Checkbutton(f, text='Online play, lobby server at', variable=var['online_on']).pack(side='left')
+    ttk.Entry(f, textvariable=var['online_server'], width=14).pack(side='left')
+    ttk.Label(f, text='name').pack(side='left', padx=4)
+    ttk.Entry(f, textvariable=var['online_name'], width=15).pack(side='left')
     f = ttk.Frame(boxes['game'])
     f.pack(anchor='w', padx=4, pady=2)
     ttk.Label(f, text='Player progression').pack(side='left')

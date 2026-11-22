@@ -53,8 +53,13 @@ Usage:
   --radio-show       Madden 07's Tony Bruno radio show in the franchise menus, once per week
                      (default.xbe grows by 16 KB; adds data/spchfe07.dat, 229 MB; needs
                      "Madden NFL 07 (USA)" in the games folder)
+  --online SERVER    Game Modes > Xbox Live goes to our own lobby server at this IPv4 address
+                     (tools/aries_server.py) instead of Xbox Live (patches/online.py, default.xbe;
+                     offline play is unchanged). Same build on every box that plays together.
+  --online-name NAME this box's name in the lobby (1-15 letters, digits, _ or -; default Player<n>)
+  --online-lag-tolerant  never end a game for lag (only for playing an xemu box, which stalls)
 
-Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, radio show, then
+Steps: awareness fix + rename, roster, 17-game season, music, progression, screens, demo, logo, commentary, kickoff, radio show, online, then
 fe.qkl/game.qkl are re-synced from every changed file. Copy the overlay over a
 copy of the game folder on the Xbox (keep the stock folder as is).
 """
@@ -116,6 +121,9 @@ def main():
     ap.add_argument('--any-number', action='store_true')
     ap.add_argument('--year', type=int)
     ap.add_argument('--radio-show', action='store_true')
+    ap.add_argument('--online')
+    ap.add_argument('--online-name')
+    ap.add_argument('--online-lag-tolerant', action='store_true')
     ap.add_argument('--career-room', action='store_true', default=None)
     ap.add_argument('--no-career-room', dest='career_room', action='store_false')
     a = ap.parse_args()
@@ -162,6 +170,14 @@ def main():
         g07 = os.path.join(a.games, 'Madden NFL 07 (USA)')
         run(os.path.join(P, 'radio_show.py'), xbe, xbe, '--show', os.path.join(g07, 'default.xbe'))
         shutil.copyfile(os.path.join(g07, 'data', 'SPCHFEDT.dat'), os.path.join(out_data, 'spchfe07.dat'))
+    if a.online:                          # after the rest: the order tested on the Xbox (release XBE + online.py)
+        args = [os.path.join(P, 'online.py'), xbe, xbe, a.online]
+        args += ['--name', a.online_name] if a.online_name else []
+        args += ['--lag-tolerant'] if a.online_lag_tolerant else []
+        print('> online.py', a.online, '...')
+        subprocess.run([PY, *args], check=True, stdin=subprocess.DEVNULL)   # no name prompt
+    elif a.online_name or a.online_lag_tolerant:
+        raise SystemExit('--online-name and --online-lag-tolerant need --online SERVER')
 
     # 2. roster (template.dat, DB_TEAMS.dat, uis_plyr.dat, uis_coac.dat)
     if a.roster:
