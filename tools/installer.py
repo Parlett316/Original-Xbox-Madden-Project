@@ -196,11 +196,24 @@ class Xbox:
         self.passive = True
         self.ftp = None
 
-    def connect(self):
+    def connect(self, tries=4):
+        """Log in. A "421 Too many users" (UnleashX allows only a few connections, and a dropped one
+        lingers for a while) is retried with a growing wait before giving up."""
         self.close()
-        f = ftplib.FTP(encoding="latin-1")   # Xbox folder names are Latin-1, not UTF-8
-        f.connect(self.host, self.port, timeout=20)
-        f.login(self.user, self.password)
+        for attempt in range(tries):
+            f = ftplib.FTP(encoding="latin-1")   # Xbox folder names are Latin-1, not UTF-8
+            try:
+                f.connect(self.host, self.port, timeout=20)
+                f.login(self.user, self.password)
+                break
+            except ftplib.error_temp as e:
+                f.close()
+                if not str(e).startswith('421') or attempt == tries - 1:
+                    if str(e).startswith('421'):
+                        raise RuntimeError('the Xbox says too many FTP connections are open. Close FileZilla '
+                                           'or any other FTP program, wait a minute, and try again.') from e
+                    raise
+                time.sleep(5 * 2 ** attempt)
         f.set_pasv(self.passive)
         self.ftp = f
         return f.getwelcome()
@@ -263,26 +276,29 @@ class Xbox:
         return out
 
     def head(self, path, n=8192):
-        """The first n bytes of a file, on a connection of its own (abort is unreliable on Xbox servers)."""
-        f = ftplib.FTP(encoding="latin-1")   # Xbox folder names are Latin-1, not UTF-8
-        f.connect(self.host, self.port, timeout=20)
-        f.login(self.user, self.password)
-        f.set_pasv(self.passive)
-        f.voidcmd('TYPE I')
-        data = b''
-        try:
+        """The first n bytes of a file. The transfer is cut short and the server's 426 swallowed; on the
+        same connection, because UnleashX allows only a few at once ("421 Too many users")."""
+        def go(f):
+            f.voidcmd('TYPE I')
+            data = b''
             s = f.transfercmd('RETR ' + path)
-            while len(data) < n:
-                b = s.recv(n - len(data))
-                if not b:
-                    break
-                data += b
-            s.close()
-        except (ftplib.Error, OSError):
-            pass
-        finally:
-            f.close()
-        return data
+            try:
+                while len(data) < n:
+                    b = s.recv(n - len(data))
+                    if not b:
+                        break
+                    data += b
+            finally:
+                s.close()
+            try:
+                f.voidresp()                # 226 if the file was shorter, else 426 for the cut
+            except (ftplib.error_temp, ftplib.error_reply):
+                pass
+            return data
+        try:
+            return self._again(go)
+        except ftplib.error_perm:
+            return b''
 
     def read(self, path):
         buf = []
@@ -1041,8 +1057,12 @@ def gui():
 
     def connected(r, err):
         if err:
-            set_conn(f'Could not connect ({err}). Check the IP address, that the Xbox is on its dashboard, and '
-                     'the user and password. Some dashboards need FTP turned on in their settings.', 'Bad.TLabel')
+            if 'too many FTP connections' in err:
+                set_conn('Could not connect: ' + err.split(': ', 1)[1], 'Bad.TLabel')
+            else:
+                set_conn(f'Could not connect ({err}). Check the IP address, that the Xbox is on its dashboard, '
+                         'and the user and password. Some dashboards need FTP turned on in their settings.',
+                         'Bad.TLabel')
             return
         box, found = r
         xbox.update(box=box, found=found)
