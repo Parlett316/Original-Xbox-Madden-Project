@@ -76,7 +76,7 @@ The same build still works in xemu.
 
 **Why it needed a fix.** The first try on a 360 stopped at "encountered an error". Sixteen test versions of the game's main file, each changing one thing, narrowed it down: the 360 doesn't mind a modified game, but it refuses to run code from the very start of the file (its header), where several mods kept their extra code. A real Xbox and xemu allow it, so it had never come up. The fix moves that code to the end of the file instead, unchanged, and redirects the jumps into it. With it, the whole build boots on a 360 and a franchise simmed through a season and the playoffs into the offseason with everything working. The details are in [docs/findings.md](docs/findings.md#15-running-on-an-xbox-360-09).
 
-Not tried yet: online play from a 360, and the moved version on an original Xbox (until then, leave the tick off for an Xbox).
+Online play works from a 360 too: a 360 and an original Xbox have played each other through the lobby server, on the same home network so far. Not tried yet: the moved version on an original Xbox (until then, leave the tick off for an Xbox).
 
 ## The Tony Bruno Show is back
 

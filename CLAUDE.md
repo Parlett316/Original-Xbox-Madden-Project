@@ -82,7 +82,7 @@ Start with [docs/outstanding.md](docs/outstanding.md) (what's open right now) an
 - **Working on hardware, now the default:** more room for career stats (`PCDE` and `PCNG` to 2,400; `--no-career-room` opts out). On the Xbox a new franchise saved and reloaded through week 1, the Pro Bowl and the next season with career totals adding up (2026-11-20); in xemu it went past the old `PCDE` limit to year 6 (docs/findings.md §11).
 - **Working on hardware, the default with `--roster`:** players' overalls are the game's own formula (`roster/game_overall.py`, docs/findings.md §13), so they don't jump at week 1 (2026-11-20).
 - **Working on hardware, the default with `--roster`:** coach ratings handed out by rank (`roster/coach_ratings.py`), and real coaching histories and 1999-2025 team records (`roster/coach_history.py`, with `--year 2026 --schedule`; otherwise the old rows are cleared) (2026-11-20).
-- **Working on a hacked Xbox 360, off by default:** the build with `--xbox360` (v1.0 moved: boots, franchise simmed into the offseason, 2026-11-22). Not tried on the original Xbox yet; then it can be the default.
+- **Working on a hacked Xbox 360, off by default:** the build with `--xbox360` (v1.0 moved: boots, franchise simmed into the offseason, 2026-11-22; online against the original Xbox on the LAN works). Not tried on the original Xbox yet; then it can be the default.
 - **Built, not tested:** the 07/08 awareness XBEs.
 - **Tested in xemu only:** a franchise reaches year 10 with no stuck week. `PLAY` stays flat, and full stat tables drop the oldest season (docs/findings.md §11).
 
