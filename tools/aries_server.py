@@ -111,6 +111,24 @@ class Server:
                 self.push(v, '+pop', {'Z': '%d/%d' % (u['room'], n)})
         c.close()
 
+    def evict_stale(self, u):
+        """A box logging in again (after a crash, a power-off or a killed xemu) replaces its old
+        login: same MAC from the same address. The old connection never closed, so it would stay
+        in the room under the same name and an invite could be routed to it."""
+        for c, v in list(self.users.items()):
+            if v is u or v['conn'] is None or not u['mac'] or v.get('mac') != u['mac'] or v['peer'] != u['peer']:
+                continue
+            self.say(v.get('name', '?'), 'replaced by a new login from the same box')
+            del self.users[c]
+            if v['room']:
+                n = sum(1 for w in self.users.values() if w['room'] == v['room'])
+                for w in self.users.values():
+                    self.push(w, '+pop', {'Z': '%d/%d' % (v['room'], n)})
+            try:
+                c.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
     def answer(self, c, who, cmd, body, port=None):
         if cmd == '~png':               # the client's answer to our keepalive
             return
@@ -142,6 +160,7 @@ class Server:
             return
         if cmd == 'auth':               # 0x545ec7: NAME, PERSONAS (one persona -> it sends pers)
             u['mac'] = body.get('MAC', '')
+            self.evict_stale(u)
             gtag = body.get('GTAG', '').strip('"')
             if gtag:                    # the name from online.py --name; two boxes with one name -> Mike, Mike2
                 taken = {v['name'] for v in self.users.values() if v is not u and 'name' in v}
